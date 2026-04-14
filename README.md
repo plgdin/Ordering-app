@@ -43,6 +43,33 @@ docs/
 - `packages/config`: shared app constants and business configuration
 - `packages/shared`: app-specific screens and compositions built on top of the shared packages
 
+## Repo Map
+
+```text
+apps/
+  client-app/        -> real customer app wrapper and native app config
+  merchant-app/      -> real merchant app wrapper and native app config
+  delivery-app/      -> real delivery app wrapper and native app config
+
+packages/
+  shared/            -> app-specific screens for client, merchant, and delivery
+  ui/                -> shared theme, layout shell, reusable UI components
+  core/              -> shared pricing logic, types, and common data
+  config/            -> shared constants such as brand values and business rules
+
+api/
+  README.md          -> placeholder for future backend/services
+```
+
+Quick mental model:
+
+- `apps/` = what gets built and published
+- `packages/shared/` = where most app screens live
+- `packages/ui/` = shared look and reusable components
+- `packages/core/` = shared logic and data
+- `packages/config/` = shared constants and settings
+- `api/` = future backend
+
 ## Current stack
 
 - Expo SDK 55
