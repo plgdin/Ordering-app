@@ -17,6 +17,7 @@ import {
   View,
   ViewStyle
 } from "react-native";
+import { AddressPinpointMap } from "./AddressPinpointMap";
 import { colors, fonts, radius, shadow, spacing } from "./theme";
 
 export type TabOption<T extends string> = {
@@ -34,6 +35,8 @@ export type SavedAddress = {
   pincode: string;
   landmark: string;
   directions: string;
+  lat?: number;
+  lng?: number;
 };
 
 /* ─── Page Shell ─── */
@@ -183,16 +186,10 @@ function AddressEditorModal({
         </View>
 
         <ScrollView style={modalStyles.scrollBody} showsVerticalScrollIndicator={false}>
-          {/* Map placeholder */}
-          <View style={modalStyles.mapPlaceholder}>
-            <View style={modalStyles.mapPin} />
-            <Text style={modalStyles.mapText}>
-              Drag the map to pinpoint your location
-            </Text>
-            <Text style={modalStyles.mapSubtext}>
-              {draft.area || draft.city}, {draft.pincode}
-            </Text>
-          </View>
+          <AddressPinpointMap
+            address={draft}
+            onChange={(patch) => setDraft((prev) => ({ ...prev, ...patch }))}
+          />
 
           <View style={modalStyles.form}>
             <FormField label="Label (e.g. Home, Office)" value={draft.label}
@@ -280,6 +277,8 @@ export function HeroCard({
       end={{ x: 1, y: 1 }}
       style={styles.heroCard}
     >
+      <View style={styles.heroGlowLarge} />
+      <View style={styles.heroGlowSmall} />
       {eyebrow ? <Text style={styles.eyebrow}>{eyebrow}</Text> : null}
       <Text style={styles.heroTitle}>{title}</Text>
       <Text style={styles.heroBody}>{body}</Text>
@@ -380,52 +379,242 @@ export function CategoryChip({
   onPress?: () => void;
 }) {
   const scale = useRef(new Animated.Value(1)).current;
-  const translateX = useRef(new Animated.Value(0)).current;
+  const translateY = useRef(new Animated.Value(0)).current;
   const useNativeDriver = Platform.OS !== "web";
 
   const handlePress = useCallback(() => {
-    Animated.sequence([
-      Animated.parallel([
-        Animated.timing(scale, {
-          toValue: 0.88,
-          duration: 100,
-          easing: Easing.out(Easing.cubic),
-          useNativeDriver
-        }),
-        Animated.timing(translateX, {
-          toValue: 10,
-          duration: 160,
-          easing: Easing.out(Easing.cubic),
-          useNativeDriver
-        })
-      ]),
-      Animated.parallel([
-        Animated.spring(scale, {
-          toValue: 1,
-          friction: 4,
-          tension: 200,
-          useNativeDriver
-        }),
-        Animated.spring(translateX, {
-          toValue: 0,
-          friction: 5,
-          tension: 180,
-          useNativeDriver
-        })
-      ])
-    ]).start(() => {
-      onPress?.();
-    });
-  }, [onPress, scale, translateX, useNativeDriver]);
+    onPress?.();
+    scale.setValue(0.94);
+    translateY.setValue(2);
+    Animated.parallel([
+      Animated.spring(scale, {
+        toValue: 1,
+        friction: 5,
+        tension: 180,
+        useNativeDriver
+      }),
+      Animated.spring(translateY, {
+        toValue: 0,
+        friction: 6,
+        tension: 170,
+        useNativeDriver
+      })
+    ]).start();
+  }, [onPress, scale, translateY, useNativeDriver]);
 
   return (
-    <Animated.View style={{ transform: [{ scale }, { translateX }] }}>
+    <Animated.View
+      style={[
+        styles.categoryChipWrap,
+        { transform: [{ scale }, { translateY }] }
+      ]}
+    >
       <Pressable onPress={handlePress}>
-        <View style={[styles.categoryChip, solid ? styles.categoryChipSolid : styles.categoryChipOutline]}>
-          <Text style={[styles.categoryChipText, solid && styles.chipSolidText]}>{label}</Text>
+        <View
+          style={[
+            styles.categoryChip,
+            solid ? styles.categoryChipSolid : styles.categoryChipOutline
+          ]}
+        >
+          <Text style={[styles.categoryChipText, solid && styles.chipSolidText]}>
+            {label}
+          </Text>
         </View>
       </Pressable>
     </Animated.View>
+  );
+}
+
+export function RatingPill({
+  rating,
+  caption = "rated"
+}: {
+  rating: number;
+  caption?: string;
+}) {
+  return (
+    <LinearGradient
+      colors={["#FF8A3D", "#FFB347", "#FFD769"]}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      style={styles.ratingPill}
+    >
+      <View style={styles.ratingPillDot} />
+      <View style={styles.ratingPillCopy}>
+        <Text style={styles.ratingPillValue}>{rating.toFixed(1)}</Text>
+        <Text style={styles.ratingPillCaption}>{caption}</Text>
+      </View>
+    </LinearGradient>
+  );
+}
+
+export function CartLoadingIndicator({
+  title = "Finding the best aisle for you",
+  subtitle = "Loading nearby stores and filling your cart."
+}: {
+  title?: string;
+  subtitle?: string;
+}) {
+  const progress = useRef(new Animated.Value(0)).current;
+  const bob = useRef(new Animated.Value(0)).current;
+  const useNativeDriver = Platform.OS !== "web";
+
+  useEffect(() => {
+    const progressLoop = Animated.loop(
+      Animated.parallel([
+        Animated.timing(progress, {
+          toValue: 1,
+          duration: 2100,
+          easing: Easing.inOut(Easing.cubic),
+          useNativeDriver
+        }),
+        Animated.sequence([
+          Animated.timing(bob, {
+            toValue: 1,
+            duration: 520,
+            easing: Easing.inOut(Easing.quad),
+            useNativeDriver
+          }),
+          Animated.timing(bob, {
+            toValue: 0,
+            duration: 520,
+            easing: Easing.inOut(Easing.quad),
+            useNativeDriver
+          })
+        ])
+      ])
+    );
+
+    progressLoop.start();
+
+    return () => {
+      progressLoop.stop();
+      progress.stopAnimation();
+      bob.stopAnimation();
+    };
+  }, [bob, progress, useNativeDriver]);
+
+  const cartLift = bob.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, -4]
+  });
+
+  const wheelRotate = progress.interpolate({
+    inputRange: [0, 1],
+    outputRange: ["0deg", "200deg"]
+  });
+
+  const basketItemAnimatedStyle = (index: number) => {
+    const start = index * 0.2;
+    const peak = start + 0.18;
+    const settle = peak + 0.14;
+
+    return {
+      opacity: progress.interpolate({
+        inputRange: [0, start, peak, 1],
+        outputRange: [0, 0, 1, 1],
+        extrapolate: "clamp"
+      }),
+      transform: [
+        {
+          translateY: progress.interpolate({
+            inputRange: [0, start, peak, settle, 1],
+            outputRange: [-18, -18, -4, 0, 0],
+            extrapolate: "clamp"
+          })
+        },
+        {
+          scale: progress.interpolate({
+            inputRange: [0, peak, 1],
+            outputRange: [0.7, 1, 1],
+            extrapolate: "clamp"
+          })
+        }
+      ]
+    };
+  };
+
+  const dropAnimatedStyle = (index: number) => {
+    const start = index * 0.2;
+    const peak = start + 0.18;
+    const settle = peak + 0.12;
+
+    return {
+      opacity: progress.interpolate({
+        inputRange: [0, start, peak, settle, 1],
+        outputRange: [0, 0, 1, 0, 0],
+        extrapolate: "clamp"
+      }),
+      transform: [
+        {
+          translateY: progress.interpolate({
+            inputRange: [0, start, peak, settle, 1],
+            outputRange: [-12, -12, 8, 26, 26],
+            extrapolate: "clamp"
+          })
+        },
+        {
+          scale: progress.interpolate({
+            inputRange: [0, peak, settle, 1],
+            outputRange: [0.8, 1, 0.92, 0.92],
+            extrapolate: "clamp"
+          })
+        }
+      ]
+    };
+  };
+
+  return (
+    <View style={styles.cartLoader}>
+      <View style={styles.cartLoaderArt}>
+        {[0, 1, 2].map((index) => (
+          <Animated.View
+            key={`drop-${index}`}
+            style={[
+              styles.cartLoaderDrop,
+              index === 1 && styles.cartLoaderDropMid,
+              index === 2 && styles.cartLoaderDropRight,
+              dropAnimatedStyle(index)
+            ]}
+          />
+        ))}
+        <Animated.View
+          style={[styles.cartLoaderCart, { transform: [{ translateY: cartLift }] }]}
+        >
+          <View style={styles.cartLoaderHandle} />
+          <View style={styles.cartLoaderBasket}>
+            {[0, 1, 2].map((index) => (
+              <Animated.View
+                key={`item-${index}`}
+                style={[
+                  styles.cartLoaderItem,
+                  index === 1 && styles.cartLoaderItemMid,
+                  index === 2 && styles.cartLoaderItemRight,
+                  basketItemAnimatedStyle(index)
+                ]}
+              />
+            ))}
+          </View>
+          <View style={styles.cartLoaderBase} />
+          <Animated.View
+            style={[
+              styles.cartLoaderWheel,
+              styles.cartLoaderWheelLeft,
+              { transform: [{ rotate: wheelRotate }] }
+            ]}
+          />
+          <Animated.View
+            style={[
+              styles.cartLoaderWheel,
+              styles.cartLoaderWheelRight,
+              { transform: [{ rotate: wheelRotate }] }
+            ]}
+          />
+        </Animated.View>
+      </View>
+      <Text style={styles.cartLoaderTitle}>{title}</Text>
+      <Text style={styles.cartLoaderSubtitle}>{subtitle}</Text>
+    </View>
   );
 }
 
@@ -622,7 +811,26 @@ const styles = StyleSheet.create({
     borderRadius: radius.lg,
     padding: spacing.xl,
     gap: spacing.sm,
+    overflow: "hidden",
     ...shadow
+  },
+  heroGlowLarge: {
+    position: "absolute",
+    width: 180,
+    height: 180,
+    borderRadius: 90,
+    backgroundColor: "rgba(255, 214, 112, 0.18)",
+    top: -36,
+    right: -32
+  },
+  heroGlowSmall: {
+    position: "absolute",
+    width: 94,
+    height: 94,
+    borderRadius: 47,
+    backgroundColor: "rgba(133, 200, 155, 0.18)",
+    bottom: -18,
+    right: 56
   },
   eyebrow: {
     color: colors.primarySoft,
@@ -701,6 +909,9 @@ const styles = StyleSheet.create({
     fontWeight: "700"
   },
   /* Category chip */
+  categoryChipWrap: {
+    borderRadius: radius.pill
+  },
   categoryChip: {
     borderRadius: radius.pill,
     paddingHorizontal: 18,
@@ -708,17 +919,57 @@ const styles = StyleSheet.create({
   },
   categoryChipOutline: {
     borderWidth: 1.5,
-    borderColor: colors.line,
-    backgroundColor: colors.surface
+    borderColor: "#D7DFD8",
+    backgroundColor: "#FFFFFF"
   },
   categoryChipSolid: {
-    backgroundColor: colors.primary,
-    borderWidth: 0
+    backgroundColor: "#254734",
+    borderWidth: 1,
+    borderColor: "#254734",
+    ...shadow
   },
   categoryChipText: {
     color: colors.ink,
     fontWeight: "700",
     fontSize: 14
+  },
+  ratingPill: {
+    minWidth: 94,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    borderRadius: radius.pill,
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+    borderWidth: 1,
+    borderColor: "#FFE1A8",
+    flexShrink: 0
+  },
+  ratingPillDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: "#FFF6DA",
+    borderWidth: 2,
+    borderColor: "rgba(255,255,255,0.7)"
+  },
+  ratingPillCopy: {
+    flexDirection: "row",
+    alignItems: "baseline",
+    gap: 4
+  },
+  ratingPillValue: {
+    color: "#4B2202",
+    fontWeight: "900",
+    fontSize: 15
+  },
+  ratingPillCaption: {
+    color: "#7A3D00",
+    fontWeight: "700",
+    fontSize: 11,
+    textTransform: "uppercase",
+    letterSpacing: 0.5
   },
   /* Chip */
   chip: {
@@ -800,16 +1051,17 @@ const styles = StyleSheet.create({
     gap: 12,
     backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: colors.line,
+    borderColor: "#DCE7DE",
     borderRadius: radius.md,
     paddingHorizontal: spacing.md,
-    paddingVertical: 14
+    paddingVertical: 14,
+    ...shadow
   },
   searchIconCircle: {
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: colors.primaryFaint,
+    backgroundColor: "#E6F3E7",
     alignItems: "center",
     justifyContent: "center"
   },
@@ -839,8 +1091,8 @@ const styles = StyleSheet.create({
   /* Featured badge */
   featuredBadge: {
     alignSelf: "flex-start",
-    backgroundColor: colors.primaryFaint,
-    borderColor: colors.primarySoft,
+    backgroundColor: "#FFF2D9",
+    borderColor: "#FFDDA3",
     borderWidth: 1,
     borderRadius: radius.pill,
     paddingHorizontal: 12,
@@ -849,16 +1101,137 @@ const styles = StyleSheet.create({
   featuredBadgeText: {
     fontSize: 12,
     fontWeight: "700",
-    color: colors.primaryMid
+    color: "#9A5A00"
+  },
+  cartLoader: {
+    alignItems: "center",
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#D8E4DA",
+    borderRadius: radius.md,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.xl,
+    gap: spacing.sm,
+    ...shadow
+  },
+  cartLoaderArt: {
+    width: 140,
+    height: 104,
+    alignItems: "center",
+    justifyContent: "flex-end"
+  },
+  cartLoaderDrop: {
+    position: "absolute",
+    top: 10,
+    left: 42,
+    width: 18,
+    height: 16,
+    borderRadius: 6,
+    backgroundColor: "#79B682"
+  },
+  cartLoaderDropMid: {
+    left: 61,
+    width: 16,
+    height: 14,
+    backgroundColor: "#FFB347"
+  },
+  cartLoaderDropRight: {
+    left: 79,
+    width: 20,
+    height: 18,
+    backgroundColor: "#EF7A52"
+  },
+  cartLoaderCart: {
+    width: 116,
+    height: 72,
+    alignItems: "center",
+    justifyContent: "flex-end"
+  },
+  cartLoaderHandle: {
+    position: "absolute",
+    width: 30,
+    height: 22,
+    top: 6,
+    left: 6,
+    borderTopWidth: 4,
+    borderLeftWidth: 4,
+    borderColor: colors.primaryDeep,
+    borderTopLeftRadius: 14
+  },
+  cartLoaderBasket: {
+    width: 76,
+    height: 42,
+    borderWidth: 4,
+    borderColor: colors.primaryDeep,
+    borderRadius: 16,
+    backgroundColor: "#F6FBF7",
+    overflow: "hidden",
+    justifyContent: "flex-end",
+    paddingHorizontal: 8,
+    paddingBottom: 6,
+    gap: 4
+  },
+  cartLoaderItem: {
+    width: 18,
+    height: 12,
+    borderRadius: 5,
+    backgroundColor: "#79B682"
+  },
+  cartLoaderItemMid: {
+    width: 24,
+    backgroundColor: "#FFB347"
+  },
+  cartLoaderItemRight: {
+    width: 28,
+    backgroundColor: "#EF7A52"
+  },
+  cartLoaderBase: {
+    width: 92,
+    height: 4,
+    borderRadius: 999,
+    backgroundColor: "#DFE9E1",
+    marginTop: 8
+  },
+  cartLoaderWheel: {
+    position: "absolute",
+    bottom: 0,
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    borderWidth: 3,
+    borderColor: colors.primaryDeep,
+    backgroundColor: "#FFFFFF"
+  },
+  cartLoaderWheelLeft: {
+    left: 24
+  },
+  cartLoaderWheelRight: {
+    right: 24
+  },
+  cartLoaderTitle: {
+    fontSize: 17,
+    fontWeight: "800",
+    color: colors.ink,
+    textAlign: "center"
+  },
+  cartLoaderSubtitle: {
+    fontSize: 14,
+    lineHeight: 21,
+    color: colors.muted,
+    textAlign: "center"
   }
 });
 
 /* ─── Modal Styles ─── */
 const modalStyles = StyleSheet.create({
   overlay: {
-    flex: 1,
+    ...StyleSheet.absoluteFillObject,
     backgroundColor: "rgba(0,0,0,0.4)",
-    justifyContent: "flex-end"
+    justifyContent: "flex-end",
+    zIndex: 1000
+  },
+  backdrop: {
+    ...StyleSheet.absoluteFillObject,
   },
   sheet: {
     backgroundColor: colors.surface,
@@ -880,33 +1253,126 @@ const modalStyles = StyleSheet.create({
     fontWeight: "800",
     color: colors.ink
   },
+  closeBtnWrap: {
+    padding: 8,
+    marginRight: -8
+  },
   closeBtn: {
     fontSize: 20,
-    color: colors.muted,
-    padding: 4
+    color: colors.muted
   },
   scrollBody: {
     paddingHorizontal: spacing.lg
   },
   mapPlaceholder: {
     height: 180,
-    backgroundColor: colors.primaryFaint,
+    backgroundColor: "#EAF5ED",
     borderRadius: radius.md,
     borderWidth: 1,
-    borderColor: colors.primarySoft,
-    justifyContent: "center",
-    alignItems: "center",
+    borderColor: "#D1E3D6",
     marginTop: spacing.lg,
     marginBottom: spacing.md,
-    gap: 8
+    overflow: "hidden"
+  },
+  mapRoadHorizontal: {
+    position: "absolute",
+    width: "68%" as never,
+    height: 18,
+    backgroundColor: "#D7EADF",
+    borderRadius: 999,
+    top: "50%" as never,
+    left: "16%" as never,
+    marginTop: -9
+  },
+  mapRoadVertical: {
+    position: "absolute",
+    width: 18,
+    height: "120%" as never,
+    backgroundColor: "#D7EADF",
+    borderRadius: 999,
+    left: "50%" as never,
+    top: "-10%" as never,
+    marginLeft: -9
+  },
+  mapMarker: {
+    position: "absolute",
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    backgroundColor: "#79B682"
+  },
+  mapMarkerLeft: {
+    left: 48,
+    top: 62
+  },
+  mapMarkerRight: {
+    right: 42,
+    top: 50
+  },
+  mapMarkerBottom: {
+    right: 70,
+    bottom: 32
+  },
+  mapPulse: {
+    position: "absolute",
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: "#F6D57A"
+  },
+  mapPinWrap: {
+    position: "absolute",
+    marginLeft: -20,
+    marginTop: -42,
+    alignItems: "center"
+  },
+  mapPinShadow: {
+    width: 22,
+    height: 8,
+    borderRadius: 999,
+    backgroundColor: "rgba(21, 38, 26, 0.16)",
+    marginBottom: -4
   },
   mapPin: {
-    width: 16,
-    height: 16,
-    borderRadius: 8,
-    backgroundColor: colors.primaryMid,
-    borderWidth: 3,
-    borderColor: colors.surface
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "#F27E46",
+    borderWidth: 4,
+    borderColor: "#FFF4EE",
+    alignItems: "center",
+    justifyContent: "center",
+    ...Platform.select({
+      android: { elevation: 5 },
+      default: {
+        shadowColor: "#D55F26",
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.22,
+        shadowRadius: 12
+      }
+    })
+  },
+  mapPinCore: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: "#FFF4EE"
+  },
+  mapShimmer: {
+    position: "absolute",
+    top: -10,
+    width: 42,
+    height: 220,
+    backgroundColor: "rgba(255,255,255,0.22)"
+  },
+  mapCopy: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    bottom: 18,
+    alignItems: "center",
+    gap: 8,
+    paddingHorizontal: spacing.md
   },
   mapText: {
     fontSize: 14,
@@ -915,7 +1381,8 @@ const modalStyles = StyleSheet.create({
   },
   mapSubtext: {
     fontSize: 13,
-    color: colors.muted
+    color: colors.muted,
+    textAlign: "center"
   },
   form: {
     gap: spacing.md,
