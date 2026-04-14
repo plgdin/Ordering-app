@@ -1,6 +1,5 @@
 import React from "react";
 import { StyleSheet, Text, View } from "react-native";
-import { merchantMetrics } from "@nearnow/core";
 import {
   Card,
   HeroCard,
@@ -9,8 +8,11 @@ import {
   SectionTitle
 } from "@nearnow/ui";
 import { colors } from "@nearnow/ui";
+import { useMerchantMetrics } from "../../../hooks/useSupabaseData";
 
 export function MerchantDashboardScreen() {
+  const metrics = useMerchantMetrics();
+
   return (
     <>
       <HeroCard
@@ -21,7 +23,7 @@ export function MerchantDashboardScreen() {
       />
       <SectionTitle title="Today's pulse" />
       <View style={styles.metricRow}>
-        {merchantMetrics.map((metric) => (
+        {metrics.map((metric) => (
           <MetricCard
             key={metric.label}
             label={metric.label}

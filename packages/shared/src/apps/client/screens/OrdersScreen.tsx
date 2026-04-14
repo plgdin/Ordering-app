@@ -1,13 +1,15 @@
 import React from "react";
 import { StyleSheet, Text, View } from "react-native";
-import { clientOrders } from "@nearnow/core";
 import { Card, Chip, SectionTitle, colors } from "@nearnow/ui";
+import { useClientOrders } from "../../../hooks/useSupabaseData";
 
 export function ClientOrdersScreen() {
+  const orders = useClientOrders();
+
   return (
     <>
       <SectionTitle title="Recent orders" />
-      {clientOrders.map((order) => (
+      {orders.map((order) => (
         <Card key={order.id}>
           <Text style={styles.cardTitle}>{order.title}</Text>
           <Text style={styles.bodyText}>{order.subtitle}</Text>

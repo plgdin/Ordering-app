@@ -1,13 +1,15 @@
 import React from "react";
 import { StyleSheet, Text, View } from "react-native";
-import { deliveryRuns } from "@nearnow/core";
 import { Card, Chip, SectionTitle, colors } from "@nearnow/ui";
+import { useDeliveryRuns } from "../../../hooks/useSupabaseData";
 
 export function DeliveryRunsScreen() {
+  const runs = useDeliveryRuns();
+
   return (
     <>
       <SectionTitle title="Suggested runs" />
-      {deliveryRuns.map((run) => (
+      {runs.map((run) => (
         <Card key={run.id}>
           <Text style={styles.cardTitle}>{run.title}</Text>
           <Text style={styles.bodyText}>{run.subtitle}</Text>

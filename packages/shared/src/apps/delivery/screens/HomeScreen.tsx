@@ -1,10 +1,12 @@
 import React from "react";
 import { StyleSheet, View } from "react-native";
 import { serviceRules } from "@nearnow/config";
-import { deliveryMetrics } from "@nearnow/core";
 import { HeroCard, MetricCard, Notice, SectionTitle } from "@nearnow/ui";
+import { useDeliveryMetrics } from "../../../hooks/useSupabaseData";
 
 export function DeliveryHomeScreen() {
+  const metrics = useDeliveryMetrics();
+
   return (
     <>
       <HeroCard
@@ -15,7 +17,7 @@ export function DeliveryHomeScreen() {
       />
       <SectionTitle title="Today at a glance" />
       <View style={styles.metricRow}>
-        {deliveryMetrics.map((metric) => (
+        {metrics.map((metric) => (
           <MetricCard
             key={metric.label}
             label={metric.label}

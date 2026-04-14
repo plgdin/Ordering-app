@@ -159,6 +159,23 @@ Example files already exist here:
 - `apps/merchant-app/.env.example`
 - `apps/delivery-app/.env.example`
 
+### Supabase SQL files
+
+Run these in the Supabase SQL editor in this order:
+
+1. `api/supabase/001_schema.sql`
+2. `api/supabase/002_auth_and_rls.sql`
+3. `api/supabase/003_seed.sql`
+
+These files create the starter tables, auth/profile trigger, row-level security policies, and demo store/product data used by the current build.
+
+If the project was already connected to Supabase before this update, rerun:
+
+1. `api/supabase/001_schema.sql`
+2. `api/supabase/002_auth_and_rls.sql`
+
+That refreshes the unique indexes and row-level security rules used by cart checkout and the new auth flow.
+
 ### What the package gives you
 
 Import from:
@@ -176,6 +193,9 @@ Available helpers:
 
 - The apps are set up so they do not crash if the Supabase env vars are still missing
 - Once you add the env vars and restart Expo, the shared client is ready to use
+- Customer settings now includes sign in/sign up for checkout writes
+- Merchant settings now includes sign in/sign up for live merchant access
+- Delivery profile now includes sign in/sign up for rider access
 
 ## How to start
 

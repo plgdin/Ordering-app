@@ -1,48 +1,130 @@
-import React, { useState } from "react";
+import { InventoryItem, Store, featuredStores } from "@nearnow/core";
+import {
+  addProductToStore,
+  fetchMerchantStores,
+  fetchStoreInventory,
+  removeProduct,
+  updateProductStock
+} from "@nearnow/supabase";
+import {
+  Card,
+  Notice,
+  SectionTitle,
+  StoreImageCard,
+  colors,
+  radius,
+  spacing
+} from "@nearnow/ui";
+import React, { useEffect, useState } from "react";
 import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
-import { featuredStores, Store, InventoryItem } from "@nearnow/core";
-import { Card, Chip, SectionTitle, StoreImageCard, Notice, colors, spacing, radius, fonts } from "@nearnow/ui";
 
 export function MerchantCatalogScreen() {
   const [selectedStore, setSelectedStore] = useState<Store>(featuredStores[0]);
   const [inventory, setInventory] = useState<InventoryItem[]>(
-    selectedStore.inventory ?? []
+    featuredStores[0].inventory ?? []
   );
-  const [editingItem, setEditingItem] = useState<string | null>(null);
   const [newItemName, setNewItemName] = useState("");
   const [newItemPrice, setNewItemPrice] = useState("");
   const [newItemUnit, setNewItemUnit] = useState("piece");
   const [showAddForm, setShowAddForm] = useState(false);
 
+  useEffect(() => {
+    let cancelled = false;
+
+    void fetchMerchantStores()
+      .then((stores) => {
+        if (!cancelled && stores.length > 0) {
+          setSelectedStore(stores[0]);
+          setInventory(stores[0].inventory ?? []);
+        }
+      })
+      .catch(() => {});
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    void fetchStoreInventory(selectedStore.id)
+      .then((items) => {
+        if (!cancelled) {
+          setInventory(items);
+        }
+      })
+      .catch(() => {});
+
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedStore.id]);
+
   const toggleStock = (itemId: string) => {
+    const nextItem = inventory.find((item) => item.id === itemId);
+    if (!nextItem) return;
+
+    const nextValue = !nextItem.inStock;
     setInventory((prev) =>
       prev.map((item) =>
-        item.id === itemId ? { ...item, inStock: !item.inStock } : item
+        item.id === itemId ? { ...item, inStock: nextValue } : item
       )
     );
+
+    void updateProductStock(itemId, nextValue).catch(() => {
+      setInventory((prev) =>
+        prev.map((item) =>
+          item.id === itemId ? { ...item, inStock: nextItem.inStock } : item
+        )
+      );
+    });
   };
 
-  const removeItem = (itemId: string) => {
+  const handleRemoveItem = (itemId: string) => {
+    const previous = inventory;
     setInventory((prev) => prev.filter((item) => item.id !== itemId));
+
+    void removeProduct(itemId).catch(() => {
+      setInventory(previous);
+    });
   };
 
   const addItem = () => {
     if (!newItemName.trim() || !newItemPrice.trim()) return;
-    const newItem: InventoryItem = {
-      id: `new-${Date.now()}`,
+
+    const draftItem: Omit<InventoryItem, "id"> = {
       name: newItemName.trim(),
       price: Number(newItemPrice),
       unit: newItemUnit.trim() || "piece",
       inStock: true
     };
-    setInventory((prev) => [...prev, newItem]);
+
+    void addProductToStore(selectedStore.id, draftItem)
+      .then((created) => {
+        if (created) {
+          setInventory((prev) => [...prev, created]);
+        } else {
+          setInventory((prev) => [
+            ...prev,
+            { id: `local-${Date.now()}`, ...draftItem }
+          ]);
+        }
+      })
+      .catch(() => {
+        setInventory((prev) => [
+          ...prev,
+          { id: `local-${Date.now()}`, ...draftItem }
+        ]);
+      });
+
     setNewItemName("");
     setNewItemPrice("");
     setNewItemUnit("piece");
     setShowAddForm(false);
   };
 
-  const inStockCount = inventory.filter((i) => i.inStock).length;
+  const inStockCount = inventory.filter((item) => item.inStock).length;
 
   return (
     <>
@@ -51,7 +133,7 @@ export function MerchantCatalogScreen() {
         <StoreImageCard imageUri={selectedStore.image} storeName={selectedStore.name} />
         <Text style={styles.storeName}>{selectedStore.name}</Text>
         <Text style={styles.storeMeta}>
-          {selectedStore.category} · {selectedStore.distanceKm} km radius
+          {selectedStore.category} | {selectedStore.distanceKm} km radius
         </Text>
         <Notice text="Tap 'Edit store' to update your store image and details. Changes reflect on the customer app immediately." />
       </Card>
@@ -68,7 +150,7 @@ export function MerchantCatalogScreen() {
               <View style={styles.itemInfo}>
                 <Text style={styles.itemName}>{item.name}</Text>
                 <Text style={styles.itemMeta}>
-                  ₹{item.price} per {item.unit}
+                  Rs {item.price} per {item.unit}
                 </Text>
               </View>
               <View style={styles.itemActions}>
@@ -88,7 +170,10 @@ export function MerchantCatalogScreen() {
                     {item.inStock ? "In Stock" : "Out"}
                   </Text>
                 </Pressable>
-                <Pressable onPress={() => removeItem(item.id)} style={styles.removeBtn}>
+                <Pressable
+                  onPress={() => handleRemoveItem(item.id)}
+                  style={styles.removeBtn}
+                >
                   <Text style={styles.removeBtnText}>Remove</Text>
                 </Pressable>
               </View>
@@ -115,7 +200,7 @@ export function MerchantCatalogScreen() {
             </View>
             <View style={styles.formRow}>
               <View style={styles.formHalf}>
-                <Text style={styles.formLabel}>Price (₹)</Text>
+                <Text style={styles.formLabel}>Price (Rs)</Text>
                 <TextInput
                   style={styles.formInput}
                   value={newItemPrice}

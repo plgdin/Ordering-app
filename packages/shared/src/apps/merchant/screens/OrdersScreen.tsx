@@ -1,13 +1,15 @@
 import React from "react";
 import { StyleSheet, Text, View } from "react-native";
-import { merchantOrders } from "@nearnow/core";
 import { Card, Chip, SectionTitle, colors } from "@nearnow/ui";
+import { useMerchantOrders } from "../../../hooks/useSupabaseData";
 
 export function MerchantOrdersScreen() {
+  const orders = useMerchantOrders();
+
   return (
     <>
       <SectionTitle title="Priority queue" />
-      {merchantOrders.map((order) => (
+      {orders.map((order) => (
         <Card key={order.id}>
           <Text style={styles.cardTitle}>{order.title}</Text>
           <Text style={styles.bodyText}>{order.subtitle}</Text>

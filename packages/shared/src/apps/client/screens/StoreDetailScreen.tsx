@@ -1,19 +1,30 @@
 import React from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { Store } from "@nearnow/core";
-import { Card, Chip, Notice, SectionTitle, StoreImageCard, colors, spacing, radius, fonts } from "@nearnow/ui";
+import {
+  Card,
+  Chip,
+  Notice,
+  SectionTitle,
+  StoreImageCard,
+  colors,
+  radius,
+  spacing
+} from "@nearnow/ui";
 
 export function StoreDetailScreen({
   store,
-  onBack
+  onBack,
+  onAddItem
 }: {
   store: Store;
   onBack: () => void;
+  onAddItem: (store: Store, item: NonNullable<Store["inventory"]>[number]) => void;
 }) {
   return (
     <>
       <Pressable onPress={onBack} style={styles.backButton}>
-        <Text style={styles.backArrow}>← Back to stores</Text>
+        <Text style={styles.backArrow}>{"< Back to stores"}</Text>
       </Pressable>
 
       <View style={styles.storeInfo}>
@@ -22,10 +33,10 @@ export function StoreDetailScreen({
           <View style={styles.storeInfoText}>
             <Text style={styles.storeName}>{store.name}</Text>
             <Text style={styles.storeMeta}>
-              {store.category}  ·  {store.eta}  ·  {store.distanceKm} km
+              {store.category} | {store.eta} | {store.distanceKm} km
             </Text>
           </View>
-          <Chip label={`${store.rating} ★`} solid />
+          <Chip label={`${store.rating} rating`} solid />
         </View>
         <Notice text={store.deliveryTag} />
       </View>
@@ -33,7 +44,7 @@ export function StoreDetailScreen({
       <View style={styles.sectionSpacing}>
         <SectionTitle
           title="Available items"
-          action={`${store.inventory?.filter((i) => i.inStock).length ?? 0} in stock`}
+          action={`${store.inventory?.filter((item) => item.inStock).length ?? 0} in stock`}
         />
         {store.inventory?.map((item) => (
           <Card key={item.id}>
@@ -43,9 +54,12 @@ export function StoreDetailScreen({
                 <Text style={styles.itemUnit}>per {item.unit}</Text>
               </View>
               <View style={styles.inventoryRight}>
-                <Text style={styles.itemPrice}>₹{item.price}</Text>
+                <Text style={styles.itemPrice}>Rs {item.price}</Text>
                 {item.inStock ? (
-                  <Pressable style={styles.addButton}>
+                  <Pressable
+                    style={styles.addButton}
+                    onPress={() => onAddItem(store, item)}
+                  >
                     <Text style={styles.addButtonText}>+ Add</Text>
                   </Pressable>
                 ) : (

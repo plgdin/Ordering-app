@@ -2,8 +2,16 @@ import React from "react";
 import { StyleSheet, Text } from "react-native";
 import { serviceRules } from "@nearnow/config";
 import { Card, SectionTitle, colors } from "@nearnow/ui";
+import { AuthCard } from "../../../components/AuthCard";
+import { useSupabaseAuth } from "../../../hooks/useSupabaseAuth";
 
-export function ClientSettingsScreen() {
+export function ClientSettingsScreen({
+  auth,
+  onAuthComplete
+}: {
+  auth: ReturnType<typeof useSupabaseAuth>;
+  onAuthComplete: () => void;
+}) {
   return (
     <>
       <SectionTitle title="Settings and trust" />
@@ -19,6 +27,27 @@ export function ClientSettingsScreen() {
           Pharmacy mode: {serviceRules.otOnlyPharmacy ? "OTC products only" : "All"}
         </Text>
       </Card>
+      <AuthCard
+        title="Account access"
+        roleLabel="Customer"
+        configured={auth.snapshot.isConfigured}
+        signedIn={auth.snapshot.isSignedIn}
+        email={auth.snapshot.email}
+        busy={auth.busy}
+        error={auth.error}
+        onClearError={auth.clearError}
+        onSignIn={async (email, password) => {
+          const ok = await auth.signIn(email, password);
+          if (ok) onAuthComplete();
+          return ok;
+        }}
+        onSignUp={async (email, password) => {
+          const ok = await auth.signUp(email, password);
+          if (ok) onAuthComplete();
+          return ok;
+        }}
+        onSignOut={auth.signOut}
+      />
       <Card>
         <Text style={styles.cardTitle}>Future add-ons</Text>
         <Text style={styles.bodyText}>

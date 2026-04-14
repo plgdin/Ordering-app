@@ -8,6 +8,20 @@ export type InventoryItem = {
   inStock: boolean;
 };
 
+export type CartLineItem = {
+  id: string;
+  storeId: string;
+  storeName: string;
+  storeCategory: string;
+  storeDistanceKm: number;
+  storeImage?: string;
+  productId: string;
+  name: string;
+  price: number;
+  unit: string;
+  quantity: number;
+};
+
 export type Store = {
   id: string;
   name: string;

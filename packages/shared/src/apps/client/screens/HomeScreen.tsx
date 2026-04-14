@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { serviceRules } from "@nearnow/config";
-import { categories, featuredStores, Store } from "@nearnow/core";
+import { categories, Store } from "@nearnow/core";
 import {
   Card,
   CartLoadingIndicator,
@@ -17,6 +17,7 @@ import {
   radius,
   spacing
 } from "@nearnow/ui";
+import { useClientStores } from "../../../hooks/useSupabaseData";
 
 export function ClientHomeScreen({
   onStorePress
@@ -27,6 +28,7 @@ export function ClientHomeScreen({
   const [pendingFilter, setPendingFilter] = useState<string | null>(null);
   const [isFilterLoading, setIsFilterLoading] = useState(false);
   const filterTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const stores = useClientStores();
 
   useEffect(() => {
     return () => {
@@ -39,23 +41,20 @@ export function ClientHomeScreen({
   const previewFilter = pendingFilter ?? activeFilter;
 
   const previewStores = useMemo(() => {
-    if (!previewFilter) return featuredStores;
-    return featuredStores.filter(
+    if (!previewFilter) return stores;
+    return stores.filter(
       (store) => store.category.toLowerCase() === previewFilter.toLowerCase()
     );
-  }, [previewFilter]);
+  }, [previewFilter, stores]);
 
   const filteredStores = useMemo(() => {
-    if (!activeFilter) return featuredStores;
-    return featuredStores.filter(
+    if (!activeFilter) return stores;
+    return stores.filter(
       (store) => store.category.toLowerCase() === activeFilter.toLowerCase()
     );
-  }, [activeFilter]);
+  }, [activeFilter, stores]);
 
-  const featuredOnly = useMemo(
-    () => featuredStores.filter((store) => store.featured),
-    []
-  );
+  const featuredOnly = useMemo(() => stores.filter((store) => store.featured), [stores]);
 
   const spotlightStore = !previewFilter ? featuredOnly[0] : previewStores[0] ?? null;
 
