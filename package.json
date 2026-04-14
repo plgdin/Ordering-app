@@ -1,0 +1,29 @@
+{
+  "name": "nearnow-platform",
+  "private": true,
+  "version": "0.1.0",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:client": "npm run start --workspace client-app",
+    "dev:merchant": "npm run start --workspace merchant-app",
+    "dev:delivery": "npm run start --workspace delivery-app",
+    "devclient:client": "npm run start:dev-client --workspace client-app",
+    "devclient:merchant": "npm run start:dev-client --workspace merchant-app",
+    "devclient:delivery": "npm run start:dev-client --workspace delivery-app",
+    "web:client": "npm run web --workspace client-app",
+    "web:merchant": "npm run web --workspace merchant-app",
+    "web:delivery": "npm run web --workspace delivery-app",
+    "android:client": "npm run android --workspace client-app",
+    "android:merchant": "npm run android --workspace merchant-app",
+    "android:delivery": "npm run android --workspace delivery-app",
+    "ios:client": "npm run ios --workspace client-app",
+    "ios:merchant": "npm run ios --workspace merchant-app",
+    "ios:delivery": "npm run ios --workspace delivery-app",
+    "eas:build:client:android": "cd apps/client-app && npx eas-cli build --platform android --profile development",
+    "eas:build:merchant:android": "cd apps/merchant-app && npx eas-cli build --platform android --profile development",
+    "eas:build:delivery:android": "cd apps/delivery-app && npx eas-cli build --platform android --profile development"
+  }
+}

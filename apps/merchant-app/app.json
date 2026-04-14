@@ -1,0 +1,34 @@
+{
+  "expo": {
+    "name": "NearNow Merchant",
+    "slug": "nearnow-merchant",
+    "scheme": "nearnow-merchant",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "plugins": [
+      [
+        "expo-dev-client",
+        {
+          "launchMode": "launcher"
+        }
+      ]
+    ],
+    "android": {
+      "package": "com.nearnow.merchant"
+    },
+    "ios": {
+      "bundleIdentifier": "com.nearnow.merchant"
+    },
+    "experiments": {
+      "autolinkingModuleResolution": true
+    },
+    "web": {
+      "bundler": "metro"
+    },
+    "platforms": [
+      "android",
+      "ios",
+      "web"
+    ]
+  }
+}

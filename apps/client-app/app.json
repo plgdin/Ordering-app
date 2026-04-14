@@ -1,0 +1,40 @@
+{
+  "expo": {
+    "name": "NearNow Customer",
+    "slug": "nearnow-customer",
+    "scheme": "nearnow-customer",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "plugins": [
+      [
+        "expo-dev-client",
+        {
+          "launchMode": "launcher"
+        }
+      ]
+    ],
+    "android": {
+      "package": "com.nearnow.customer"
+    },
+    "ios": {
+      "bundleIdentifier": "com.nearnow.customer"
+    },
+    "experiments": {
+      "autolinkingModuleResolution": true
+    },
+    "web": {
+      "bundler": "metro"
+    },
+    "platforms": [
+      "android",
+      "ios",
+      "web"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "f2bcbc5d-ac87-4070-96ba-2b4c188e81d5"
+      }
+    },
+    "owner": "plgdinn"
+  }
+}
