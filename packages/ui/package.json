@@ -1,14 +1,9 @@
 {
-  "name": "@nearnow/shared",
+  "name": "@nearnow/ui",
   "private": true,
   "version": "0.1.0",
   "main": "src/index.ts",
   "types": "src/index.ts",
-  "dependencies": {
-    "@nearnow/config": "0.1.0",
-    "@nearnow/core": "0.1.0",
-    "@nearnow/ui": "0.1.0"
-  },
   "peerDependencies": {
     "react": "19.2.0",
     "react-native": "0.83.4"

@@ -1,3 +1,3 @@
-export { ClientApp } from "./client-app";
-export { MerchantApp } from "./merchant-app";
-export { DeliveryApp } from "./delivery-app";
+export { ClientApp } from "./apps/client/ClientApp";
+export { MerchantApp } from "./apps/merchant/MerchantApp";
+export { DeliveryApp } from "./apps/delivery/DeliveryApp";

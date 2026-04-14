@@ -29,6 +29,12 @@
       "android",
       "ios",
       "web"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "4425f664-7429-4b2e-ab4f-a9fb8da4d156"
+      }
+    },
+    "owner": "plgdinn"
   }
 }
