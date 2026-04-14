@@ -1,12 +1,15 @@
 import "expo-dev-client";
 import { MerchantApp } from "@nearnow/shared";
+import { registerSupabaseAutoRefresh } from "@nearnow/supabase";
 import React, { useEffect } from "react";
 import { Platform } from "react-native";
 
 export default function App() {
   useEffect(() => {
+    const cleanup = registerSupabaseAutoRefresh();
+
     if (Platform.OS !== "web") {
-      return;
+      return cleanup;
     }
 
     document.documentElement.style.height = "100%";
@@ -18,6 +21,8 @@ export default function App() {
     if (root) {
       root.style.height = "100%";
     }
+
+    return cleanup;
   }, []);
 
   return <MerchantApp />;

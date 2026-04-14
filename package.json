@@ -25,5 +25,10 @@
     "eas:build:client:android": "cd apps/client-app && npx eas-cli build --platform android --profile development",
     "eas:build:merchant:android": "cd apps/merchant-app && npx eas-cli build --platform android --profile development",
     "eas:build:delivery:android": "cd apps/delivery-app && npx eas-cli build --platform android --profile development"
+  },
+  "dependencies": {
+    "@react-native-async-storage/async-storage": "^3.0.2",
+    "@supabase/supabase-js": "^2.103.0",
+    "react-native-url-polyfill": "^3.0.0"
   }
 }

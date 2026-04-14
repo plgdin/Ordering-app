@@ -13,6 +13,7 @@
   "dependencies": {
     "@expo/metro-runtime": "~55.0.9",
     "@nearnow/shared": "0.1.0",
+    "@nearnow/supabase": "0.1.0",
     "expo": "~55.0.0",
     "expo-dev-client": "~55.0.27",
     "expo-linear-gradient": "~55.0.13",

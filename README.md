@@ -29,6 +29,7 @@ packages/
   config/
   core/
   shared/
+  supabase/
   ui/
 docs/
   product-blueprint.md
@@ -41,6 +42,7 @@ docs/
 - `packages/ui`: shared design system, theme, and reusable visual components
 - `packages/core`: shared business data, types, and pricing logic
 - `packages/config`: shared app constants and business configuration
+- `packages/supabase`: shared Supabase client and environment helpers
 - `packages/shared`: app-specific screens and compositions built on top of the shared packages
 
 ## Repo Map
@@ -56,6 +58,7 @@ packages/
   ui/                -> shared theme, layout shell, reusable UI components
   core/              -> shared pricing logic, types, and common data
   config/            -> shared constants such as brand values and business rules
+  supabase/          -> shared Supabase client and auth/session helpers
 
 api/
   README.md          -> placeholder for future backend/services
@@ -68,6 +71,7 @@ Quick mental model:
 - `packages/ui/` = shared look and reusable components
 - `packages/core/` = shared logic and data
 - `packages/config/` = shared constants and settings
+- `packages/supabase/` = shared database/auth client setup
 - `api/` = future backend
 
 ## Current stack
@@ -121,6 +125,57 @@ npm run web:client
 ```
 
 That is usually the fastest way to confirm the repo installed correctly on a new machine.
+
+## Supabase Setup
+
+This repo is prepared for Supabase through the shared workspace package:
+
+- `packages/supabase`
+
+### What to create in Supabase
+
+1. Create a new Supabase project in the Supabase dashboard
+2. Copy the project URL
+3. Copy the publishable key or anon key
+
+### Add environment variables
+
+Create these local files and fill in the same values:
+
+- `apps/client-app/.env.local`
+- `apps/merchant-app/.env.local`
+- `apps/delivery-app/.env.local`
+
+Use this format:
+
+```env
+EXPO_PUBLIC_SUPABASE_URL=https://your-project-id.supabase.co
+EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your_publishable_or_anon_key
+```
+
+Example files already exist here:
+
+- `apps/client-app/.env.example`
+- `apps/merchant-app/.env.example`
+- `apps/delivery-app/.env.example`
+
+### What the package gives you
+
+Import from:
+
+- `@nearnow/supabase`
+
+Available helpers:
+
+- `getSupabaseClient()`
+- `maybeGetSupabaseClient()`
+- `isSupabaseConfigured()`
+- `registerSupabaseAutoRefresh()`
+
+### Important note
+
+- The apps are set up so they do not crash if the Supabase env vars are still missing
+- Once you add the env vars and restart Expo, the shared client is ready to use
 
 ## How to start
 
