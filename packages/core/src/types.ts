@@ -1,5 +1,13 @@
 export type DirectionBucket = "same-route" | "north" | "south" | "east" | "west";
 
+export type InventoryItem = {
+  id: string;
+  name: string;
+  price: number;
+  unit: string;
+  inStock: boolean;
+};
+
 export type Store = {
   id: string;
   name: string;
@@ -9,6 +17,9 @@ export type Store = {
   rating: number;
   deliveryTag: string;
   highlight: string;
+  featured?: boolean;
+  image?: string;
+  inventory?: InventoryItem[];
 };
 
 export type QuoteStop = {

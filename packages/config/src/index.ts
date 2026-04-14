@@ -1,6 +1,6 @@
 export const brand = {
   name: "NearNow",
-  primaryColor: "#0E8A4D",
+  primaryColor: "#273C2C",
   surfaceColor: "#FFFFFF",
   textColor: "#111111"
 };

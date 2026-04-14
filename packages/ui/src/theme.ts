@@ -1,17 +1,20 @@
 import { Platform } from "react-native";
 
 export const colors = {
-  primary: "#0E8A4D",
-  primaryDeep: "#075C31",
-  primarySoft: "#DDF8E9",
+  primary: "#273C2C",
+  primaryDeep: "#1A2A1E",
+  primaryMid: "#3A5A40",
+  primaryLight: "#5A8A66",
+  primarySoft: "#DAE8DC",
+  primaryFaint: "#EDF4EE",
   surface: "#FFFFFF",
-  canvas: "#F4FBF6",
-  line: "#D6E6DA",
+  canvas: "#F0F4F1",
+  line: "#D4DDD6",
   ink: "#111111",
-  muted: "#5A6B60",
-  success: "#1FA866",
-  warning: "#E9A31B",
-  danger: "#DD4C4C"
+  muted: "#5A6B5E",
+  success: "#2D8B55",
+  warning: "#D4960A",
+  danger: "#D14343"
 };
 
 export const spacing = {
@@ -35,10 +38,10 @@ export const shadow = Platform.select({
     elevation: 6
   },
   default: {
-    shadowColor: "#000000",
-    shadowOffset: { width: 0, height: 14 },
+    shadowColor: "#1A2A1E",
+    shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.08,
-    shadowRadius: 20
+    shadowRadius: 16
   }
 });
 

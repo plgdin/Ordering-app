@@ -12,7 +12,7 @@ export default function App() {
     document.documentElement.style.height = "100%";
     document.body.style.height = "100%";
     document.body.style.margin = "0";
-    document.body.style.background = "#F4FBF6";
+    document.body.style.background = "#F0F4F1";
 
     const root = document.getElementById("root");
     if (root) {

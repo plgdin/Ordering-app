@@ -11,16 +11,34 @@ export const categories = [
   "Snacks"
 ];
 
+export const storeImages: Record<string, string> = {
+  more: "https://images.unsplash.com/photo-1604719312566-8912e9227c6a?w=600&h=300&fit=crop",
+  pharma: "https://images.unsplash.com/photo-1631549916768-4119b2e5f926?w=600&h=300&fit=crop",
+  bakery: "https://images.unsplash.com/photo-1509440159596-0249088772ff?w=600&h=300&fit=crop"
+};
+
 export const featuredStores: Store[] = [
   {
     id: "more",
     name: "More Daily Mart",
-    category: "Supermarket",
+    category: "Groceries",
     eta: "18-25 min",
     distanceKm: 2.1,
     rating: 4.7,
     deliveryTag: "Free pickup if clubbed with nearby stores",
-    highlight: "Fruits, milk, staples, and premium pantry"
+    highlight: "Fruits, milk, staples, and premium pantry",
+    featured: true,
+    image: storeImages.more,
+    inventory: [
+      { id: "m1", name: "Toned Milk 500ml", price: 28, unit: "pack", inStock: true },
+      { id: "m2", name: "Basmati Rice 1kg", price: 98, unit: "bag", inStock: true },
+      { id: "m3", name: "Farm Eggs (6 pcs)", price: 54, unit: "tray", inStock: true },
+      { id: "m4", name: "Amul Butter 100g", price: 56, unit: "pack", inStock: true },
+      { id: "m5", name: "Aashirvaad Atta 5kg", price: 265, unit: "bag", inStock: true },
+      { id: "m6", name: "Sugar 1kg", price: 46, unit: "bag", inStock: false },
+      { id: "m7", name: "Sunflower Oil 1L", price: 142, unit: "bottle", inStock: true },
+      { id: "m8", name: "Fresh Paneer 200g", price: 80, unit: "pack", inStock: true }
+    ]
   },
   {
     id: "pharma",
@@ -30,7 +48,17 @@ export const featuredStores: Store[] = [
     distanceKm: 3.4,
     rating: 4.8,
     deliveryTag: "Only non-prescription items enabled",
-    highlight: "Wellness, baby care, hygiene, OTC products"
+    highlight: "Wellness, baby care, hygiene, OTC products",
+    featured: true,
+    image: storeImages.pharma,
+    inventory: [
+      { id: "p1", name: "Vitamin C 500mg (30)", price: 145, unit: "strip", inStock: true },
+      { id: "p2", name: "Band-Aid Pack (10)", price: 35, unit: "box", inStock: true },
+      { id: "p3", name: "Hand Sanitizer 200ml", price: 85, unit: "bottle", inStock: true },
+      { id: "p4", name: "Dettol Soap (3 pack)", price: 120, unit: "pack", inStock: true },
+      { id: "p5", name: "Baby Lotion 200ml", price: 195, unit: "bottle", inStock: true },
+      { id: "p6", name: "Cough Drops (20)", price: 30, unit: "pack", inStock: true }
+    ]
   },
   {
     id: "bakery",
@@ -40,7 +68,18 @@ export const featuredStores: Store[] = [
     distanceKm: 1.6,
     rating: 4.9,
     deliveryTag: "Stack on-route pickups to save delivery fees",
-    highlight: "Fresh breads, cakes, buns, and tea-time snacks"
+    highlight: "Fresh breads, cakes, buns, and tea-time snacks",
+    featured: true,
+    image: storeImages.bakery,
+    inventory: [
+      { id: "b1", name: "Sandwich Loaf", price: 45, unit: "loaf", inStock: true },
+      { id: "b2", name: "Butter Croissant", price: 60, unit: "piece", inStock: true },
+      { id: "b3", name: "Chocolate Cake Slice", price: 85, unit: "slice", inStock: true },
+      { id: "b4", name: "Pav Buns (6 pcs)", price: 30, unit: "pack", inStock: true },
+      { id: "b5", name: "Veg Puff", price: 25, unit: "piece", inStock: false },
+      { id: "b6", name: "Banana Muffin", price: 40, unit: "piece", inStock: true },
+      { id: "b7", name: "Garlic Bread Stick", price: 55, unit: "piece", inStock: true }
+    ]
   }
 ];
 
