@@ -11,6 +11,8 @@ import { serviceRules } from "@nearnow/config";
 import {
   DeliveryEarningsDetails,
   DeliveryProfileData,
+  DeliveryRunActionItem,
+  MerchantQueueItem,
   fetchClientOrders,
   fetchDeliveryEarningsDetails,
   fetchDeliveryMetrics,
@@ -151,7 +153,16 @@ export function useMerchantMetrics() {
 }
 
 export function useMerchantOrders() {
-  const [orders, setOrders] = useState(merchantOrders);
+  const [orders, setOrders] = useState<MerchantQueueItem[]>(
+    merchantOrders.map((order, index) => ({
+      ...order,
+      groupId: `mock-group-${index}`,
+      orderId: `mock-order-${index}`,
+      rawStatus: index === 0 ? "pending" : "accepted",
+      actionLabel: index === 0 ? "Accept order" : "Start packing",
+      nextStatus: index === 0 ? "accepted" : "packing"
+    }))
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -215,7 +226,16 @@ export function useDeliveryMetrics() {
 }
 
 export function useDeliveryRuns() {
-  const [runs, setRuns] = useState(deliveryRuns);
+  const [runs, setRuns] = useState<DeliveryRunActionItem[]>(
+    deliveryRuns.map((run, index) => ({
+      ...run,
+      runId: `mock-run-${index}`,
+      orderId: `mock-order-${index}`,
+      rawStatus: index === 0 ? "available" : "accepted",
+      actionLabel: index === 0 ? "Accept run" : "Mark picked up",
+      nextStatus: index === 0 ? "accepted" : "picked_up"
+    }))
+  );
 
   useEffect(() => {
     let cancelled = false;

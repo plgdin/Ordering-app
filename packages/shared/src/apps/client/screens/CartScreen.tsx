@@ -1,6 +1,7 @@
 import { CartLineItem, DeliveryQuote } from "@nearnow/core";
 import React from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
+import { PaymentMethod } from "@nearnow/supabase";
 import {
   Card,
   HeroCard,
@@ -27,6 +28,8 @@ export function ClientCartScreen({
   itemTotal,
   deliveryQuote,
   grandTotal,
+  paymentMethod,
+  onPaymentMethodChange,
   isSignedIn,
   signedInEmail,
   checkoutBusy,
@@ -40,6 +43,8 @@ export function ClientCartScreen({
   itemTotal: number;
   deliveryQuote: DeliveryQuote;
   grandTotal: number;
+  paymentMethod: PaymentMethod;
+  onPaymentMethodChange: (method: PaymentMethod) => void;
   isSignedIn: boolean;
   signedInEmail: string | null;
   checkoutBusy: boolean;
@@ -127,6 +132,40 @@ export function ClientCartScreen({
 
       <Card>
         <Text style={styles.cardTitle}>Checkout notes</Text>
+        <View style={styles.switchRow}>
+          <Pressable
+            style={[
+              styles.modeChip,
+              paymentMethod === "cod" && styles.modeChipActive
+            ]}
+            onPress={() => onPaymentMethodChange("cod")}
+          >
+            <Text
+              style={[
+                styles.modeChipText,
+                paymentMethod === "cod" && styles.modeChipTextActive
+              ]}
+            >
+              Cash on delivery
+            </Text>
+          </Pressable>
+          <Pressable
+            style={[
+              styles.modeChip,
+              paymentMethod === "online" && styles.modeChipActive
+            ]}
+            onPress={() => onPaymentMethodChange("online")}
+          >
+            <Text
+              style={[
+                styles.modeChipText,
+                paymentMethod === "online" && styles.modeChipTextActive
+              ]}
+            >
+              Online payment
+            </Text>
+          </Pressable>
+        </View>
         {isSignedIn ? (
           <Text style={styles.bodyText}>Signed in as {signedInEmail ?? "active user"}</Text>
         ) : (
@@ -250,5 +289,29 @@ const styles = StyleSheet.create({
   },
   buttonDisabled: {
     opacity: 0.7
+  },
+  switchRow: {
+    flexDirection: "row",
+    gap: spacing.sm
+  },
+  modeChip: {
+    flex: 1,
+    borderRadius: radius.pill,
+    borderWidth: 1,
+    borderColor: colors.line,
+    paddingVertical: 10,
+    alignItems: "center"
+  },
+  modeChipActive: {
+    backgroundColor: colors.primaryMid,
+    borderColor: colors.primaryMid
+  },
+  modeChipText: {
+    color: colors.muted,
+    fontWeight: "700",
+    fontSize: 12
+  },
+  modeChipTextActive: {
+    color: "#FFFFFF"
   }
 });

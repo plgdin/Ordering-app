@@ -26,10 +26,13 @@ export function DeliveryProfileScreen() {
         email={auth.snapshot.email}
         busy={auth.busy}
         error={auth.error}
+        info={auth.info}
         onClearError={auth.clearError}
         onSignIn={auth.signIn}
         onSignUp={auth.signUp}
         onSignOut={auth.signOut}
+        onSendReset={auth.sendReset}
+        onResendConfirmation={auth.resendConfirmation}
       />
     </>
   );

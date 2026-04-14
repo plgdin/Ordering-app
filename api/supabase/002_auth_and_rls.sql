@@ -10,7 +10,7 @@ begin
     new.id,
     coalesce(new.raw_user_meta_data ->> 'full_name', ''),
     coalesce(new.raw_user_meta_data ->> 'phone', ''),
-    coalesce(new.raw_user_meta_data ->> 'role', 'client')
+    'client'
   )
   on conflict (id) do nothing;
 
@@ -31,10 +31,72 @@ stable
 security definer
 set search_path = public
 as $$
-  select role
-  from public.profiles
-  where id = auth.uid()
+  select coalesce(
+    (select role from public.profiles where id = auth.uid()),
+    'client'
+  );
 $$;
+
+create or replace function public.create_store_with_owner(
+  p_name text,
+  p_category text,
+  p_highlight text
+)
+returns uuid
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_store_id uuid;
+  v_slug text;
+begin
+  if auth.uid() is null then
+    raise exception 'not authenticated';
+  end if;
+
+  v_slug := regexp_replace(lower(coalesce(trim(p_name), '')), '[^a-z0-9]+', '-', 'g');
+  v_slug := regexp_replace(v_slug, '(^-+|-+$)', '', 'g');
+  if v_slug = '' then
+    v_slug := 'store';
+  end if;
+
+  insert into public.stores (
+    slug,
+    name,
+    category,
+    highlight,
+    eta_min,
+    eta_max,
+    distance_km,
+    rating,
+    delivery_tag,
+    is_active
+  )
+  values (
+    v_slug || '-' || substring(gen_random_uuid()::text, 1, 6),
+    coalesce(p_name, 'New store'),
+    coalesce(p_category, 'General'),
+    coalesce(p_highlight, ''),
+    18,
+    25,
+    1.2,
+    4.7,
+    'New merchant onboarding profile',
+    true
+  )
+  returning id into v_store_id;
+
+  insert into public.store_staff (store_id, user_id, role)
+  values (v_store_id, auth.uid(), 'owner')
+  on conflict (store_id, user_id) do nothing;
+
+  return v_store_id;
+end;
+$$;
+
+revoke all on function public.create_store_with_owner(text, text, text) from public;
+grant execute on function public.create_store_with_owner(text, text, text) to authenticated;
 
 alter table public.profiles enable row level security;
 alter table public.addresses enable row level security;
@@ -47,6 +109,15 @@ alter table public.order_items enable row level security;
 alter table public.delivery_partners enable row level security;
 alter table public.delivery_runs enable row level security;
 alter table public.rider_payouts enable row level security;
+
+-- Prevent client-side role escalation
+revoke update(role) on table public.profiles from anon, authenticated;
+
+-- Prevent client-side tampering with monetary / linkage fields
+revoke update(order_id, store_id, subtotal, pickup_sequence) on table public.order_store_groups from anon, authenticated;
+revoke update(customer_id, address_id, item_total, delivery_fee, extra_delivery_fee, total, payment_status, notes, created_at)
+  on table public.orders
+  from anon, authenticated;
 
 drop policy if exists "profiles_self_select" on public.profiles;
 create policy "profiles_self_select"
@@ -72,14 +143,23 @@ drop policy if exists "stores_public_read" on public.stores;
 create policy "stores_public_read"
   on public.stores
   for select
-  using (is_active = true or public.current_app_role() in ('merchant', 'admin'));
+  using (
+    is_active = true
+    or public.current_app_role() = 'admin'
+    or exists (
+      select 1
+      from public.store_staff
+      where store_staff.store_id = stores.id
+        and store_staff.user_id = auth.uid()
+    )
+  );
 
 drop policy if exists "stores_merchant_manage" on public.stores;
 create policy "stores_merchant_manage"
   on public.stores
   for all
   using (
-    public.current_app_role() in ('merchant', 'admin')
+    public.current_app_role() = 'admin'
     or exists (
       select 1
       from public.store_staff
@@ -88,7 +168,7 @@ create policy "stores_merchant_manage"
     )
   )
   with check (
-    public.current_app_role() in ('merchant', 'admin')
+    public.current_app_role() = 'admin'
     or exists (
       select 1
       from public.store_staff
@@ -114,7 +194,13 @@ create policy "products_public_read"
       where stores.id = products.store_id
         and stores.is_active = true
     )
-    or public.current_app_role() in ('merchant', 'admin')
+    or public.current_app_role() = 'admin'
+    or exists (
+      select 1
+      from public.store_staff
+      where store_staff.store_id = products.store_id
+        and store_staff.user_id = auth.uid()
+    )
   );
 
 drop policy if exists "products_merchant_manage" on public.products;
@@ -122,7 +208,7 @@ create policy "products_merchant_manage"
   on public.products
   for all
   using (
-    public.current_app_role() in ('merchant', 'admin')
+    public.current_app_role() = 'admin'
     or exists (
       select 1
       from public.store_staff
@@ -131,7 +217,7 @@ create policy "products_merchant_manage"
     )
   )
   with check (
-    public.current_app_role() in ('merchant', 'admin')
+    public.current_app_role() = 'admin'
     or exists (
       select 1
       from public.store_staff
@@ -146,7 +232,14 @@ create policy "orders_customer_read"
   for select
   using (
     auth.uid() = customer_id
-    or public.current_app_role() in ('merchant', 'admin')
+    or public.current_app_role() = 'admin'
+    or exists (
+      select 1
+      from public.order_store_groups
+      join public.store_staff on store_staff.store_id = order_store_groups.store_id
+      where order_store_groups.order_id = orders.id
+        and store_staff.user_id = auth.uid()
+    )
   );
 
 drop policy if exists "orders_customer_insert" on public.orders;
@@ -155,7 +248,7 @@ create policy "orders_customer_insert"
   for insert
   with check (
     auth.uid() = customer_id
-    or public.current_app_role() in ('merchant', 'admin')
+    or public.current_app_role() = 'admin'
   );
 
 drop policy if exists "orders_customer_update" on public.orders;
@@ -164,11 +257,50 @@ create policy "orders_customer_update"
   for update
   using (
     auth.uid() = customer_id
-    or public.current_app_role() in ('merchant', 'admin')
+    or public.current_app_role() = 'admin'
+    or exists (
+      select 1
+      from public.order_store_groups
+      join public.store_staff on store_staff.store_id = order_store_groups.store_id
+      where order_store_groups.order_id = orders.id
+        and store_staff.user_id = auth.uid()
+    )
   )
   with check (
     auth.uid() = customer_id
-    or public.current_app_role() in ('merchant', 'admin')
+    or public.current_app_role() = 'admin'
+    or exists (
+      select 1
+      from public.order_store_groups
+      join public.store_staff on store_staff.store_id = order_store_groups.store_id
+      where order_store_groups.order_id = orders.id
+        and store_staff.user_id = auth.uid()
+    )
+  );
+
+drop policy if exists "orders_rider_update" on public.orders;
+create policy "orders_rider_update"
+  on public.orders
+  for update
+  using (
+    public.current_app_role() = 'admin'
+    or exists (
+      select 1
+      from public.delivery_runs
+      join public.delivery_partners on delivery_partners.id = delivery_runs.rider_id
+      where delivery_runs.order_id = orders.id
+        and delivery_partners.user_id = auth.uid()
+    )
+  )
+  with check (
+    public.current_app_role() = 'admin'
+    or exists (
+      select 1
+      from public.delivery_runs
+      join public.delivery_partners on delivery_partners.id = delivery_runs.rider_id
+      where delivery_runs.order_id = orders.id
+        and delivery_partners.user_id = auth.uid()
+    )
   );
 
 drop policy if exists "order_groups_related_read" on public.order_store_groups;
@@ -196,33 +328,60 @@ create policy "order_groups_store_manage"
   on public.order_store_groups
   for all
   using (
-    public.current_app_role() in ('merchant', 'admin')
-    or exists (
-      select 1
-      from public.orders
-      where orders.id = order_store_groups.order_id
-        and orders.customer_id = auth.uid()
-    )
+    public.current_app_role() = 'admin'
     or exists (
       select 1
       from public.store_staff
       where store_staff.store_id = order_store_groups.store_id
         and store_staff.user_id = auth.uid()
+    )
+    or exists (
+      select 1
+      from public.orders
+      where orders.id = order_store_groups.order_id
+        and orders.customer_id = auth.uid()
+        and orders.status = 'pending'
     )
   )
   with check (
-    public.current_app_role() in ('merchant', 'admin')
-    or exists (
-      select 1
-      from public.orders
-      where orders.id = order_store_groups.order_id
-        and orders.customer_id = auth.uid()
-    )
+    public.current_app_role() = 'admin'
     or exists (
       select 1
       from public.store_staff
       where store_staff.store_id = order_store_groups.store_id
         and store_staff.user_id = auth.uid()
+    )
+    or exists (
+      select 1
+      from public.orders
+      where orders.id = order_store_groups.order_id
+        and orders.customer_id = auth.uid()
+        and orders.status = 'pending'
+    )
+  );
+
+drop policy if exists "order_groups_rider_update" on public.order_store_groups;
+create policy "order_groups_rider_update"
+  on public.order_store_groups
+  for update
+  using (
+    public.current_app_role() = 'admin'
+    or exists (
+      select 1
+      from public.delivery_runs
+      join public.delivery_partners on delivery_partners.id = delivery_runs.rider_id
+      where delivery_runs.order_id = order_store_groups.order_id
+        and delivery_partners.user_id = auth.uid()
+    )
+  )
+  with check (
+    public.current_app_role() = 'admin'
+    or exists (
+      select 1
+      from public.delivery_runs
+      join public.delivery_partners on delivery_partners.id = delivery_runs.rider_id
+      where delivery_runs.order_id = order_store_groups.order_id
+        and delivery_partners.user_id = auth.uid()
     )
   );
 
@@ -253,13 +412,14 @@ create policy "order_items_store_manage"
   on public.order_items
   for all
   using (
-    public.current_app_role() in ('merchant', 'admin')
+    public.current_app_role() = 'admin'
     or exists (
       select 1
       from public.order_store_groups
       join public.orders on orders.id = order_store_groups.order_id
       where order_store_groups.id = order_items.order_store_group_id
         and orders.customer_id = auth.uid()
+        and orders.status = 'pending'
     )
     or exists (
       select 1
@@ -270,13 +430,14 @@ create policy "order_items_store_manage"
     )
   )
   with check (
-    public.current_app_role() in ('merchant', 'admin')
+    public.current_app_role() = 'admin'
     or exists (
       select 1
       from public.order_store_groups
       join public.orders on orders.id = order_store_groups.order_id
       where order_store_groups.id = order_items.order_store_group_id
         and orders.customer_id = auth.uid()
+        and orders.status = 'pending'
     )
     or exists (
       select 1
@@ -293,11 +454,26 @@ create policy "delivery_partner_self_all"
   for all
   using (
     auth.uid() = user_id
-    or public.current_app_role() in ('delivery', 'admin')
+    or public.current_app_role() = 'admin'
   )
   with check (
     auth.uid() = user_id
-    or public.current_app_role() in ('delivery', 'admin')
+    or public.current_app_role() = 'admin'
+  );
+
+drop policy if exists "delivery_runs_store_insert" on public.delivery_runs;
+create policy "delivery_runs_store_insert"
+  on public.delivery_runs
+  for insert
+  with check (
+    public.current_app_role() = 'admin'
+    or exists (
+      select 1
+      from public.order_store_groups
+      join public.store_staff on store_staff.store_id = order_store_groups.store_id
+      where order_store_groups.order_id = delivery_runs.order_id
+        and store_staff.user_id = auth.uid()
+    )
   );
 
 drop policy if exists "delivery_runs_rider_read" on public.delivery_runs;
@@ -305,13 +481,15 @@ create policy "delivery_runs_rider_read"
   on public.delivery_runs
   for select
   using (
-    public.current_app_role() in ('delivery', 'admin')
-    or status = 'available'
+    public.current_app_role() = 'admin'
     or exists (
       select 1
-      from public.delivery_partners
-      where delivery_partners.id = delivery_runs.rider_id
-        and delivery_partners.user_id = auth.uid()
+      from public.delivery_partners me
+      where me.user_id = auth.uid()
+        and (
+          delivery_runs.status = 'available'
+          or delivery_runs.rider_id = me.id
+        )
     )
   );
 
@@ -320,21 +498,24 @@ create policy "delivery_runs_rider_update"
   on public.delivery_runs
   for update
   using (
-    public.current_app_role() in ('delivery', 'admin')
+    public.current_app_role() = 'admin'
     or exists (
       select 1
-      from public.delivery_partners
-      where delivery_partners.id = delivery_runs.rider_id
-        and delivery_partners.user_id = auth.uid()
+      from public.delivery_partners me
+      where me.user_id = auth.uid()
+        and (
+          (delivery_runs.status = 'available' and delivery_runs.rider_id is null)
+          or delivery_runs.rider_id = me.id
+        )
     )
   )
   with check (
-    public.current_app_role() in ('delivery', 'admin')
+    public.current_app_role() = 'admin'
     or exists (
       select 1
-      from public.delivery_partners
-      where delivery_partners.id = delivery_runs.rider_id
-        and delivery_partners.user_id = auth.uid()
+      from public.delivery_partners me
+      where me.user_id = auth.uid()
+        and delivery_runs.rider_id = me.id
     )
   );
 
@@ -343,11 +524,25 @@ create policy "rider_payouts_self_read"
   on public.rider_payouts
   for select
   using (
-    public.current_app_role() in ('delivery', 'admin')
+    public.current_app_role() = 'admin'
     or exists (
       select 1
       from public.delivery_partners
       where delivery_partners.id = rider_payouts.rider_id
         and delivery_partners.user_id = auth.uid()
+    )
+  );
+
+drop policy if exists "rider_payouts_rider_insert" on public.rider_payouts;
+create policy "rider_payouts_rider_insert"
+  on public.rider_payouts
+  for insert
+  with check (
+    public.current_app_role() = 'admin'
+    or exists (
+      select 1
+      from public.delivery_partners me
+      where me.user_id = auth.uid()
+        and me.id = rider_payouts.rider_id
     )
   );

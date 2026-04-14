@@ -10,9 +10,12 @@ type AuthCardProps = {
   email: string | null;
   busy: boolean;
   error: string | null;
+  info?: string | null;
   onSignIn: (email: string, password: string) => Promise<boolean>;
   onSignUp: (email: string, password: string) => Promise<boolean>;
   onSignOut: () => Promise<boolean>;
+  onSendReset?: (email: string) => Promise<boolean>;
+  onResendConfirmation?: (email: string) => Promise<boolean>;
   onClearError: () => void;
 };
 
@@ -24,9 +27,12 @@ export function AuthCard({
   email,
   busy,
   error,
+  info,
   onSignIn,
   onSignUp,
   onSignOut,
+  onSendReset,
+  onResendConfirmation,
   onClearError
 }: AuthCardProps) {
   const [mode, setMode] = useState<"signin" | "signup">("signin");
@@ -73,6 +79,7 @@ export function AuthCard({
       </Text>
 
       {error ? <Notice tone="warning" text={error} /> : null}
+      {info ? <Notice tone="success" text={info} /> : null}
 
       <View style={styles.switchRow}>
         <Pressable
@@ -144,6 +151,32 @@ export function AuthCard({
           {busy ? "Working..." : mode === "signin" ? "Sign in" : "Create account"}
         </Text>
       </Pressable>
+
+      {mode === "signin" && onSendReset ? (
+        <Pressable
+          style={styles.linkButton}
+          disabled={busy || !draftEmail.trim()}
+          onPress={() => {
+            onClearError();
+            void onSendReset(draftEmail.trim());
+          }}
+        >
+          <Text style={styles.linkText}>Forgot password? Send reset email</Text>
+        </Pressable>
+      ) : null}
+
+      {mode === "signup" && onResendConfirmation ? (
+        <Pressable
+          style={styles.linkButton}
+          disabled={busy || !draftEmail.trim()}
+          onPress={() => {
+            onClearError();
+            void onResendConfirmation(draftEmail.trim());
+          }}
+        >
+          <Text style={styles.linkText}>Resend confirmation email</Text>
+        </Pressable>
+      ) : null}
     </Card>
   );
 }
@@ -214,5 +247,14 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontWeight: "800",
     fontSize: 14
+  },
+  linkButton: {
+    paddingVertical: 10,
+    alignItems: "center"
+  },
+  linkText: {
+    color: colors.primaryMid,
+    fontWeight: "700",
+    fontSize: 13
   }
 });

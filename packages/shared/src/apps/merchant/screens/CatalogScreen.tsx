@@ -1,4 +1,4 @@
-import { InventoryItem, Store, featuredStores } from "@nearnow/core";
+import { InventoryItem, Store } from "@nearnow/core";
 import {
   addProductToStore,
   fetchMerchantStores,
@@ -19,26 +19,36 @@ import React, { useEffect, useState } from "react";
 import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 
 export function MerchantCatalogScreen() {
-  const [selectedStore, setSelectedStore] = useState<Store>(featuredStores[0]);
-  const [inventory, setInventory] = useState<InventoryItem[]>(
-    featuredStores[0].inventory ?? []
-  );
+  const [selectedStore, setSelectedStore] = useState<Store | null>(null);
+  const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [newItemName, setNewItemName] = useState("");
   const [newItemPrice, setNewItemPrice] = useState("");
   const [newItemUnit, setNewItemUnit] = useState("piece");
   const [showAddForm, setShowAddForm] = useState(false);
+  const [storeError, setStoreError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
 
+    setStoreError(null);
     void fetchMerchantStores()
       .then((stores) => {
-        if (!cancelled && stores.length > 0) {
+        if (cancelled) return;
+
+        if (stores.length > 0) {
           setSelectedStore(stores[0]);
           setInventory(stores[0].inventory ?? []);
+          return;
         }
+
+        setSelectedStore(null);
+        setInventory([]);
       })
-      .catch(() => {});
+      .catch((nextError: any) => {
+        if (!cancelled) {
+          setStoreError(nextError?.message ?? "Unable to load linked stores.");
+        }
+      });
 
     return () => {
       cancelled = true;
@@ -47,6 +57,8 @@ export function MerchantCatalogScreen() {
 
   useEffect(() => {
     let cancelled = false;
+
+    if (!selectedStore) return;
 
     void fetchStoreInventory(selectedStore.id)
       .then((items) => {
@@ -59,7 +71,7 @@ export function MerchantCatalogScreen() {
     return () => {
       cancelled = true;
     };
-  }, [selectedStore.id]);
+  }, [selectedStore?.id]);
 
   const toggleStock = (itemId: string) => {
     const nextItem = inventory.find((item) => item.id === itemId);
@@ -91,6 +103,7 @@ export function MerchantCatalogScreen() {
   };
 
   const addItem = () => {
+    if (!selectedStore) return;
     if (!newItemName.trim() || !newItemPrice.trim()) return;
 
     const draftItem: Omit<InventoryItem, "id"> = {
@@ -125,6 +138,21 @@ export function MerchantCatalogScreen() {
   };
 
   const inStockCount = inventory.filter((item) => item.inStock).length;
+
+  if (!selectedStore) {
+    return (
+      <>
+        <SectionTitle title="Store profile" />
+        <Card>
+          <Text style={styles.storeName}>No store linked</Text>
+          <Text style={styles.storeMeta}>
+            Create a store from Settings to unlock live inventory and order management.
+          </Text>
+          {storeError ? <Notice tone="warning" text={storeError} /> : null}
+        </Card>
+      </>
+    );
+  }
 
   return (
     <>

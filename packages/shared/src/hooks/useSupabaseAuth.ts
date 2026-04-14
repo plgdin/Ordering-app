@@ -2,6 +2,8 @@ import {
   AppRole,
   AuthSnapshot,
   getAuthSnapshot,
+  requestPasswordReset,
+  resendSignupConfirmation,
   signInWithPassword,
   signOutCurrentUser,
   signUpWithPassword,
@@ -19,6 +21,7 @@ export function useSupabaseAuth(role: Exclude<AppRole, "admin">) {
   });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [info, setInfo] = useState<string | null>(null);
 
   useEffect(() => {
     const unsubscribe = subscribeToAuthSnapshot(setSnapshot);
@@ -29,6 +32,7 @@ export function useSupabaseAuth(role: Exclude<AppRole, "admin">) {
     try {
       setBusy(true);
       setError(null);
+      setInfo(null);
       const next = await signInWithPassword(email, password);
       setSnapshot(next);
       return true;
@@ -44,8 +48,12 @@ export function useSupabaseAuth(role: Exclude<AppRole, "admin">) {
     try {
       setBusy(true);
       setError(null);
+      setInfo(null);
       const next = await signUpWithPassword(email, password, role);
       setSnapshot(next);
+      if (!next.isSignedIn) {
+        setInfo("Check your email to confirm the account before signing in.");
+      }
       return true;
     } catch (nextError: any) {
       setError(nextError?.message ?? "Unable to create the account.");
@@ -59,6 +67,7 @@ export function useSupabaseAuth(role: Exclude<AppRole, "admin">) {
     try {
       setBusy(true);
       setError(null);
+      setInfo(null);
       await signOutCurrentUser();
       setSnapshot(await getAuthSnapshot());
       return true;
@@ -70,13 +79,51 @@ export function useSupabaseAuth(role: Exclude<AppRole, "admin">) {
     }
   };
 
+  const sendReset = async (email: string) => {
+    try {
+      setBusy(true);
+      setError(null);
+      setInfo(null);
+      await requestPasswordReset(email);
+      setInfo("Password reset email sent. Check your inbox.");
+      return true;
+    } catch (nextError: any) {
+      setError(nextError?.message ?? "Unable to send reset email.");
+      return false;
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const resendConfirmation = async (email: string) => {
+    try {
+      setBusy(true);
+      setError(null);
+      setInfo(null);
+      await resendSignupConfirmation(email);
+      setInfo("Confirmation email sent again.");
+      return true;
+    } catch (nextError: any) {
+      setError(nextError?.message ?? "Unable to resend confirmation.");
+      return false;
+    } finally {
+      setBusy(false);
+    }
+  };
+
   return {
     snapshot,
     busy,
     error,
-    clearError: () => setError(null),
+    info,
+    clearError: () => {
+      setError(null);
+      setInfo(null);
+    },
     signIn,
     signUp,
-    signOut
+    signOut,
+    sendReset,
+    resendConfirmation
   };
 }

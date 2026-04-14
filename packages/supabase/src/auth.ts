@@ -163,6 +163,34 @@ export async function signUpWithPassword(
   return buildSnapshot();
 }
 
+export async function requestPasswordReset(email: string) {
+  const supabase = maybeGetSupabaseClient();
+  if (!supabase) {
+    throw new Error("Supabase is not configured.");
+  }
+
+  const { error } = await supabase.auth.resetPasswordForEmail(email);
+  if (error) {
+    throw error;
+  }
+}
+
+export async function resendSignupConfirmation(email: string) {
+  const supabase = maybeGetSupabaseClient();
+  if (!supabase) {
+    throw new Error("Supabase is not configured.");
+  }
+
+  const { error } = await supabase.auth.resend({
+    type: "signup",
+    email
+  });
+
+  if (error) {
+    throw error;
+  }
+}
+
 export async function signOutCurrentUser() {
   const supabase = maybeGetSupabaseClient();
   if (!supabase) return;

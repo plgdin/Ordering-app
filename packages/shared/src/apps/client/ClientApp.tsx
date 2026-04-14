@@ -1,7 +1,12 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { LocationBar, PageShell, SavedAddress } from "@nearnow/ui";
 import { Store } from "@nearnow/core";
-import { createClientOrder } from "@nearnow/supabase";
+import {
+  PaymentMethod,
+  createClientOrder,
+  fetchCurrentClientAddress,
+  saveCurrentClientAddress
+} from "@nearnow/supabase";
 import { useClientCart } from "../../hooks/useClientCart";
 import { useSupabaseAuth } from "../../hooks/useSupabaseAuth";
 import { ClientCartScreen } from "./screens/CartScreen";
@@ -27,6 +32,7 @@ export function ClientApp() {
   const [activeTab, setActiveTab] = useState<ClientTab>("home");
   const [selectedStore, setSelectedStore] = useState<Store | null>(null);
   const [address, setAddress] = useState<SavedAddress>(defaultAddress);
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("cod");
   const [checkoutBusy, setCheckoutBusy] = useState(false);
   const [checkoutStatus, setCheckoutStatus] = useState<{
     tone: "success" | "warning";
@@ -34,6 +40,23 @@ export function ClientApp() {
   } | null>(null);
   const cart = useClientCart();
   const auth = useSupabaseAuth("client");
+
+  useEffect(() => {
+    let cancelled = false;
+
+    if (!auth.snapshot.isSignedIn) return;
+
+    void fetchCurrentClientAddress()
+      .then((saved) => {
+        if (!saved || cancelled) return;
+        setAddress(saved);
+      })
+      .catch(() => {});
+
+    return () => {
+      cancelled = true;
+    };
+  }, [auth.snapshot.isSignedIn]);
 
   const handleStorePress = useCallback((store: Store) => {
     setSelectedStore(store);
@@ -64,11 +87,14 @@ export function ClientApp() {
     try {
       setCheckoutBusy(true);
       setCheckoutStatus(null);
-      const result = await createClientOrder(cart.items, address);
+      const result = await createClientOrder(cart.items, address, paymentMethod);
       cart.clear();
       setCheckoutStatus({
         tone: "success",
-        text: `Order ${result.orderId} was created for ${result.amount}.`
+        text:
+          paymentMethod === "online"
+            ? `Order ${result.orderId} was created for ${result.amount}. Payment is pending (wire a payment provider next).`
+            : `Order ${result.orderId} was created for ${result.amount}.`
       });
       return true;
     } catch (error: any) {
@@ -80,10 +106,23 @@ export function ClientApp() {
     } finally {
       setCheckoutBusy(false);
     }
-  }, [address, cart]);
+  }, [address, cart, paymentMethod]);
 
   const locationBar = (
-    <LocationBar address={address} onEditAddress={setAddress} />
+    <LocationBar
+      address={address}
+      onEditAddress={(nextAddress) => {
+        setAddress(nextAddress);
+        if (!auth.snapshot.isSignedIn) return;
+
+        void saveCurrentClientAddress(nextAddress).catch((nextError: any) => {
+          setCheckoutStatus({
+            tone: "warning",
+            text: nextError?.message ?? "Unable to save the address right now."
+          });
+        });
+      }}
+    />
   );
 
   return (
@@ -110,6 +149,8 @@ export function ClientApp() {
           itemTotal={cart.itemTotal}
           deliveryQuote={cart.deliveryQuote}
           grandTotal={cart.grandTotal}
+          paymentMethod={paymentMethod}
+          onPaymentMethodChange={setPaymentMethod}
           isSignedIn={auth.snapshot.isSignedIn}
           signedInEmail={auth.snapshot.email}
           checkoutBusy={checkoutBusy}

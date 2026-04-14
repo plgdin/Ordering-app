@@ -7,6 +7,7 @@ import {
   QuoteStop,
   Store
 } from "@nearnow/core";
+import { AppRole } from "./auth";
 import { getSupabaseClient, maybeGetSupabaseClient } from "./client";
 
 export type DeliveryProfileData = {
@@ -36,6 +37,43 @@ export type CheckoutAddressInput = {
 export type CheckoutResult = {
   orderId: string;
   amount: string;
+  paymentStatus: "pending" | "paid";
+};
+
+export type PaymentMethod = "cod" | "online";
+
+export type MerchantQueueItem = OrderCard & {
+  groupId: string;
+  orderId: string;
+  rawStatus: string;
+  actionLabel?: string;
+  nextStatus?: "accepted" | "packing" | "ready";
+};
+
+export type DeliveryRunActionItem = OrderCard & {
+  runId: string;
+  orderId: string;
+  rawStatus: string;
+  actionLabel?: string;
+  nextStatus?: "accepted" | "picked_up" | "delivered";
+};
+
+export type MerchantOnboardingInput = {
+  name: string;
+  category: string;
+  highlight: string;
+};
+
+export type ProfileBasics = {
+  fullName: string;
+  phone: string;
+};
+
+type CurrentUserContext = {
+  userId: string | null;
+  role: AppRole | null;
+  fullName: string;
+  phone: string;
 };
 
 function formatCurrency(value: number) {
@@ -127,6 +165,127 @@ export async function fetchStoresWithInventory(): Promise<Store[]> {
   return (data ?? []).map(mapStoreRow);
 }
 
+export async function fetchCurrentClientAddress(): Promise<CheckoutAddressInput | null> {
+  const supabase = maybeGetSupabaseClient();
+  if (!supabase) return null;
+
+  const context = await getCurrentUserContext();
+  if (!context.userId) return null;
+
+  const { data, error } = await supabase
+    .from("addresses")
+    .select("label, house_no, street, area, city, pincode, landmark, directions, lat, lng")
+    .eq("user_id", context.userId)
+    .order("is_default", { ascending: false })
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) throw error;
+  if (!data) return null;
+
+  return {
+    label: data.label ?? "Home",
+    houseNo: data.house_no ?? "",
+    street: data.street ?? "",
+    area: data.area ?? "",
+    city: data.city ?? "",
+    pincode: data.pincode ?? "",
+    landmark: data.landmark ?? "",
+    directions: data.directions ?? "",
+    lat: data.lat ?? undefined,
+    lng: data.lng ?? undefined
+  };
+}
+
+export async function saveCurrentClientAddress(address: CheckoutAddressInput) {
+  const supabase = maybeGetSupabaseClient();
+  if (!supabase) return null;
+
+  const context = await getCurrentUserContext();
+  if (!context.userId) return null;
+
+  const { data: existing, error: existingError } = await supabase
+    .from("addresses")
+    .select("id")
+    .eq("user_id", context.userId)
+    .order("is_default", { ascending: false })
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (existingError) throw existingError;
+
+  if (existing?.id) {
+    const { error } = await supabase
+      .from("addresses")
+      .update({
+        label: address.label,
+        house_no: address.houseNo,
+        street: address.street,
+        area: address.area,
+        city: address.city,
+        pincode: address.pincode,
+        landmark: address.landmark,
+        directions: address.directions,
+        lat: address.lat,
+        lng: address.lng,
+        is_default: true
+      })
+      .eq("id", existing.id);
+
+    if (error) throw error;
+    return address;
+  }
+
+  const { error } = await supabase.from("addresses").insert({
+    user_id: context.userId,
+    label: address.label,
+    house_no: address.houseNo,
+    street: address.street,
+    area: address.area,
+    city: address.city,
+    pincode: address.pincode,
+    landmark: address.landmark,
+    directions: address.directions,
+    lat: address.lat,
+    lng: address.lng,
+    is_default: true
+  });
+
+  if (error) throw error;
+  return address;
+}
+
+export async function fetchCurrentProfileBasics(): Promise<ProfileBasics | null> {
+  const context = await getCurrentUserContext();
+  if (!context.userId) return null;
+
+  return {
+    fullName: context.fullName,
+    phone: context.phone
+  };
+}
+
+export async function updateCurrentProfileBasics(profile: ProfileBasics) {
+  const supabase = maybeGetSupabaseClient();
+  if (!supabase) return null;
+
+  const context = await getCurrentUserContext();
+  if (!context.userId) return null;
+
+  const { error } = await supabase
+    .from("profiles")
+    .update({
+      full_name: profile.fullName,
+      phone: profile.phone
+    })
+    .eq("id", context.userId);
+
+  if (error) throw error;
+  return profile;
+}
+
 function buildQuoteStops(items: CartLineItem[]): QuoteStop[] {
   const stores = new Map<
     string,
@@ -155,9 +314,230 @@ function buildQuoteStops(items: CartLineItem[]): QuoteStop[] {
   }));
 }
 
+function nextMerchantAction(status: string) {
+  switch (status) {
+    case "pending":
+      return { label: "Accept order", nextStatus: "accepted" as const };
+    case "accepted":
+      return { label: "Start packing", nextStatus: "packing" as const };
+    case "packing":
+      return { label: "Mark ready", nextStatus: "ready" as const };
+    default:
+      return null;
+  }
+}
+
+function nextDeliveryAction(status: string) {
+  switch (status) {
+    case "available":
+      return { label: "Accept run", nextStatus: "accepted" as const };
+    case "accepted":
+      return { label: "Mark picked up", nextStatus: "picked_up" as const };
+    case "picked_up":
+      return { label: "Mark delivered", nextStatus: "delivered" as const };
+    default:
+      return null;
+  }
+}
+
+function tomorrowDateString() {
+  const date = new Date();
+  date.setDate(date.getDate() + 1);
+  return date.toISOString().slice(0, 10);
+}
+
+function slugifyStoreName(name: string) {
+  const base = name
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+
+  return base || `store-${Date.now()}`;
+}
+
+async function getCurrentUserContext(): Promise<CurrentUserContext> {
+  const supabase = maybeGetSupabaseClient();
+  if (!supabase) {
+    return {
+      userId: null,
+      role: null,
+      fullName: "",
+      phone: ""
+    };
+  }
+
+  const {
+    data: { user }
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return {
+      userId: null,
+      role: null,
+      fullName: "",
+      phone: ""
+    };
+  }
+
+  const { data } = await supabase
+    .from("profiles")
+    .select("role, full_name, phone")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  return {
+    userId: user.id,
+    role: (data?.role as AppRole | undefined) ?? null,
+    fullName: data?.full_name ?? "",
+    phone: data?.phone ?? ""
+  };
+}
+
+async function getMerchantStoreIds() {
+  const supabase = maybeGetSupabaseClient();
+  if (!supabase) return null;
+
+  const context = await getCurrentUserContext();
+  if (!context.userId) return null;
+  if (context.role === "admin") return null;
+
+  const { data, error } = await supabase
+    .from("store_staff")
+    .select("store_id")
+    .eq("user_id", context.userId);
+
+  if (error) throw error;
+
+  return (data ?? []).map((row: any) => String(row.store_id));
+}
+
+async function getOrCreateDeliveryPartnerRow() {
+  const supabase = getSupabaseClient();
+  const context = await getCurrentUserContext();
+
+  if (!context.userId) {
+    throw new Error("Please sign in as a rider first.");
+  }
+
+  const { data: existing, error: selectError } = await supabase
+    .from("delivery_partners")
+    .select("id, vehicle_type, is_online")
+    .eq("user_id", context.userId)
+    .maybeSingle();
+
+  if (selectError) throw selectError;
+  if (existing) return existing;
+
+  const { data: created, error: insertError } = await supabase
+    .from("delivery_partners")
+    .insert({
+      user_id: context.userId,
+      vehicle_type: "bike",
+      is_online: false
+    })
+    .select("id, vehicle_type, is_online")
+    .single();
+
+  if (insertError) throw insertError;
+  return created;
+}
+
+async function syncOrderStatus(orderId: string) {
+  const supabase = maybeGetSupabaseClient();
+  if (!supabase) return;
+
+  const [{ data: groups, error: groupsError }, { data: run, error: runError }] =
+    await Promise.all([
+      supabase
+        .from("order_store_groups")
+        .select("status")
+        .eq("order_id", orderId),
+      supabase
+        .from("delivery_runs")
+        .select("status")
+        .eq("order_id", orderId)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle()
+    ]);
+
+  if (groupsError) throw groupsError;
+  if (runError) throw runError;
+
+  const statuses = (groups ?? []).map((group: any) => String(group.status));
+  let nextStatus = "pending";
+
+  if (run?.status === "delivered" || statuses.every((status) => status === "delivered")) {
+    nextStatus = "delivered";
+  } else if (run?.status === "picked_up") {
+    nextStatus = "out_for_delivery";
+  } else if (run?.status === "accepted") {
+    nextStatus = "assigned";
+  } else if (statuses.some((status) => status === "packing")) {
+    nextStatus = "packing";
+  } else if (statuses.some((status) => status === "ready")) {
+    nextStatus = "confirmed";
+  } else if (statuses.some((status) => status === "accepted")) {
+    nextStatus = "confirmed";
+  } else if (statuses.every((status) => status === "cancelled")) {
+    nextStatus = "cancelled";
+  }
+
+  const { error } = await supabase
+    .from("orders")
+    .update({ status: nextStatus })
+    .eq("id", orderId);
+
+  if (error) throw error;
+}
+
+async function ensureDeliveryRunForOrder(orderId: string) {
+  const supabase = maybeGetSupabaseClient();
+  if (!supabase) return;
+
+  const { data: existing, error: existingError } = await supabase
+    .from("delivery_runs")
+    .select("id")
+    .eq("order_id", orderId)
+    .in("status", ["available", "accepted", "picked_up"])
+    .limit(1)
+    .maybeSingle();
+
+  if (existingError) throw existingError;
+  if (existing) return;
+
+  const { data: groups, error: groupsError } = await supabase
+    .from("order_store_groups")
+    .select("status")
+    .eq("order_id", orderId);
+
+  if (groupsError) throw groupsError;
+  if (!groups?.length) return;
+
+  const allReady = groups.every((group: any) =>
+    ["ready", "picked_up", "delivered"].includes(String(group.status))
+  );
+
+  if (!allReady) return;
+
+  const pickupCount = groups.length;
+  const { error } = await supabase.from("delivery_runs").insert({
+    order_id: orderId,
+    status: "available",
+    route_type: pickupCount > 1 ? "stacked" : "single",
+    pickup_count: pickupCount,
+    incentive_amount: pickupCount > 1 ? 172 : 74,
+    scheduled_payout_date: tomorrowDateString()
+  });
+
+  if (error) throw error;
+}
+
 export async function createClientOrder(
   items: CartLineItem[],
-  address: CheckoutAddressInput
+  address: CheckoutAddressInput,
+  paymentMethod: PaymentMethod
 ): Promise<CheckoutResult> {
   const supabase = getSupabaseClient();
   const {
@@ -178,28 +558,24 @@ export async function createClientOrder(
     0
   );
 
+  const savedAddress = await saveCurrentClientAddress(address);
+  if (!savedAddress) {
+    throw new Error("Unable to save your delivery address.");
+  }
+
   const { data: addressRow, error: addressError } = await supabase
     .from("addresses")
-    .insert({
-      user_id: user.id,
-      label: address.label,
-      house_no: address.houseNo,
-      street: address.street,
-      area: address.area,
-      city: address.city,
-      pincode: address.pincode,
-      landmark: address.landmark,
-      directions: address.directions,
-      lat: address.lat,
-      lng: address.lng,
-      is_default: true
-    })
     .select("id")
+    .eq("user_id", user.id)
+    .order("is_default", { ascending: false })
+    .order("created_at", { ascending: false })
+    .limit(1)
     .single();
 
   if (addressError) throw addressError;
 
   const total = itemTotal + quote.totalCharge;
+  const paymentStatus = "pending";
   const { data: orderRow, error: orderError } = await supabase
     .from("orders")
     .insert({
@@ -210,8 +586,8 @@ export async function createClientOrder(
       delivery_fee: quote.baseCharge,
       extra_delivery_fee: quote.extraCharge,
       total,
-      payment_status: "pending",
-      notes: quote.explanation
+      payment_status: paymentStatus,
+      notes: `Payment method: ${paymentMethod}. ${quote.explanation}`
     })
     .select("id")
     .single();
@@ -261,15 +637,21 @@ export async function createClientOrder(
     if (itemError) throw itemError;
   }
 
+  await syncOrderStatus(orderRow.id);
+
   return {
     orderId: String(orderRow.id).slice(0, 8).toUpperCase(),
-    amount: formatCurrency(total)
+    amount: formatCurrency(total),
+    paymentStatus
   };
 }
 
 export async function fetchClientOrders(limit = 10): Promise<OrderCard[]> {
   const supabase = maybeGetSupabaseClient();
   if (!supabase) return [];
+
+  const context = await getCurrentUserContext();
+  if (!context.userId) return [];
 
   const { data, error } = await supabase
     .from("orders")
@@ -288,6 +670,7 @@ export async function fetchClientOrders(limit = 10): Promise<OrderCard[]> {
       )
     `
     )
+    .eq("customer_id", context.userId)
     .order("created_at", { ascending: false })
     .limit(limit);
 
@@ -322,53 +705,69 @@ export async function fetchMerchantMetrics(): Promise<Metric[]> {
   const supabase = maybeGetSupabaseClient();
   if (!supabase) return [];
 
+  const storeIds = await getMerchantStoreIds();
+  if (storeIds && storeIds.length === 0) {
+    return [
+      { label: "Today's orders", value: "0", trend: "No store linked" },
+      { label: "Packed in SLA", value: "0%", trend: "No store linked" },
+      { label: "Catalog live", value: "0", trend: "No store linked" }
+    ];
+  }
+
   const todayStart = new Date();
   todayStart.setHours(0, 0, 0, 0);
 
-  const [
-    { count: orderCount, error: orderError },
-    { count: packedCount, error: packedError },
-    { count: productCount, error: productError }
-  ] = await Promise.all([
-    supabase
-      .from("orders")
-      .select("*", { count: "exact", head: true })
-      .gte("created_at", todayStart.toISOString()),
-    supabase
-      .from("order_store_groups")
-      .select("*", { count: "exact", head: true })
-      .in("status", ["ready", "picked_up", "delivered"]),
-    supabase.from("products").select("*", { count: "exact", head: true })
-  ]);
+  let orderGroupsQuery = supabase
+    .from("order_store_groups")
+    .select("status, created_at, store_id");
+  let productsQuery = supabase.from("products").select("store_id");
+
+  if (storeIds && storeIds.length > 0) {
+    orderGroupsQuery = orderGroupsQuery.in("store_id", storeIds);
+    productsQuery = productsQuery.in("store_id", storeIds);
+  }
+
+  const [{ data: orderGroups, error: orderError }, { data: products, error: productError }] =
+    await Promise.all([
+      orderGroupsQuery.gte("created_at", todayStart.toISOString()),
+      productsQuery
+    ]);
 
   if (orderError) throw orderError;
-  if (packedError) throw packedError;
   if (productError) throw productError;
 
-  const safeOrderCount = orderCount ?? 0;
-  const safePackedCount = packedCount ?? 0;
-  const safeProductCount = productCount ?? 0;
+  const safeOrderGroups = orderGroups ?? [];
+  const packedCount = safeOrderGroups.filter((group: any) =>
+    ["ready", "picked_up", "delivered"].includes(String(group.status))
+  ).length;
   const sla =
-    safeOrderCount > 0 ? Math.round((safePackedCount / safeOrderCount) * 100) : 0;
+    safeOrderGroups.length > 0
+      ? Math.round((packedCount / safeOrderGroups.length) * 100)
+      : 0;
 
   return [
-    { label: "Today's orders", value: String(safeOrderCount), trend: "Live" },
+    { label: "Today's orders", value: String(safeOrderGroups.length), trend: "Live" },
     { label: "Packed in SLA", value: `${sla}%`, trend: "Live" },
-    { label: "Catalog live", value: String(safeProductCount), trend: "Synced" }
+    { label: "Catalog live", value: String((products ?? []).length), trend: "Synced" }
   ];
 }
 
-export async function fetchMerchantOrders(limit = 10): Promise<OrderCard[]> {
+export async function fetchMerchantOrders(limit = 10): Promise<MerchantQueueItem[]> {
   const supabase = maybeGetSupabaseClient();
   if (!supabase) return [];
 
-  const { data, error } = await supabase
+  const storeIds = await getMerchantStoreIds();
+  if (storeIds && storeIds.length === 0) return [];
+
+  let query = supabase
     .from("order_store_groups")
     .select(
       `
       id,
+      order_id,
       status,
       subtotal,
+      store_id,
       stores (
         name
       )
@@ -377,22 +776,128 @@ export async function fetchMerchantOrders(limit = 10): Promise<OrderCard[]> {
     .order("created_at", { ascending: false })
     .limit(limit);
 
+  if (storeIds && storeIds.length > 0) {
+    query = query.in("store_id", storeIds);
+  }
+
+  const { data, error } = await query;
+
   if (error) throw error;
 
-  return (data ?? []).map((group: any) => ({
-    id: String(group.id).slice(0, 8).toUpperCase(),
-    title: `${group.stores?.name ?? "Store"} basket`,
-    subtitle: `Current status: ${mapOrderStatus(group.status)}`,
-    status:
-      group.status === "pending" || group.status === "accepted"
-        ? "High priority"
-        : mapOrderStatus(group.status),
-    amount: formatCurrency(Number(group.subtotal ?? 0))
-  }));
+  return (data ?? []).map((group: any) => {
+    const action = nextMerchantAction(group.status);
+    return {
+      groupId: String(group.id),
+      orderId: String(group.order_id),
+      rawStatus: String(group.status),
+      id: String(group.id).slice(0, 8).toUpperCase(),
+      title: `${group.stores?.name ?? "Store"} basket`,
+      subtitle: `Current status: ${mapOrderStatus(group.status)}`,
+      status:
+        group.status === "pending" || group.status === "accepted"
+          ? "High priority"
+          : mapOrderStatus(group.status),
+      amount: formatCurrency(Number(group.subtotal ?? 0)),
+      actionLabel: action?.label,
+      nextStatus: action?.nextStatus
+    };
+  });
 }
 
 export async function fetchMerchantStores(): Promise<Store[]> {
-  return fetchStoresWithInventory();
+  const supabase = maybeGetSupabaseClient();
+  if (!supabase) return [];
+
+  const storeIds = await getMerchantStoreIds();
+  if (storeIds && storeIds.length === 0) return [];
+
+  let query = supabase
+    .from("stores")
+    .select(
+      `
+      id,
+      slug,
+      name,
+      category,
+      eta_min,
+      eta_max,
+      distance_km,
+      rating,
+      delivery_tag,
+      highlight,
+      image_url,
+      is_active,
+      products (
+        id,
+        name,
+        price,
+        unit,
+        in_stock
+      )
+    `
+    )
+    .order("created_at", { ascending: false });
+
+  if (storeIds && storeIds.length > 0) {
+    query = query.in("id", storeIds);
+  } else {
+    query = query.eq("is_active", true);
+  }
+
+  const { data, error } = await query;
+  if (error) throw error;
+
+  return (data ?? []).map(mapStoreRow);
+}
+
+export async function createMerchantStore(input: MerchantOnboardingInput) {
+  const supabase = getSupabaseClient();
+  const context = await getCurrentUserContext();
+
+  if (!context.userId) {
+    throw new Error("Please sign in first.");
+  }
+
+  const { data: storeId, error: storeError } = await supabase.rpc(
+    "create_store_with_owner",
+    {
+      p_name: input.name,
+      p_category: input.category,
+      p_highlight: input.highlight
+    }
+  );
+  if (storeError) throw storeError;
+
+  const stores = await fetchMerchantStores();
+  return stores.find((entry) => entry.id === String(storeId)) ?? null;
+}
+
+export async function updateMerchantOrderStatus(
+  groupId: string,
+  nextStatus: "accepted" | "packing" | "ready" | "cancelled"
+) {
+  const supabase = getSupabaseClient();
+
+  const { data: group, error: fetchError } = await supabase
+    .from("order_store_groups")
+    .select("id, order_id")
+    .eq("id", groupId)
+    .single();
+
+  if (fetchError) throw fetchError;
+
+  const { error } = await supabase
+    .from("order_store_groups")
+    .update({ status: nextStatus })
+    .eq("id", groupId);
+
+  if (error) throw error;
+
+  if (nextStatus === "ready") {
+    await ensureDeliveryRunForOrder(String(group.order_id));
+  }
+
+  await syncOrderStatus(String(group.order_id));
 }
 
 export async function fetchStoreInventory(storeId: string): Promise<InventoryItem[]> {
@@ -475,18 +980,24 @@ export async function fetchDeliveryMetrics(
   const todayStart = new Date();
   todayStart.setHours(0, 0, 0, 0);
 
+  const partner = await getOrCreateDeliveryPartnerRow().catch(() => null);
+  let runsQuery = supabase
+    .from("delivery_runs")
+    .select("status, incentive_amount, created_at")
+    .gte("created_at", todayStart.toISOString());
+  let payoutsQuery = supabase
+    .from("rider_payouts")
+    .select("amount, payout_date")
+    .order("payout_date", { ascending: true })
+    .limit(1);
+
+  if (partner?.id) {
+    runsQuery = runsQuery.eq("rider_id", partner.id);
+    payoutsQuery = payoutsQuery.eq("rider_id", partner.id);
+  }
+
   const [{ data: runs, error: runsError }, { error: payoutsError }] =
-    await Promise.all([
-      supabase
-        .from("delivery_runs")
-        .select("status, incentive_amount, created_at")
-        .gte("created_at", todayStart.toISOString()),
-      supabase
-        .from("rider_payouts")
-        .select("amount, payout_date")
-        .order("payout_date", { ascending: true })
-        .limit(1)
-    ]);
+    await Promise.all([runsQuery, payoutsQuery]);
 
   if (runsError) throw runsError;
   if (payoutsError) throw payoutsError;
@@ -504,33 +1015,48 @@ export async function fetchDeliveryMetrics(
   ];
 }
 
-export async function fetchDeliveryRuns(limit = 10): Promise<OrderCard[]> {
+export async function fetchDeliveryRuns(limit = 10): Promise<DeliveryRunActionItem[]> {
   const supabase = maybeGetSupabaseClient();
   if (!supabase) return [];
 
-  const { data, error } = await supabase
+  const partner = await getOrCreateDeliveryPartnerRow().catch(() => null);
+  let query = supabase
     .from("delivery_runs")
-    .select("id, status, route_type, pickup_count, incentive_amount")
+    .select("id, order_id, status, route_type, pickup_count, incentive_amount, rider_id")
     .order("created_at", { ascending: false })
     .limit(limit);
 
+  if (partner?.id) {
+    query = query.or(`status.eq.available,rider_id.eq.${partner.id}`);
+  }
+
+  const { data, error } = await query;
+
   if (error) throw error;
 
-  return (data ?? []).map((run: any) => ({
-    id: String(run.id).slice(0, 8).toUpperCase(),
-    title:
-      Number(run.pickup_count ?? 1) > 1
-        ? "Route stack available"
-        : "Single pickup express",
-    subtitle: `${Number(run.pickup_count ?? 1)} pickup(s) | ${String(
-      run.route_type
-    ).replaceAll("_", " ")}`,
-    status:
-      run.status === "available"
-        ? "Best incentive fit"
-        : mapOrderStatus(run.status),
-    amount: formatCurrency(Number(run.incentive_amount ?? 0))
-  }));
+  return (data ?? []).map((run: any) => {
+    const action = nextDeliveryAction(run.status);
+    return {
+      runId: String(run.id),
+      orderId: String(run.order_id),
+      rawStatus: String(run.status),
+      id: String(run.id).slice(0, 8).toUpperCase(),
+      title:
+        Number(run.pickup_count ?? 1) > 1
+          ? "Route stack available"
+          : "Single pickup express",
+      subtitle: `${Number(run.pickup_count ?? 1)} pickup(s) | ${String(
+        run.route_type
+      ).replaceAll("_", " ")}`,
+      status:
+        run.status === "available"
+          ? "Best incentive fit"
+          : mapOrderStatus(run.status),
+      amount: formatCurrency(Number(run.incentive_amount ?? 0)),
+      actionLabel: action?.label,
+      nextStatus: action?.nextStatus
+    };
+  });
 }
 
 export async function fetchDeliveryEarningsDetails(
@@ -542,18 +1068,24 @@ export async function fetchDeliveryEarningsDetails(
   const todayStart = new Date();
   todayStart.setHours(0, 0, 0, 0);
 
+  const partner = await getOrCreateDeliveryPartnerRow().catch(() => null);
+  let runsQuery = supabase
+    .from("delivery_runs")
+    .select("status, incentive_amount, created_at")
+    .gte("created_at", todayStart.toISOString());
+  let payoutsQuery = supabase
+    .from("rider_payouts")
+    .select("payout_date, amount, status")
+    .order("payout_date", { ascending: true })
+    .limit(1);
+
+  if (partner?.id) {
+    runsQuery = runsQuery.eq("rider_id", partner.id);
+    payoutsQuery = payoutsQuery.eq("rider_id", partner.id);
+  }
+
   const [{ data: runs, error: runsError }, { data: payouts, error: payoutsError }] =
-    await Promise.all([
-      supabase
-        .from("delivery_runs")
-        .select("status, incentive_amount, created_at")
-        .gte("created_at", todayStart.toISOString()),
-      supabase
-        .from("rider_payouts")
-        .select("payout_date, amount, status")
-        .order("payout_date", { ascending: true })
-        .limit(1)
-    ]);
+    await Promise.all([runsQuery, payoutsQuery]);
 
   if (runsError) throw runsError;
   if (payoutsError) throw payoutsError;
@@ -584,21 +1116,100 @@ export async function fetchDeliveryEarningsDetails(
 }
 
 export async function fetchDeliveryProfile(): Promise<DeliveryProfileData | null> {
-  const supabase = maybeGetSupabaseClient();
-  if (!supabase) return null;
-
-  const { data, error } = await supabase
-    .from("delivery_partners")
-    .select("vehicle_type, is_online")
-    .limit(1)
-    .maybeSingle();
-
-  if (error) throw error;
-  if (!data) return null;
+  const partner = await getOrCreateDeliveryPartnerRow().catch(() => null);
+  if (!partner) return null;
 
   return {
-    onlineWindow: data.is_online ? "Currently online" : "Currently offline",
-    vehicleType: String(data.vehicle_type ?? "Bike"),
+    onlineWindow: partner.is_online ? "Currently online" : "Currently offline",
+    vehicleType: String(partner.vehicle_type ?? "Bike"),
     preferredZone: "Assigned local zone"
   };
+}
+
+export async function acceptDeliveryRun(runId: string) {
+  const supabase = getSupabaseClient();
+  const partner = await getOrCreateDeliveryPartnerRow();
+
+  const { data: run, error: fetchError } = await supabase
+    .from("delivery_runs")
+    .select("id, order_id")
+    .eq("id", runId)
+    .single();
+
+  if (fetchError) throw fetchError;
+
+  const { error } = await supabase
+    .from("delivery_runs")
+    .update({
+      rider_id: partner.id,
+      status: "accepted"
+    })
+    .eq("id", runId);
+
+  if (error) throw error;
+
+  const { error: partnerError } = await supabase
+    .from("delivery_partners")
+    .update({ is_online: true })
+    .eq("id", partner.id);
+
+  if (partnerError) throw partnerError;
+
+  await syncOrderStatus(String(run.order_id));
+}
+
+export async function updateDeliveryRunStatus(
+  runId: string,
+  nextStatus: "picked_up" | "delivered"
+) {
+  const supabase = getSupabaseClient();
+  const partner = await getOrCreateDeliveryPartnerRow();
+
+  const { data: run, error: fetchError } = await supabase
+    .from("delivery_runs")
+    .select("id, order_id, incentive_amount")
+    .eq("id", runId)
+    .eq("rider_id", partner.id)
+    .single();
+
+  if (fetchError) throw fetchError;
+
+  const { error } = await supabase
+    .from("delivery_runs")
+    .update({ status: nextStatus })
+    .eq("id", runId)
+    .eq("rider_id", partner.id);
+
+  if (error) throw error;
+
+  if (nextStatus === "picked_up") {
+    const { error: groupsError } = await supabase
+      .from("order_store_groups")
+      .update({ status: "picked_up" })
+      .eq("order_id", run.order_id);
+
+    if (groupsError) throw groupsError;
+  }
+
+  if (nextStatus === "delivered") {
+    const { error: groupsError } = await supabase
+      .from("order_store_groups")
+      .update({ status: "delivered" })
+      .eq("order_id", run.order_id);
+
+    if (groupsError) throw groupsError;
+
+    const { error: payoutError } = await supabase
+      .from("rider_payouts")
+      .insert({
+        rider_id: partner.id,
+        payout_date: tomorrowDateString(),
+        amount: Number(run.incentive_amount ?? 0),
+        status: "pending"
+      });
+
+    if (payoutError) throw payoutError;
+  }
+
+  await syncOrderStatus(String(run.order_id));
 }
