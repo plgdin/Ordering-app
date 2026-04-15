@@ -1,10 +1,13 @@
 import {
+  AppliedCartDiscount,
+  estimateDirectionBucket,
   calculateDeliveryQuote,
   CartLineItem,
   InventoryItem,
   Metric,
   OrderCard,
   QuoteStop,
+  StoreDiscountKey,
   Store
 } from "@nearnow/core";
 import { AppRole } from "./auth";
@@ -64,6 +67,15 @@ export type MerchantOnboardingInput = {
   highlight: string;
 };
 
+export type MerchantDiscountProgram = {
+  storeId: string;
+  storeName: string;
+  discountKey: StoreDiscountKey;
+  active: boolean;
+};
+
+const merchantDiscountKeys: StoreDiscountKey[] = ["combo30", "save10", "flat75"];
+
 export type ProfileBasics = {
   fullName: string;
   phone: string;
@@ -101,8 +113,40 @@ function mapStoreRow(row: any): Store {
     highlight: row.highlight ?? "",
     featured: Boolean(row.is_active),
     image: row.image_url ?? undefined,
-    inventory
+    inventory,
+    enabledDiscountKeys: []
   };
+}
+
+async function fetchStoreDiscountMap(
+  storeIds: string[]
+): Promise<Record<string, StoreDiscountKey[]>> {
+  const supabase = maybeGetSupabaseClient();
+  if (!supabase || storeIds.length === 0) return {};
+
+  try {
+    const { data, error } = await supabase
+      .from("store_discount_programs")
+      .select("store_id, discount_key")
+      .in("store_id", storeIds)
+      .eq("is_active", true);
+
+    if (error) throw error;
+
+    return (data ?? []).reduce<Record<string, StoreDiscountKey[]>>((acc, row: any) => {
+      const storeId = String(row.store_id);
+      const discountKey = row.discount_key as StoreDiscountKey;
+
+      if (!acc[storeId]) {
+        acc[storeId] = [];
+      }
+
+      acc[storeId].push(discountKey);
+      return acc;
+    }, {});
+  } catch {
+    return {};
+  }
 }
 
 function mapOrderStatus(status: string) {
@@ -162,7 +206,13 @@ export async function fetchStoresWithInventory(): Promise<Store[]> {
     throw error;
   }
 
-  return (data ?? []).map(mapStoreRow);
+  const stores = (data ?? []).map(mapStoreRow);
+  const discountMap = await fetchStoreDiscountMap(stores.map((store) => store.id));
+
+  return stores.map((store) => ({
+    ...store,
+    enabledDiscountKeys: discountMap[store.id] ?? []
+  }));
 }
 
 export async function fetchCurrentClientAddress(): Promise<CheckoutAddressInput | null> {
@@ -304,12 +354,10 @@ function buildQuoteStops(items: CartLineItem[]): QuoteStop[] {
   return Array.from(stores.values()).map((store, index) => ({
     storeName: store.storeName,
     distanceFromCustomerKm: store.distanceFromCustomerKm,
-    direction:
-      store.distanceFromCustomerKm <= 1
-        ? "same-route"
-        : index % 2 === 0
-          ? "east"
-          : "west",
+    direction: estimateDirectionBucket(
+      `${store.storeName}:${index}`,
+      store.distanceFromCustomerKm
+    ),
     isAlongCurrentRoute: store.distanceFromCustomerKm <= 1
   }));
 }
@@ -537,7 +585,8 @@ async function ensureDeliveryRunForOrder(orderId: string) {
 export async function createClientOrder(
   items: CartLineItem[],
   address: CheckoutAddressInput,
-  paymentMethod: PaymentMethod
+  paymentMethod: PaymentMethod,
+  appliedDiscounts: AppliedCartDiscount[] = []
 ): Promise<CheckoutResult> {
   const supabase = getSupabaseClient();
   const {
@@ -557,6 +606,10 @@ export async function createClientOrder(
     (sum, item) => sum + item.price * item.quantity,
     0
   );
+  const discountTotal = appliedDiscounts.reduce(
+    (sum, discount) => sum + discount.savingsAmount,
+    0
+  );
 
   const savedAddress = await saveCurrentClientAddress(address);
   if (!savedAddress) {
@@ -574,8 +627,14 @@ export async function createClientOrder(
 
   if (addressError) throw addressError;
 
-  const total = itemTotal + quote.totalCharge;
+  const total = Math.max(0, itemTotal + quote.totalCharge - discountTotal);
   const paymentStatus = "pending";
+  const discountSummary =
+    appliedDiscounts.length > 0
+      ? ` Discounts applied: ${appliedDiscounts
+          .map((discount) => `${discount.code} (-Rs ${discount.savingsAmount})`)
+          .join(", ")}.`
+      : "";
   const { data: orderRow, error: orderError } = await supabase
     .from("orders")
     .insert({
@@ -587,7 +646,7 @@ export async function createClientOrder(
       extra_delivery_fee: quote.extraCharge,
       total,
       payment_status: paymentStatus,
-      notes: `Payment method: ${paymentMethod}. ${quote.explanation}`
+      notes: `Payment method: ${paymentMethod}. ${quote.explanation}${discountSummary}`
     })
     .select("id")
     .single();
@@ -644,6 +703,51 @@ export async function createClientOrder(
     amount: formatCurrency(total),
     paymentStatus
   };
+}
+
+export async function fetchMerchantDiscountPrograms(): Promise<MerchantDiscountProgram[]> {
+  const stores = await fetchMerchantStores();
+
+  return stores.flatMap((store) =>
+    merchantDiscountKeys.map((discountKey) => ({
+      storeId: store.id,
+      storeName: store.name,
+      discountKey,
+      active: (store.enabledDiscountKeys ?? []).includes(discountKey)
+    }))
+  );
+}
+
+export async function setMerchantDiscountProgram(
+  storeId: string,
+  discountKey: StoreDiscountKey,
+  active: boolean
+) {
+  const supabase = getSupabaseClient();
+
+  if (active) {
+    const { error } = await supabase
+      .from("store_discount_programs")
+      .upsert(
+        {
+          store_id: storeId,
+          discount_key: discountKey,
+          is_active: true
+        },
+        { onConflict: "store_id,discount_key" }
+      );
+
+    if (error) throw error;
+    return;
+  }
+
+  const { error } = await supabase
+    .from("store_discount_programs")
+    .delete()
+    .eq("store_id", storeId)
+    .eq("discount_key", discountKey);
+
+  if (error) throw error;
 }
 
 export async function fetchClientOrders(limit = 10): Promise<OrderCard[]> {
@@ -847,7 +951,13 @@ export async function fetchMerchantStores(): Promise<Store[]> {
   const { data, error } = await query;
   if (error) throw error;
 
-  return (data ?? []).map(mapStoreRow);
+  const stores = (data ?? []).map(mapStoreRow);
+  const discountMap = await fetchStoreDiscountMap(stores.map((store) => store.id));
+
+  return stores.map((store) => ({
+    ...store,
+    enabledDiscountKeys: discountMap[store.id] ?? []
+  }));
 }
 
 export async function createMerchantStore(input: MerchantOnboardingInput) {

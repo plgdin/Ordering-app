@@ -28,6 +28,7 @@ export const featuredStores: Store[] = [
     deliveryTag: "Free pickup if clubbed with nearby stores",
     highlight: "Fruits, milk, staples, and premium pantry",
     featured: true,
+    enabledDiscountKeys: ["combo30", "save10"],
     image: storeImages.more,
     inventory: [
       { id: "m1", name: "Toned Milk 500ml", price: 28, unit: "pack", inStock: true },
@@ -50,6 +51,7 @@ export const featuredStores: Store[] = [
     deliveryTag: "Only non-prescription items enabled",
     highlight: "Wellness, baby care, hygiene, OTC products",
     featured: true,
+    enabledDiscountKeys: ["combo30"],
     image: storeImages.pharma,
     inventory: [
       { id: "p1", name: "Vitamin C 500mg (30)", price: 145, unit: "strip", inStock: true },
@@ -70,6 +72,7 @@ export const featuredStores: Store[] = [
     deliveryTag: "Stack on-route pickups to save delivery fees",
     highlight: "Fresh breads, cakes, buns, and tea-time snacks",
     featured: true,
+    enabledDiscountKeys: ["flat75", "save10"],
     image: storeImages.bakery,
     inventory: [
       { id: "b1", name: "Sandwich Loaf", price: 45, unit: "loaf", inStock: true },

@@ -1,0 +1,12 @@
+{
+  "expo": {
+    "extra": {
+      "eas": {
+        "projectId": "31b77c1b-05bf-423e-bea6-711da2d7376d"
+      }
+    },
+    "android": {
+      "package": "com.plgdinn.nearnowplatform"
+    }
+  }
+}

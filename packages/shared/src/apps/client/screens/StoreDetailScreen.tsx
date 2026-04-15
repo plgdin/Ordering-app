@@ -3,8 +3,8 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import { Store } from "@nearnow/core";
 import {
   Card,
-  Chip,
   Notice,
+  RatingPill,
   SectionTitle,
   StoreImageCard,
   colors,
@@ -36,7 +36,7 @@ export function StoreDetailScreen({
               {store.category} | {store.eta} | {store.distanceKm} km
             </Text>
           </View>
-          <Chip label={`${store.rating} rating`} solid />
+          <RatingPill rating={store.rating} caption="rated" />
         </View>
         <Notice text={store.deliveryTag} />
       </View>

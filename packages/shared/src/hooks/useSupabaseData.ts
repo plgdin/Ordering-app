@@ -75,7 +75,7 @@ export function useClientStores() {
     syncStores();
     const unsubscribe = subscribeToTables(
       "client-stores-live",
-      ["stores", "products"],
+      ["stores", "products", "store_discount_programs"],
       syncStores
     );
 

@@ -432,17 +432,46 @@ export function RatingPill({
   rating: number;
   caption?: string;
 }) {
+  const palette =
+    rating > 4
+      ? {
+          colors: ["#1D5B33", "#2C7A46", "#489E62"],
+          borderColor: "#B7DBC2",
+          dotColor: "#E9F8EE",
+          valueColor: "#FFFFFF",
+          captionColor: "#DBF3E3"
+        }
+      : rating > 3.5
+        ? {
+            colors: ["#8FD19E", "#A9DEB0", "#C3EAC5"],
+            borderColor: "#D5EDD7",
+            dotColor: "#F7FFF8",
+            valueColor: "#1D4D2E",
+            captionColor: "#356B45"
+          }
+        : {
+            colors: ["#FF8A3D", "#FFB347", "#FFD769"],
+            borderColor: "#FFE1A8",
+            dotColor: "#FFF6DA",
+            valueColor: "#4B2202",
+            captionColor: "#7A3D00"
+          };
+
   return (
     <LinearGradient
-      colors={["#FF8A3D", "#FFB347", "#FFD769"]}
+      colors={palette.colors}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
-      style={styles.ratingPill}
+      style={[styles.ratingPill, { borderColor: palette.borderColor }]}
     >
-      <View style={styles.ratingPillDot} />
+      <View style={[styles.ratingPillDot, { backgroundColor: palette.dotColor }]} />
       <View style={styles.ratingPillCopy}>
-        <Text style={styles.ratingPillValue}>{rating.toFixed(1)}</Text>
-        <Text style={styles.ratingPillCaption}>{caption}</Text>
+        <Text style={[styles.ratingPillValue, { color: palette.valueColor }]}>
+          {rating.toFixed(1)}
+        </Text>
+        <Text style={[styles.ratingPillCaption, { color: palette.captionColor }]}>
+          {caption}
+        </Text>
       </View>
     </LinearGradient>
   );

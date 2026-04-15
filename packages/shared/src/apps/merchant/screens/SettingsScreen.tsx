@@ -1,16 +1,28 @@
 import React, { useEffect, useState } from "react";
 import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { serviceRules } from "@nearnow/config";
+import { StoreDiscountKey, storeDiscountTemplates } from "@nearnow/core";
 import { Card, Notice, SectionTitle, colors, radius, spacing } from "@nearnow/ui";
 import { AuthCard } from "../../../components/AuthCard";
 import { useSupabaseAuth } from "../../../hooks/useSupabaseAuth";
-import { createMerchantStore, fetchCurrentProfileBasics, fetchMerchantStores, updateCurrentProfileBasics } from "@nearnow/supabase";
+import {
+  createMerchantStore,
+  fetchCurrentProfileBasics,
+  fetchMerchantStores,
+  setMerchantDiscountProgram,
+  updateCurrentProfileBasics
+} from "@nearnow/supabase";
 
 export function MerchantSettingsScreen() {
   const auth = useSupabaseAuth("merchant");
-  const [stores, setStores] = useState<{ id: string; name: string }[]>([]);
+  const [stores, setStores] = useState<{
+    id: string;
+    name: string;
+    enabledDiscountKeys?: StoreDiscountKey[];
+  }[]>([]);
   const [storesBusy, setStoresBusy] = useState(false);
   const [storesError, setStoresError] = useState<string | null>(null);
+  const [discountBusyKey, setDiscountBusyKey] = useState<string | null>(null);
   const [profileError, setProfileError] = useState<string | null>(null);
   const [profileBusy, setProfileBusy] = useState(false);
   const [fullName, setFullName] = useState("");
@@ -32,7 +44,13 @@ export function MerchantSettingsScreen() {
     void fetchMerchantStores()
       .then((result) => {
         if (cancelled) return;
-        setStores(result.map((store) => ({ id: store.id, name: store.name })));
+        setStores(
+          result.map((store) => ({
+            id: store.id,
+            name: store.name,
+            enabledDiscountKeys: store.enabledDiscountKeys ?? []
+          }))
+        );
       })
       .catch((nextError: any) => {
         if (cancelled) return;
@@ -116,6 +134,82 @@ export function MerchantSettingsScreen() {
                 <Text style={styles.bodyText}>
                   Add inventory and manage orders from the Catalog and Orders tabs.
                 </Text>
+                {stores.map((store) => (
+                  <View key={store.id} style={styles.discountBlock}>
+                    <Text style={styles.discountStoreTitle}>{store.name}</Text>
+                    <Text style={styles.bodyText}>
+                      Turn on only the platform-approved discount programs you want customers
+                      to use.
+                    </Text>
+                    {storeDiscountTemplates.map((template) => {
+                      const active = (store.enabledDiscountKeys ?? []).includes(template.key);
+                      const busyKey = `${store.id}:${template.key}`;
+
+                      return (
+                        <View key={template.key} style={styles.discountRow}>
+                          <View style={styles.discountInfo}>
+                            <Text style={styles.discountCode}>
+                              {template.code} | {template.title}
+                            </Text>
+                            <Text style={styles.discountDescription}>
+                              {template.description}
+                            </Text>
+                          </View>
+                          <Pressable
+                            style={[
+                              styles.discountToggle,
+                              active && styles.discountToggleActive,
+                              discountBusyKey === busyKey && styles.buttonDisabled
+                            ]}
+                            disabled={discountBusyKey === busyKey}
+                            onPress={() => {
+                              setStoresError(null);
+                              setDiscountBusyKey(busyKey);
+                              void setMerchantDiscountProgram(store.id, template.key, !active)
+                                .then(() => {
+                                  setStores((current) =>
+                                    current.map((entry) =>
+                                      entry.id !== store.id
+                                        ? entry
+                                        : {
+                                            ...entry,
+                                            enabledDiscountKeys: !active
+                                              ? Array.from(
+                                                  new Set([
+                                                    ...(entry.enabledDiscountKeys ?? []),
+                                                    template.key
+                                                  ])
+                                                )
+                                              : (entry.enabledDiscountKeys ?? []).filter(
+                                                  (key) => key !== template.key
+                                                )
+                                          }
+                                    )
+                                  );
+                                })
+                                .catch((nextError: any) => {
+                                  setStoresError(
+                                    nextError?.message ??
+                                      "Unable to update merchant discount settings."
+                                  );
+                                })
+                                .finally(() => setDiscountBusyKey(null));
+                            }}
+                          >
+                            <Text
+                              style={[
+                                styles.discountToggleText,
+                                active && styles.discountToggleTextActive
+                              ]}
+                            >
+                              {active ? "On" : "Off"}
+                            </Text>
+                          </Pressable>
+                        </View>
+                      );
+                    })}
+                  </View>
+                ))}
               </>
             ) : (
               <>
@@ -167,7 +261,13 @@ export function MerchantSettingsScreen() {
                     })
                       .then((created) => {
                         if (created) {
-                          setStores([{ id: created.id, name: created.name }]);
+                          setStores([
+                            {
+                              id: created.id,
+                              name: created.name,
+                              enabledDiscountKeys: created.enabledDiscountKeys ?? []
+                            }
+                          ]);
                         }
                       })
                       .catch((nextError: any) => {
@@ -245,6 +345,62 @@ const styles = StyleSheet.create({
   formInputMultiline: {
     minHeight: 72,
     textAlignVertical: "top" as never
+  },
+  discountBlock: {
+    marginTop: spacing.md,
+    gap: spacing.sm,
+    borderTopWidth: 1,
+    borderTopColor: colors.line,
+    paddingTop: spacing.md
+  },
+  discountStoreTitle: {
+    fontSize: 16,
+    fontWeight: "800",
+    color: colors.ink
+  },
+  discountRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.line,
+    borderRadius: radius.sm,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 12
+  },
+  discountInfo: {
+    flex: 1,
+    gap: 3
+  },
+  discountCode: {
+    fontSize: 13,
+    fontWeight: "800",
+    color: colors.primaryMid
+  },
+  discountDescription: {
+    fontSize: 13,
+    lineHeight: 18,
+    color: colors.muted
+  },
+  discountToggle: {
+    minWidth: 58,
+    borderRadius: radius.pill,
+    borderWidth: 1,
+    borderColor: colors.primaryMid,
+    paddingVertical: 8,
+    alignItems: "center"
+  },
+  discountToggleActive: {
+    backgroundColor: colors.primaryMid
+  },
+  discountToggleText: {
+    fontSize: 13,
+    fontWeight: "800",
+    color: colors.primaryMid
+  },
+  discountToggleTextActive: {
+    color: "#FFFFFF"
   },
   primaryButton: {
     marginTop: spacing.md,

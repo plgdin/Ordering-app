@@ -87,7 +87,12 @@ export function ClientApp() {
     try {
       setCheckoutBusy(true);
       setCheckoutStatus(null);
-      const result = await createClientOrder(cart.items, address, paymentMethod);
+      const result = await createClientOrder(
+        cart.items,
+        address,
+        paymentMethod,
+        cart.appliedDiscounts
+      );
       cart.clear();
       setCheckoutStatus({
         tone: "success",
@@ -148,6 +153,9 @@ export function ClientApp() {
           itemCount={cart.itemCount}
           itemTotal={cart.itemTotal}
           deliveryQuote={cart.deliveryQuote}
+          availableDiscounts={cart.availableDiscounts}
+          appliedDiscounts={cart.appliedDiscounts}
+          discountTotal={cart.discountTotal}
           grandTotal={cart.grandTotal}
           paymentMethod={paymentMethod}
           onPaymentMethodChange={setPaymentMethod}
@@ -155,6 +163,7 @@ export function ClientApp() {
           signedInEmail={auth.snapshot.email}
           checkoutBusy={checkoutBusy}
           checkoutStatus={checkoutStatus}
+          onToggleDiscount={cart.toggleDiscount}
           onUpdateQuantity={cart.updateQuantity}
           onCheckout={handleCheckout}
           onGoToSettings={() => setActiveTab("settings")}

@@ -2,8 +2,8 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 
 declare const process:
   | {
-      env?: Record<string, string | undefined>;
-    }
+    env?: Record<string, string | undefined>;
+  }
   | undefined;
 
 type AddressShape = {

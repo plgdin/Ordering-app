@@ -1,3 +1,5 @@
+import { CartDiscountOption, StoreDiscountKey } from "./discounts";
+
 export type DirectionBucket = "same-route" | "north" | "south" | "east" | "west";
 
 export type InventoryItem = {
@@ -14,6 +16,7 @@ export type CartLineItem = {
   storeName: string;
   storeCategory: string;
   storeDistanceKm: number;
+  storeDiscountKeys?: StoreDiscountKey[];
   storeImage?: string;
   productId: string;
   name: string;
@@ -34,6 +37,7 @@ export type Store = {
   featured?: boolean;
   image?: string;
   inventory?: InventoryItem[];
+  enabledDiscountKeys?: StoreDiscountKey[];
 };
 
 export type QuoteStop = {
@@ -50,7 +54,13 @@ export type DeliveryQuote = {
   explanation: string;
   freeBecauseClustered: boolean;
   freeBecauseOnRoute: boolean;
+  travelledDistanceKm: number;
+  freeDistanceLimitKm: number;
+  chargeableDistanceKm: number;
+  perKmCharge: number;
 };
+
+export type AppliedCartDiscount = CartDiscountOption;
 
 export type OrderCard = {
   id: string;
