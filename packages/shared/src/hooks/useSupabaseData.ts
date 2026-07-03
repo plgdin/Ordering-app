@@ -60,6 +60,7 @@ export function useClientStores() {
   const [stores, setStores] = useState<Store[]>(featuredStores);
 
   useEffect(() => {
+    if (!maybeGetSupabaseClient()) return;
     let cancelled = false;
 
     const syncStores = () => {
@@ -92,6 +93,7 @@ export function useClientOrders() {
   const [orders, setOrders] = useState(clientOrders);
 
   useEffect(() => {
+    if (!maybeGetSupabaseClient()) return;
     let cancelled = false;
 
     const syncOrders = () => {
@@ -124,6 +126,7 @@ export function useMerchantMetrics() {
   const [metrics, setMetrics] = useState(merchantMetrics);
 
   useEffect(() => {
+    if (!maybeGetSupabaseClient()) return;
     let cancelled = false;
 
     const syncMetrics = () => {
@@ -165,6 +168,7 @@ export function useMerchantOrders() {
   );
 
   useEffect(() => {
+    if (!maybeGetSupabaseClient()) return;
     let cancelled = false;
 
     const syncOrders = () => {
@@ -197,6 +201,7 @@ export function useDeliveryMetrics() {
   const [metrics, setMetrics] = useState(deliveryMetrics);
 
   useEffect(() => {
+    if (!maybeGetSupabaseClient()) return;
     let cancelled = false;
 
     const syncMetrics = () => {
@@ -238,6 +243,7 @@ export function useDeliveryRuns() {
   );
 
   useEffect(() => {
+    if (!maybeGetSupabaseClient()) return;
     let cancelled = false;
 
     const syncRuns = () => {

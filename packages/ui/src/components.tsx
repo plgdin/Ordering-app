@@ -706,13 +706,28 @@ export function BottomTabs<T extends string>({
 }
 
 /* ─── Search Bar (no emoji) ─── */
-export function SearchBar({ label }: { label: string }) {
+export function SearchBar({
+  label,
+  value,
+  onChangeText
+}: {
+  label: string;
+  value?: string;
+  onChangeText?: (text: string) => void;
+}) {
   return (
     <View style={styles.searchBar}>
       <View style={styles.searchIconCircle}>
         <Text style={styles.searchIconText}>S</Text>
       </View>
-      <Text style={styles.searchText}>{label}</Text>
+      <TextInput
+        style={styles.searchText}
+        placeholder={label}
+        placeholderTextColor={colors.muted}
+        value={value}
+        onChangeText={onChangeText}
+        autoCapitalize="none"
+      />
     </View>
   );
 }

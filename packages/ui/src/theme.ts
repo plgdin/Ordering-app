@@ -1,20 +1,20 @@
 import { Platform } from "react-native";
 
 export const colors = {
-  primary: "#273C2C",
-  primaryDeep: "#1A2A1E",
-  primaryMid: "#3A5A40",
-  primaryLight: "#5A8A66",
-  primarySoft: "#DAE8DC",
-  primaryFaint: "#EDF4EE",
-  surface: "#FFFFFF",
-  canvas: "#F0F4F1",
-  line: "#D4DDD6",
-  ink: "#111111",
-  muted: "#5A6B5E",
-  success: "#2D8B55",
-  warning: "#D4960A",
-  danger: "#D14343"
+  primary: "#A8201A",
+  primaryDeep: "#5C0D11",
+  primaryMid: "#8B1E22",
+  primaryLight: "#C33C3C",
+  primarySoft: "#EAC7C0",
+  primaryFaint: "#F7EDE2",
+  surface: "#FAF6F0",
+  canvas: "#F5EBE0",
+  line: "#E3D5CA",
+  ink: "#2F1F17",
+  muted: "#7F6D64",
+  success: "#588157",
+  warning: "#D4A373",
+  danger: "#A8201A"
 };
 
 export const spacing = {

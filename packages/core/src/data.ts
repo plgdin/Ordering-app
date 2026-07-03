@@ -14,7 +14,10 @@ export const categories = [
 export const storeImages: Record<string, string> = {
   more: "https://images.unsplash.com/photo-1604719312566-8912e9227c6a?w=600&h=300&fit=crop",
   pharma: "https://images.unsplash.com/photo-1631549916768-4119b2e5f926?w=600&h=300&fit=crop",
-  bakery: "https://images.unsplash.com/photo-1509440159596-0249088772ff?w=600&h=300&fit=crop"
+  bakery: "https://images.unsplash.com/photo-1509440159596-0249088772ff?w=600&h=300&fit=crop",
+  spice: "https://images.unsplash.com/photo-1589301760014-d929f3979dbc?w=600&h=300&fit=crop",
+  burger: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=600&h=300&fit=crop",
+  pizza: "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=600&h=300&fit=crop"
 };
 
 export const featuredStores: Store[] = [
@@ -82,6 +85,64 @@ export const featuredStores: Store[] = [
       { id: "b5", name: "Veg Puff", price: 25, unit: "piece", inStock: false },
       { id: "b6", name: "Banana Muffin", price: 40, unit: "piece", inStock: true },
       { id: "b7", name: "Garlic Bread Stick", price: 55, unit: "piece", inStock: true }
+    ]
+  },
+  {
+    id: "spice",
+    name: "Spice Junction Restaurant",
+    category: "Restaurants",
+    eta: "25-35 min",
+    distanceKm: 2.8,
+    rating: 4.6,
+    deliveryTag: "Rider route alignment saves Rs 30 in delivery",
+    highlight: "Authentic Dum Biryani, Tandoori, and North Indian delights",
+    featured: true,
+    enabledDiscountKeys: ["flat75", "save10"],
+    image: storeImages.spice,
+    inventory: [
+      { id: "f1", name: "Chicken Dum Biryani", price: 240, unit: "portion", inStock: true },
+      { id: "f2", name: "Paneer Tikka Masala", price: 190, unit: "portion", inStock: true },
+      { id: "f3", name: "Butter Naan", price: 40, unit: "piece", inStock: true },
+      { id: "f4", name: "Tandoori Chicken (Half)", price: 220, unit: "portion", inStock: true },
+      { id: "f5", name: "Gulab Jamun (2 pcs)", price: 50, unit: "portion", inStock: true }
+    ]
+  },
+  {
+    id: "burger",
+    name: "Burger Bistro",
+    category: "Burgers",
+    eta: "15-25 min",
+    distanceKm: 1.9,
+    rating: 4.5,
+    deliveryTag: "Warm delivery within 20 mins guaranteed",
+    highlight: "Gourmet cheese burgers, crispy fries, and milkshakes",
+    featured: true,
+    enabledDiscountKeys: ["save10"],
+    image: storeImages.burger,
+    inventory: [
+      { id: "f6", name: "Double Cheese Chicken Burger", price: 165, unit: "piece", inStock: true },
+      { id: "f7", name: "Crispy Veggie Burger", price: 125, unit: "piece", inStock: true },
+      { id: "f8", name: "Peri Peri French Fries", price: 85, unit: "portion", inStock: true },
+      { id: "f9", name: "Chocolate Oreo Shake", price: 110, unit: "glass", inStock: true }
+    ]
+  },
+  {
+    id: "pizza",
+    name: "Pizza Roma",
+    category: "Pizza",
+    eta: "20-30 min",
+    distanceKm: 3.2,
+    rating: 4.7,
+    deliveryTag: "100% fresh mozzarella and wood-fired crust",
+    highlight: "Freshly baked pizzas, cheesy garlic breads, and pasta",
+    featured: true,
+    enabledDiscountKeys: ["combo30", "flat75"],
+    image: storeImages.pizza,
+    inventory: [
+      { id: "f10", name: "Margherita Pizza (Medium)", price: 280, unit: "piece", inStock: true },
+      { id: "f11", name: "Fiery Chicken Pizza (Medium)", price: 340, unit: "piece", inStock: true },
+      { id: "f12", name: "Cheesy Garlic Bread", price: 120, unit: "pack", inStock: true },
+      { id: "f13", name: "Arrabbiata Pasta", price: 180, unit: "portion", inStock: true }
     ]
   }
 ];
