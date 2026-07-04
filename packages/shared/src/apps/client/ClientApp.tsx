@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { LocationBar, PageShell, SavedAddress, ForkItSplash } from "@nearnow/ui";
+import { LocationBar, PageShell, SavedAddress, ForkItSplash, categoryPalettes, fontFamilies, SpringButton } from "@nearnow/ui";
 import { Store } from "@nearnow/core";
 import {
   PaymentMethod,
@@ -15,7 +15,7 @@ import { ClientOrdersScreen } from "./screens/OrdersScreen";
 import { ClientSettingsScreen } from "./screens/SettingsScreen";
 import { StoreDetailScreen } from "./screens/StoreDetailScreen";
 import { clientTabs } from "./tabs";
-import { ClientTab } from "./types";
+import { ClientTab, MainCategory } from "./types";
 import { Platform, View, Text, Pressable, Animated, StyleSheet } from "react-native";
 
 const defaultAddress: SavedAddress = {
@@ -32,6 +32,7 @@ const defaultAddress: SavedAddress = {
 export function ClientApp() {
   const [showSplash, setShowSplash] = useState(true);
   const [activeTab, setActiveTab] = useState<ClientTab>("home");
+  const [mainCategory, setMainCategory] = useState<MainCategory>("provisions");
   const [selectedStore, setSelectedStore] = useState<Store | null>(null);
   const [address, setAddress] = useState<SavedAddress>(defaultAddress);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("cod");
@@ -42,6 +43,8 @@ export function ClientApp() {
   } | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const toastOpacity = useRef(new Animated.Value(0)).current;
+  const toastTranslateY = useRef(new Animated.Value(40)).current;
+  const cartStripTranslateY = useRef(new Animated.Value(100)).current;
 
   const cart = useClientCart();
   const auth = useSupabaseAuth("client");
@@ -63,6 +66,24 @@ export function ClientApp() {
     };
   }, [auth.snapshot.isSignedIn]);
 
+  useEffect(() => {
+    if (activeTab === "home" && cart.itemCount > 0) {
+      Animated.spring(cartStripTranslateY, {
+        toValue: 0,
+        tension: 50,
+        friction: 8,
+        useNativeDriver: true
+      }).start();
+    } else {
+      Animated.spring(cartStripTranslateY, {
+        toValue: 100,
+        tension: 50,
+        friction: 8,
+        useNativeDriver: true
+      }).start();
+    }
+  }, [activeTab, cart.itemCount]);
+
   const handleStorePress = useCallback((store: Store) => {
     setSelectedStore(store);
   }, []);
@@ -81,13 +102,20 @@ export function ClientApp() {
       cart.addItem(store, item);
       setToastMessage(`${item.name} added to cart.`);
       toastOpacity.setValue(0);
+      toastTranslateY.setValue(40);
       Animated.sequence([
-        Animated.timing(toastOpacity, { toValue: 1, duration: 200, useNativeDriver: true }),
-        Animated.delay(1800),
-        Animated.timing(toastOpacity, { toValue: 0, duration: 300, useNativeDriver: true })
+        Animated.parallel([
+          Animated.spring(toastTranslateY, { toValue: 0, tension: 60, friction: 7, useNativeDriver: true }),
+          Animated.timing(toastOpacity, { toValue: 1, duration: 150, useNativeDriver: true })
+        ]),
+        Animated.delay(1500),
+        Animated.parallel([
+          Animated.spring(toastTranslateY, { toValue: 40, tension: 60, friction: 7, useNativeDriver: true }),
+          Animated.timing(toastOpacity, { toValue: 0, duration: 250, useNativeDriver: true })
+        ])
       ]).start(() => setToastMessage(null));
     },
-    [cart, toastOpacity]
+    [cart, toastOpacity, toastTranslateY]
   );
 
   const handleCheckout = useCallback(async () => {
@@ -130,12 +158,15 @@ export function ClientApp() {
         activeTab={activeTab}
         onTabChange={handleTabChange}
         tabs={clientTabs}
+        backgroundColor={activeTab === "home" ? categoryPalettes[mainCategory].canvas : undefined}
       >
         {activeTab === "home" && !selectedStore ? (
           <ClientHomeScreen
             onStorePress={handleStorePress}
             cartCount={cart.itemCount}
             onGoToCart={() => setActiveTab("cart")}
+            mainCategory={mainCategory}
+            onMainCategoryChange={setMainCategory}
             onQuickAdd={(item) => {
               const moreStore = {
                 id: "more",
@@ -192,24 +223,33 @@ export function ClientApp() {
 
       {/* Floating Swiggy/Instamart style Cart Strip */}
       {activeTab === "home" && cart.itemCount > 0 && (
-        <Pressable
-          style={styles.floatingCartStrip}
-          onPress={() => setActiveTab("cart")}
+        <Animated.View
+          style={[
+            styles.floatingCartStrip,
+            {
+              backgroundColor: categoryPalettes[mainCategory].primary,
+              transform: [{ translateY: cartStripTranslateY }]
+            }
+          ]}
         >
-          <View style={styles.cartStripInfo}>
-            <Text style={styles.cartStripIcon}>🛒</Text>
-            <Text style={styles.cartStripText}>
-              {cart.itemCount} {cart.itemCount === 1 ? "item" : "items"} added
-            </Text>
-          </View>
-          <Text style={styles.cartStripBtn}>View Cart ➔</Text>
-        </Pressable>
+          <SpringButton
+            style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", width: "100%" }}
+            onPress={() => setActiveTab("cart")}
+          >
+            <View style={styles.cartStripInfo}>
+              <Text style={styles.cartStripText}>
+                {cart.itemCount} {cart.itemCount === 1 ? "item" : "items"} added
+              </Text>
+            </View>
+            <Text style={styles.cartStripBtn}>View Cart -{">"}</Text>
+          </SpringButton>
+        </Animated.View>
       )}
 
       {/* Floating toast notification */}
       {toastMessage && (
-        <Animated.View style={[styles.floatingToast, { opacity: toastOpacity }]}>
-          <Text style={styles.floatingToastText}>{toastMessage}</Text>
+        <Animated.View style={[styles.floatingToast, { opacity: toastOpacity, borderColor: categoryPalettes[mainCategory].primary, transform: [{ translateY: toastTranslateY }] }]}>
+          <Text style={[styles.floatingToastText, { color: categoryPalettes[mainCategory].deep }]}>{toastMessage}</Text>
         </Animated.View>
       )}
     </View>
@@ -241,6 +281,7 @@ const styles = StyleSheet.create({
     zIndex: 9999
   },
   floatingToastText: {
+    fontFamily: fontFamilies.display,
     color: "#8B1E22", // crimson red text
     fontSize: 14,
     fontWeight: "900",
@@ -274,12 +315,14 @@ const styles = StyleSheet.create({
     fontSize: 20
   },
   cartStripText: {
+    fontFamily: fontFamilies.display,
     color: "#FAF6F0",
     fontSize: 15,
     fontWeight: "800",
     letterSpacing: 0.5
   },
   cartStripBtn: {
+    fontFamily: fontFamilies.display,
     color: "#FAF6F0",
     fontSize: 15,
     fontWeight: "900",

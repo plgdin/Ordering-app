@@ -1,4 +1,5 @@
 import { LinearGradient } from "expo-linear-gradient";
+import MaskedView from '@react-native-masked-view/masked-view';
 import { StatusBar } from "expo-status-bar";
 import React, { PropsWithChildren, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -18,7 +19,7 @@ import {
   ViewStyle
 } from "react-native";
 import { AddressPinpointMap } from "./AddressPinpointMap";
-import { colors, fonts, radius, shadow, spacing } from "./theme";
+import { colors, fonts, radius, shadow, spacing, fontFamilies } from "./theme";
 
 export type TabOption<T extends string> = {
   id: T;
@@ -39,6 +40,207 @@ export type SavedAddress = {
   lng?: number;
 };
 
+/* ─── 21st.dev Animations ─── */
+
+export function AuroraBackground({ colors: blobColors = ["rgba(255,0,0,0.08)", "rgba(0,0,255,0.08)", "rgba(0,255,0,0.06)"] }: { colors?: string[] }) {
+  const anim1 = useRef(new Animated.Value(0)).current;
+  const anim2 = useRef(new Animated.Value(0)).current;
+  const anim3 = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    const createLoop = (anim: Animated.Value, duration: number) => Animated.loop(
+      Animated.sequence([
+        Animated.timing(anim, { toValue: 1, duration, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
+        Animated.timing(anim, { toValue: 0, duration, easing: Easing.inOut(Easing.sin), useNativeDriver: true })
+      ])
+    );
+    const loops = [createLoop(anim1, 14000), createLoop(anim2, 18000), createLoop(anim3, 22000)];
+    loops.forEach(l => l.start());
+    return () => loops.forEach(l => l.stop());
+  }, [anim1, anim2, anim3]);
+
+  const filterStyle = Platform.OS === 'web' ? { filter: 'blur(70px)' } : { opacity: 0.8 };
+
+  return (
+    <View style={[StyleSheet.absoluteFillObject, { overflow: 'hidden' }]} pointerEvents="none">
+      <Animated.View style={[
+        { position: 'absolute', top: '-10%', left: '-10%', width: '70%', height: '60%', borderRadius: 9999, backgroundColor: blobColors[0] },
+        filterStyle as any,
+        { transform: [
+          { translateX: anim1.interpolate({ inputRange: [0, 1], outputRange: [0, 100] }) },
+          { translateY: anim1.interpolate({ inputRange: [0, 1], outputRange: [0, 40] }) },
+          { scale: anim1.interpolate({ inputRange: [0, 1], outputRange: [1, 1.1] }) }
+        ] }
+      ]} />
+      <Animated.View style={[
+        { position: 'absolute', top: '30%', right: '-20%', width: '80%', height: '70%', borderRadius: 9999, backgroundColor: blobColors[1] || blobColors[0] },
+        filterStyle as any,
+        { transform: [
+          { translateX: anim2.interpolate({ inputRange: [0, 1], outputRange: [0, -80] }) },
+          { translateY: anim2.interpolate({ inputRange: [0, 1], outputRange: [0, 60] }) },
+          { scale: anim2.interpolate({ inputRange: [0, 1], outputRange: [1, 1.15] }) }
+        ] }
+      ]} />
+      {blobColors[2] && (
+        <Animated.View style={[
+          { position: 'absolute', bottom: '-20%', left: '10%', width: '60%', height: '50%', borderRadius: 9999, backgroundColor: blobColors[2] },
+          filterStyle as any,
+          { transform: [
+            { translateX: anim3.interpolate({ inputRange: [0, 1], outputRange: [0, 60] }) },
+            { translateY: anim3.interpolate({ inputRange: [0, 1], outputRange: [0, -90] }) },
+            { scale: anim3.interpolate({ inputRange: [0, 1], outputRange: [1, 1.2] }) }
+          ] }
+        ]} />
+      )}
+    </View>
+  );
+}
+
+export function SpringButton({ onPress, children, style, scaleTo = 0.95, ...props }: React.ComponentProps<typeof Pressable> & { scaleTo?: number }) {
+  const scale = useRef(new Animated.Value(1)).current;
+  const shimmer = useRef(new Animated.Value(-1)).current;
+
+  useEffect(() => {
+    const loop = Animated.loop(
+      Animated.timing(shimmer, { toValue: 2, duration: 3000, easing: Easing.linear, useNativeDriver: true })
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [shimmer]);
+
+  const onPressIn = (e: any) => {
+    Animated.spring(scale, { toValue: scaleTo, tension: 150, friction: 6, useNativeDriver: true }).start();
+    props.onPressIn?.(e);
+  };
+  const onPressOut = (e: any) => {
+    Animated.spring(scale, { toValue: 1, tension: 180, friction: 7, useNativeDriver: true }).start();
+    props.onPressOut?.(e);
+  };
+
+  const translateX = shimmer.interpolate({
+    inputRange: [-1, 2],
+    outputRange: [-200, 400]
+  });
+
+  return (
+    <Pressable onPress={onPress} onPressIn={onPressIn} onPressOut={onPressOut} {...props}>
+      {(state) => {
+        const customStyle = typeof style === 'function' ? style(state) : style;
+        return (
+          <Animated.View style={[customStyle, { transform: [{ scale }], overflow: 'hidden', position: 'relative' }] as any}>
+            {typeof children === 'function' ? children(state) : children}
+            {/* The Shiny Glare */}
+            <Animated.View style={[StyleSheet.absoluteFillObject, { transform: [{ translateX }, { skewX: '-20deg' }], width: '50%' }]} pointerEvents="none">
+              <LinearGradient 
+                colors={["rgba(255,255,255,0)", "rgba(255,255,255,0.25)", "rgba(255,255,255,0)"]} 
+                start={{ x: 0, y: 0 }} 
+                end={{ x: 1, y: 0 }} 
+                style={StyleSheet.absoluteFillObject} 
+              />
+            </Animated.View>
+          </Animated.View>
+        );
+      }}
+    </Pressable>
+  );
+}
+
+export function BorderBeamCard({ children, style, colors: beamColors = ["#000", "transparent", "transparent"] }: { children: React.ReactNode, style?: StyleProp<ViewStyle>, colors?: string[] }) {
+  const spin = useRef(new Animated.Value(0)).current;
+  
+  useEffect(() => {
+    const loop = Animated.loop(
+      Animated.timing(spin, { toValue: 1, duration: 3500, easing: Easing.linear, useNativeDriver: true })
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [spin]);
+
+  const spinRotate = spin.interpolate({
+    inputRange: [0, 1],
+    outputRange: ["0deg", "360deg"]
+  });
+
+  const flatStyle = StyleSheet.flatten(style) || {};
+  const { 
+    padding, paddingHorizontal, paddingVertical, paddingTop, paddingBottom, paddingLeft, paddingRight, paddingStart, paddingEnd, 
+    borderRadius, backgroundColor, 
+    ...outerStyle 
+  } = flatStyle as any;
+
+  const innerPadding = {
+    padding, paddingHorizontal, paddingVertical, paddingTop, paddingBottom, paddingLeft, paddingRight, paddingStart, paddingEnd,
+  };
+  const bRadius = borderRadius || 0;
+  const bgColor = backgroundColor || "transparent";
+
+  return (
+    <View style={[outerStyle, { overflow: 'hidden', position: 'relative', backgroundColor: 'transparent', borderRadius: bRadius }]}>
+      <Animated.View style={[
+        StyleSheet.absoluteFillObject, 
+        { 
+          width: '200%', 
+          height: '200%', 
+          top: '-50%', 
+          left: '-50%', 
+          transform: [{ rotate: spinRotate }],
+          alignItems: 'center',
+          justifyContent: 'center'
+        }
+      ]}>
+        <LinearGradient 
+          colors={[beamColors[0], beamColors[1] || 'transparent', beamColors[2] || 'transparent']} 
+          start={{ x: 0.5, y: 0.5 }} 
+          end={{ x: 1, y: 1 }} 
+          style={{ width: '50%', height: '50%', position: 'absolute', bottom: '50%', right: '50%' }} 
+        />
+        <LinearGradient 
+          colors={['transparent', beamColors[0], 'transparent']} 
+          start={{ x: 0, y: 0 }} 
+          end={{ x: 1, y: 0 }} 
+          style={{ width: '100%', height: 4, position: 'absolute', top: '50%', right: '50%' }} 
+        />
+      </Animated.View>
+      <View style={[innerPadding, { flex: 1, margin: 2, backgroundColor: bgColor, borderRadius: Math.max(0, bRadius - 2), overflow: 'hidden' }]}>
+        {children}
+      </View>
+    </View>
+  );
+}
+
+export function ShimmerText({ children, style, shimmerColor = "rgba(255,255,255,0.9)" }: { children: string, style?: StyleProp<ViewStyle>, shimmerColor?: string }) {
+  const move = useRef(new Animated.Value(0)).current;
+  
+  useEffect(() => {
+    const loop = Animated.loop(
+      Animated.timing(move, { toValue: 1, duration: 2500, easing: Easing.linear, useNativeDriver: true })
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [move]);
+
+  const translateX = move.interpolate({
+    inputRange: [0, 1],
+    outputRange: [-150, 250]
+  });
+
+  return (
+    <MaskedView
+      maskElement={<Text style={[style, { backgroundColor: 'transparent' }]}>{children}</Text>}
+    >
+      <Text style={[style, { opacity: 0.5 }]}>{children}</Text>
+      <Animated.View style={[StyleSheet.absoluteFillObject, { transform: [{ translateX }, { skewX: '-15deg' }], width: 100 }]} pointerEvents="none">
+         <LinearGradient 
+           colors={["transparent", shimmerColor, "transparent"]} 
+           start={{ x: 0, y: 0 }} 
+           end={{ x: 1, y: 0 }} 
+           style={StyleSheet.absoluteFillObject} 
+         />
+      </Animated.View>
+    </MaskedView>
+  );
+}
+
 /* ─── Page Shell ─── */
 export function PageShell<T extends string>({
   title,
@@ -47,6 +249,8 @@ export function PageShell<T extends string>({
   activeTab,
   onTabChange,
   tabs,
+  backgroundColor,
+  auroraColors,
   children
 }: PropsWithChildren<{
   title?: string;
@@ -55,33 +259,43 @@ export function PageShell<T extends string>({
   activeTab: T;
   onTabChange: (tab: T) => void;
   tabs: TabOption<T>[];
+  backgroundColor?: string;
+  auroraColors?: string[];
 }>) {
   const fade = useRef(new Animated.Value(0)).current;
-  const lift = useRef(new Animated.Value(18)).current;
+  const lift = useRef(new Animated.Value(15)).current;
+  const slideX = useRef(new Animated.Value(20)).current;
   const useNativeDriver = Platform.OS !== "web";
   const webViewportStyle = Platform.OS === "web" ? styles.webViewport : null;
 
   useEffect(() => {
     fade.setValue(0);
-    lift.setValue(18);
+    lift.setValue(15);
+    slideX.setValue(20);
     Animated.parallel([
       Animated.timing(fade, {
         toValue: 1,
-        duration: 420,
-        easing: Easing.out(Easing.cubic),
+        duration: 250,
         useNativeDriver
       }),
-      Animated.timing(lift, {
+      Animated.spring(lift, {
         toValue: 0,
-        duration: 460,
-        easing: Easing.out(Easing.cubic),
+        tension: 60,
+        friction: 8,
+        useNativeDriver
+      }),
+      Animated.spring(slideX, {
+        toValue: 0,
+        tension: 60,
+        friction: 8,
         useNativeDriver
       })
     ]).start();
-  }, [activeTab, fade, lift, useNativeDriver]);
+  }, [activeTab, fade, lift, slideX, useNativeDriver]);
 
   return (
-    <View style={[styles.background, webViewportStyle]}>
+    <View style={[styles.background, webViewportStyle, backgroundColor ? { backgroundColor } : null]}>
+      {auroraColors && <AuroraBackground colors={auroraColors} />}
       <StatusBar style="dark" />
       <SafeAreaView style={[styles.safeArea, webViewportStyle]}>
         {locationBar}
@@ -97,7 +311,7 @@ export function PageShell<T extends string>({
         <Animated.View
           style={[
             styles.animatedBody,
-            { opacity: fade, transform: [{ translateY: lift }] }
+            { opacity: fade, transform: [{ translateY: lift }, { translateX: slideX }] }
           ]}
         >
           <ScrollView
@@ -786,11 +1000,13 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md
   },
   title: {
+    fontFamily: fontFamilies.display,
     fontSize: fonts.title,
     fontWeight: "800",
     color: colors.ink
   },
   subtitle: {
+    fontFamily: fontFamilies.body,
     marginTop: 4,
     fontSize: fonts.body,
     color: colors.muted
@@ -834,18 +1050,21 @@ const styles = StyleSheet.create({
     flex: 1
   },
   locationLabel: {
+    fontFamily: fontFamilies.body,
     fontSize: 11,
     fontWeight: "700",
     color: colors.primaryMid,
     letterSpacing: 0.8
   },
   locationAddress: {
+    fontFamily: fontFamilies.body,
     fontSize: fonts.body,
     fontWeight: "600",
     color: colors.ink,
     marginTop: 2
   },
   locationChevron: {
+    fontFamily: fontFamilies.body,
     fontSize: 13,
     color: colors.primaryMid,
     fontWeight: "700"
@@ -877,6 +1096,7 @@ const styles = StyleSheet.create({
     right: 56
   },
   eyebrow: {
+    fontFamily: fontFamilies.body,
     color: colors.primarySoft,
     textTransform: "uppercase",
     fontWeight: "700",
@@ -884,12 +1104,14 @@ const styles = StyleSheet.create({
     fontSize: 12
   },
   heroTitle: {
+    fontFamily: fontFamilies.display,
     color: "#FFFFFF",
     fontSize: 26,
     lineHeight: 32,
     fontWeight: "800"
   },
   heroBody: {
+    fontFamily: fontFamilies.body,
     color: "#D4E8D9",
     fontSize: fonts.body,
     lineHeight: 22
@@ -902,6 +1124,7 @@ const styles = StyleSheet.create({
     marginTop: 8
   },
   accentText: {
+    fontFamily: fontFamilies.body,
     color: colors.primaryDeep,
     fontWeight: "700",
     fontSize: 13
@@ -916,6 +1139,7 @@ const styles = StyleSheet.create({
     overflow: "hidden"
   },
   storeImageInitials: {
+    fontFamily: fontFamilies.display,
     color: "#FFFFFF",
     fontSize: 32,
     fontWeight: "800",
@@ -943,11 +1167,13 @@ const styles = StyleSheet.create({
     marginBottom: 4
   },
   sectionTitle: {
+    fontFamily: fontFamilies.display,
     fontSize: fonts.heading,
     fontWeight: "800",
     color: colors.ink
   },
   sectionAction: {
+    fontFamily: fontFamilies.body,
     fontSize: fonts.caption,
     color: colors.primaryMid,
     fontWeight: "700"
@@ -973,6 +1199,7 @@ const styles = StyleSheet.create({
     ...shadow
   },
   categoryChipText: {
+    fontFamily: fontFamilies.display,
     color: colors.ink,
     fontWeight: "700",
     fontSize: 14
@@ -1004,11 +1231,13 @@ const styles = StyleSheet.create({
     gap: 4
   },
   ratingPillValue: {
+    fontFamily: fontFamilies.display,
     color: "#4B2202",
     fontWeight: "900",
     fontSize: 15
   },
   ratingPillCaption: {
+    fontFamily: fontFamilies.body,
     color: "#7A3D00",
     fontWeight: "700",
     fontSize: 11,
@@ -1031,6 +1260,7 @@ const styles = StyleSheet.create({
     borderWidth: 0
   },
   chipText: {
+    fontFamily: fontFamilies.body,
     color: colors.ink,
     fontWeight: "700"
   },
@@ -1042,15 +1272,18 @@ const styles = StyleSheet.create({
     flex: 1
   },
   metricLabel: {
+    fontFamily: fontFamilies.body,
     fontSize: fonts.caption,
     color: colors.muted
   },
   metricValue: {
+    fontFamily: fontFamilies.display,
     fontSize: 24,
     fontWeight: "800",
     color: colors.ink
   },
   metricTrend: {
+    fontFamily: fontFamilies.body,
     fontSize: fonts.caption,
     color: colors.primaryMid,
     fontWeight: "700"
@@ -1081,6 +1314,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary
   },
   tabLabel: {
+    fontFamily: fontFamilies.display,
     fontSize: 13,
     fontWeight: "700",
     color: colors.muted
@@ -1115,6 +1349,7 @@ const styles = StyleSheet.create({
     fontSize: 13
   },
   searchText: {
+    fontFamily: fontFamilies.body,
     color: colors.muted,
     fontSize: fonts.body,
     flex: 1
@@ -1127,6 +1362,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12
   },
   noticeText: {
+    fontFamily: fontFamilies.body,
     color: colors.primaryDeep,
     fontSize: fonts.body,
     lineHeight: 21,
@@ -1143,6 +1379,7 @@ const styles = StyleSheet.create({
     paddingVertical: 5
   },
   featuredBadgeText: {
+    fontFamily: fontFamilies.body,
     fontSize: 12,
     fontWeight: "700",
     color: "#9A5A00"
@@ -1253,12 +1490,14 @@ const styles = StyleSheet.create({
     right: 24
   },
   cartLoaderTitle: {
+    fontFamily: fontFamilies.display,
     fontSize: 17,
     fontWeight: "800",
     color: colors.ink,
     textAlign: "center"
   },
   cartLoaderSubtitle: {
+    fontFamily: fontFamilies.body,
     fontSize: 14,
     lineHeight: 21,
     color: colors.muted,
@@ -1293,6 +1532,7 @@ const modalStyles = StyleSheet.create({
     borderBottomColor: colors.line
   },
   headerTitle: {
+    fontFamily: fontFamilies.display,
     fontSize: 18,
     fontWeight: "800",
     color: colors.ink
@@ -1419,11 +1659,13 @@ const modalStyles = StyleSheet.create({
     paddingHorizontal: spacing.md
   },
   mapText: {
+    fontFamily: fontFamilies.display,
     fontSize: 14,
     fontWeight: "700",
     color: colors.primaryDeep
   },
   mapSubtext: {
+    fontFamily: fontFamilies.body,
     fontSize: 13,
     color: colors.muted,
     textAlign: "center"
@@ -1443,11 +1685,13 @@ const modalStyles = StyleSheet.create({
     gap: 6
   },
   fieldLabel: {
+    fontFamily: fontFamilies.body,
     fontSize: 13,
     fontWeight: "700",
     color: colors.muted
   },
   fieldInput: {
+    fontFamily: fontFamilies.body,
     backgroundColor: colors.primaryFaint,
     borderRadius: radius.sm,
     borderWidth: 1,
@@ -1458,6 +1702,7 @@ const modalStyles = StyleSheet.create({
     color: colors.ink
   },
   fieldMultiline: {
+    fontFamily: fontFamilies.body,
     minHeight: 72,
     textAlignVertical: "top" as never
   },
@@ -1469,6 +1714,7 @@ const modalStyles = StyleSheet.create({
     alignItems: "center"
   },
   saveBtnText: {
+    fontFamily: fontFamilies.display,
     color: "#FFFFFF",
     fontWeight: "800",
     fontSize: 16

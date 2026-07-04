@@ -25,13 +25,19 @@ import {
   SearchBar,
   SectionTitle,
   StoreImageCard,
+  AuroraBackground,
+  BorderBeamCard,
+  SpringButton,
+  ShimmerText,
   colors,
   radius,
-  spacing
+  spacing,
+  categoryPalettes,
+  fontFamilies
 } from "@nearnow/ui";
 import { useClientStores } from "../../../hooks/useSupabaseData";
 
-type MainCategory = "provisions" | "food" | "ride";
+
 
 const munchiesItems = [
   { id: "munch1", name: "Chilled Cold Brew", price: 95, unit: "bottle", inStock: true, image: "https://images.unsplash.com/photo-1517701604599-bb29b565090c?w=200&h=200&fit=crop" },
@@ -44,33 +50,133 @@ const foodCuisines = [
   { name: "Biryani", filterKey: "Restaurants", tag: "50% OFF", image: "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=200&h=280&fit=crop" },
   { name: "Burgers", filterKey: "Burgers", tag: "BUY 1 GET 1", image: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=200&h=280&fit=crop" },
   { name: "Pizzas", filterKey: "Pizza", tag: "FLAT Rs 125 OFF", image: "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=200&h=280&fit=crop" },
-  { name: "Desserts", filterKey: "Bakery", tag: "30% OFF", image: "https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=200&h=280&fit=crop" }
+  { name: "Desserts", filterKey: "Bakery", tag: "30% OFF", image: "https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=200&h=280&fit=crop" },
+  { name: "Rolls & Wraps", filterKey: "Restaurants", tag: "FLAT Rs 80 OFF", image: "https://images.unsplash.com/photo-1626700051175-6518c4793f4f?w=200&h=280&fit=crop" },
+  { name: "North Indian", filterKey: "Restaurants", tag: "FREE DEL", image: "https://images.unsplash.com/photo-1601050690597-df056fb4ce78?w=200&h=280&fit=crop" }
 ];
 
 const provisionsCategories = [
   { name: "Vegetables", filterKey: "Groceries", tag: "FRESH 40%", image: "https://images.unsplash.com/photo-1540420773420-3366772f4999?w=200&h=280&fit=crop" },
   { name: "Milk & Dairy", filterKey: "Groceries", tag: "DAILY SAVE", image: "https://images.unsplash.com/photo-1563636619-e9143da7973b?w=200&h=280&fit=crop" },
   { name: "Wellness OTC", filterKey: "Pharmacy", tag: "10-MIN", image: "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=200&h=280&fit=crop" },
-  { name: "Daily Bakery", filterKey: "Bakery", tag: "WARM BREAD", image: "https://images.unsplash.com/photo-1509440159596-0249088772ff?w=200&h=280&fit=crop" }
+  { name: "Daily Bakery", filterKey: "Bakery", tag: "WARM BREAD", image: "https://images.unsplash.com/photo-1509440159596-0249088772ff?w=200&h=280&fit=crop" },
+  { name: "Organic Fruits", filterKey: "Groceries", tag: "SAVE 25%", image: "https://images.unsplash.com/photo-1610832958506-ee5633619144?w=200&h=280&fit=crop" },
+  { name: "Instant Snacks", filterKey: "Groceries", tag: "CRISP DEL", image: "https://images.unsplash.com/photo-1599490659213-e2b9527bc087?w=200&h=280&fit=crop" }
 ];
+
+const foodDeals = [
+  {
+    bgColor: "#75E643",
+    title: "Anti-Gatekeep\nEats",
+    titleColor: "#155724",
+    badgeText: "FLAT\n50%\nOFF",
+    badgeBg: "#155724",
+    desc: "Gatekeeping local cafes is officially over. Stack your order to split the fee."
+  },
+  {
+    bgColor: "#FF8C66",
+    title: "No Cap\nZero Tax",
+    titleColor: "#3E1A0F",
+    badgeText: "FREE\nDELIVERY",
+    badgeBg: "#A8201A",
+    desc: "Eating for free delivery is the new standard when stacked on active neighborhood routes."
+  },
+  {
+    bgColor: "#FFB84D",
+    title: "Vibe Check\nFeast",
+    titleColor: "#3E1A0F",
+    badgeText: "FLAT\nRs 125\nOFF",
+    badgeBg: "#A8201A",
+    desc: "High-density hot stacks from local kitchens passing your lane."
+  },
+  {
+    bgColor: "#7CD6FA",
+    title: "Main Character\nEnergy",
+    titleColor: "#054D60",
+    badgeText: "BOGO\nFREE",
+    badgeBg: "#054D60",
+    desc: "Get 2x the mood booster. Double down on burgers & pizzas for the squad."
+  },
+  {
+    bgColor: "#EAB3FA",
+    title: "Brain Rot\nMunchies",
+    titleColor: "#5C1570",
+    badgeText: "SAVE\n30%",
+    badgeBg: "#5C1570",
+    desc: "Late night cravings satisfied instantly. Fuel your late-night scrolling."
+  }
+];
+
+const provisionsDeals = [
+  {
+    bgColor: "#75E643",
+    title: "Speedrun\nStaples",
+    titleColor: "#155724",
+    badgeText: "FLAT\n50%\nOFF",
+    badgeBg: "#155724",
+    desc: "Speedrunning grocery runs with 10-minute instant delivery by active on-route riders."
+  },
+  {
+    bgColor: "#FFB84D",
+    title: "Route\nRebate",
+    titleColor: "#3E1A0F",
+    badgeText: "SAVE\nRs 100",
+    badgeBg: "#A8201A",
+    desc: "Get instant cashback on grocery stacks aligned with active neighborhood lanes."
+  },
+  {
+    bgColor: "#FF8C66",
+    title: "Adulting\n101",
+    titleColor: "#3E1A0F",
+    badgeText: "FREE\nMILK",
+    badgeBg: "#A8201A",
+    desc: "Fresh milk, paneer, and eggs delivered before you even finish your morning scroll."
+  },
+  {
+    bgColor: "#7CD6FA",
+    title: "Slay The\nPantry",
+    titleColor: "#054D60",
+    badgeText: "FLAT\n30%\nOFF",
+    badgeBg: "#054D60",
+    desc: "Staples & snacks matching neighborhood delivery runs. Keep the pantry loaded."
+  },
+  {
+    bgColor: "#EAB3FA",
+    title: "Emergency\nEra",
+    titleColor: "#5C1570",
+    badgeText: "OTC\n10-MIN",
+    badgeBg: "#5C1570",
+    desc: "Pharmacy OTC medicines & wellness essentials stacked on on-route runs. No cap wellness."
+  }
+];
+
+import { MainCategory } from "../types";
 
 export function ClientHomeScreen({
   onStorePress,
   onQuickAdd,
   cartCount = 0,
-  onGoToCart
+  onGoToCart,
+  mainCategory,
+  onMainCategoryChange
 }: {
   onStorePress: (store: Store) => void;
   onQuickAdd?: (item: any) => void;
   cartCount?: number;
   onGoToCart?: () => void;
+  mainCategory: MainCategory;
+  onMainCategoryChange: (category: MainCategory) => void;
 }) {
-  const [mainCategory, setMainCategory] = useState<MainCategory>("provisions");
   const [activeFilter, setActiveFilter] = useState<string | null>(null);
   const [pendingFilter, setPendingFilter] = useState<string | null>(null);
   const [isFilterLoading, setIsFilterLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const filterTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const flyAnimX = useRef(new Animated.Value(0)).current;
+  const flyAnimY = useRef(new Animated.Value(0)).current;
+  const [flyDotVisible, setFlyDotVisible] = useState(false);
+  const [flyDotColor, setFlyDotColor] = useState("#9B1B15");
   
   const allStores = useClientStores();
 
@@ -78,10 +184,40 @@ export function ClientHomeScreen({
     setActiveFilter(null);
     setPendingFilter(null);
     setSearchQuery("");
-    setMainCategory(category);
+    onMainCategoryChange(category);
+  };
+
+  const triggerFlyToCart = () => {
+    flyAnimX.setValue(0);
+    flyAnimY.setValue(0);
+    setFlyDotColor(categoryTheme.primary);
+    setFlyDotVisible(true);
+
+    Animated.parallel([
+      Animated.timing(flyAnimX, {
+        toValue: 200,
+        duration: 700,
+        useNativeDriver: true
+      }),
+      Animated.sequence([
+        Animated.timing(flyAnimY, {
+          toValue: -150,
+          duration: 250,
+          useNativeDriver: true
+        }),
+        Animated.timing(flyAnimY, {
+          toValue: 400,
+          duration: 450,
+          useNativeDriver: true
+        })
+      ])
+    ]).start(() => {
+      setFlyDotVisible(false);
+    });
   };
 
   const handleQuickAdd = (item: any) => {
+    triggerFlyToCart();
     if (onQuickAdd) {
       onQuickAdd(item);
     }
@@ -91,21 +227,33 @@ export function ClientHomeScreen({
   const categoryTheme = useMemo(() => {
     if (mainCategory === "ride") {
       return {
-        primary: "#B05B48",
-        faint: "#F6ECE8",
-        soft: "#E4C5BD"
+        primary: categoryPalettes.ride.primary,
+        faint: categoryPalettes.ride.light,
+        soft: categoryPalettes.ride.soft,
+        deep: categoryPalettes.ride.deep,
+        surface: categoryPalettes.ride.surface,
+        canvas: categoryPalettes.ride.canvas,
+        line: categoryPalettes.ride.line
       };
     } else if (mainCategory === "food") {
       return {
-        primary: "#A8201A",
-        faint: "#FAF0EF",
-        soft: "#EAC7C0"
+        primary: categoryPalettes.food.primary,
+        faint: categoryPalettes.food.light,
+        soft: categoryPalettes.food.soft,
+        deep: categoryPalettes.food.deep,
+        surface: categoryPalettes.food.surface,
+        canvas: categoryPalettes.food.canvas,
+        line: categoryPalettes.food.line
       };
     } else {
       return {
-        primary: "#C88E52",
-        faint: "#FAF6F0",
-        soft: "#EAD6BD"
+        primary: categoryPalettes.provisions.primary,
+        faint: categoryPalettes.provisions.light,
+        soft: categoryPalettes.provisions.soft,
+        deep: categoryPalettes.provisions.deep,
+        surface: categoryPalettes.provisions.surface,
+        canvas: categoryPalettes.provisions.canvas,
+        line: categoryPalettes.provisions.line
       };
     }
   }, [mainCategory]);
@@ -210,54 +358,71 @@ export function ClientHomeScreen({
 
   return (
     <>
-      {/* ─── Upper Side: Category Switcher Cards ─── */}
-      <View style={styles.switcherContainer}>
-        <SwitcherCard
-          active={mainCategory === "ride"}
-          label="RIDE"
-          tag="COMMUTE"
-          sublabel="Direct Transit"
-          accentColor="#B05B48"
-          onPress={() => handleMainCategoryChange("ride")}
-        />
-        <SwitcherCard
-          active={mainCategory === "food"}
-          label="FOOD"
-          tag="RESTAURANTS"
-          sublabel="Zero Fee Eats"
-          accentColor="#A8201A"
-          onPress={() => handleMainCategoryChange("food")}
-        />
-        <SwitcherCard
-          active={mainCategory === "provisions"}
-          label="PROVISIONS"
-          tag="ESSENTIALS"
-          sublabel="10-Min Fast"
-          accentColor="#C88E52"
-          onPress={() => handleMainCategoryChange("provisions")}
-        />
-      </View>
-
-      {/* Category Slogan Highlight */}
+      {/* ─── Upper Section: Dark Two-Tone Header ─── */}
       <View
-        style={[
-          styles.captionHighlightBar,
-          {
-            backgroundColor: categoryTheme.faint,
-            borderColor: categoryTheme.soft
-          }
-        ]}
+        style={{
+          backgroundColor: categoryTheme.deep,
+          marginHorizontal: -spacing.md,
+          marginTop: -spacing.md,
+          paddingHorizontal: spacing.md,
+          paddingTop: spacing.md,
+          paddingBottom: spacing.lg,
+          borderBottomLeftRadius: 28,
+          borderBottomRightRadius: 28,
+          gap: spacing.md,
+          shadowColor: "#000",
+          shadowOffset: { width: 0, height: 6 },
+          shadowOpacity: 0.15,
+          shadowRadius: 10,
+          elevation: 6,
+          zIndex: 10
+        }}
       >
-        <Text style={[styles.captionHighlightText, { color: categoryTheme.primary }]}>
-          {categoryCaption}
-        </Text>
-      </View>
+        {/* Category Switcher Cards */}
+        <View style={styles.switcherContainer}>
+          <SwitcherCard
+            active={mainCategory === "ride"}
+            label="RIDE"
+            tag="COMMUTE"
+            sublabel="Direct Transit"
+            accentColor={categoryPalettes.ride.primary}
+            onPress={() => handleMainCategoryChange("ride")}
+          />
+          <SwitcherCard
+            active={mainCategory === "food"}
+            label="FOOD"
+            tag="RESTAURANTS"
+            sublabel="Zero Fee Eats"
+            accentColor={categoryPalettes.food.primary}
+            onPress={() => handleMainCategoryChange("food")}
+          />
+          <SwitcherCard
+            active={mainCategory === "provisions"}
+            label="PROVISIONS"
+            tag="ESSENTIALS"
+            sublabel="10-Min Fast"
+            accentColor={categoryPalettes.provisions.primary}
+            onPress={() => handleMainCategoryChange("provisions")}
+          />
+        </View>
 
-      {/* ─── Down Side: Content ─── */}
-      {mainCategory === "ride" ? (
-        <RideBookingSection accentColor={categoryTheme.primary} />
-      ) : (
-        <>
+        {/* Category Slogan Highlight */}
+        <View
+          style={[
+            styles.captionHighlightBar,
+            {
+              backgroundColor: "rgba(255, 255, 255, 0.12)",
+              borderColor: "rgba(255, 255, 255, 0.2)",
+              marginBottom: 0
+            }
+          ]}
+        >
+          <Text style={[styles.captionHighlightText, { color: "#FAF6F0" }]}>
+            {categoryCaption}
+          </Text>
+        </View>
+        {/* Search Bar inside Dark Header for Food and Provisions */}
+        {mainCategory !== "ride" && (
           <SearchBar
             label={
               mainCategory === "food"
@@ -267,52 +432,60 @@ export function ClientHomeScreen({
             value={searchQuery}
             onChangeText={setSearchQuery}
           />
+        )}
+      </View>
 
-          {/* Promo Deals Banners Carousel - Gen Z Coded */}
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.promoCarousel}
-          >
-            {mainCategory === "food" ? (
-              <>
-                <View style={[styles.promoCard, { backgroundColor: "#A8201A" }]}>
-                  <Text style={styles.promoTag}>FASTER THAN YOUR EX ⚡</Text>
-                  <Text style={styles.promoTitle}>Direct Fare Cloner</Text>
-                  <Text style={styles.promoSub}>Match active runners to clone fare down by 50% instantly.</Text>
-                </View>
-                <View style={[styles.promoCard, { backgroundColor: "#A8201A", opacity: 0.9 }]}>
-                  <Text style={styles.promoTag}>NO CAP ZERO TAX 🍔</Text>
-                  <Text style={styles.promoTitle}>Free Route Stack</Text>
-                  <Text style={styles.promoSub}>Eat for free delivery when stacked on active neighborhood routes.</Text>
-                </View>
-                <View style={[styles.promoCard, { backgroundColor: "#A8201A", opacity: 0.8 }]}>
-                  <Text style={styles.promoTag}>VIBE FEAST 🍕</Text>
-                  <Text style={styles.promoTitle}>Stacked Discounts</Text>
-                  <Text style={styles.promoSub}>High-density hot stacks from local kitchens passing your lane.</Text>
-                </View>
-              </>
-            ) : (
-              <>
-                <View style={[styles.promoCard, { backgroundColor: "#C88E52" }]}>
-                  <Text style={styles.promoTag}>SPEEDRUN 10-MINS 🛒</Text>
-                  <Text style={styles.promoTitle}>Daily Staples Fast</Text>
-                  <Text style={styles.promoSub}>Instant drop-offs by active route-aligned riders nearby.</Text>
-                </View>
-                <View style={[styles.promoCard, { backgroundColor: "#C88E52", opacity: 0.9 }]}>
-                  <Text style={styles.promoTag}>ROUTE MATCHED 🥛</Text>
-                  <Text style={styles.promoTitle}>Milk & Munchies</Text>
-                  <Text style={styles.promoSub}>Save Rs 100 when delivery runs stack with active lane orders.</Text>
-                </View>
-                <View style={[styles.promoCard, { backgroundColor: "#C88E52", opacity: 0.8 }]}>
-                  <Text style={styles.promoTag}>FAST AF OTC 💊</Text>
-                  <Text style={styles.promoTitle}>Health Quick-Add</Text>
-                  <Text style={styles.promoSub}>Local pharmacy items stacked on on-route neighborhood runs.</Text>
-                </View>
-              </>
-            )}
-            <View style={{ width: 24 }} />
-          </ScrollView>
+      {/* ─── Down Side: Content on Light Canvas ─── */}
+      <View style={{ marginTop: spacing.md }}>
+        {mainCategory === "ride" ? (
+          <RideBookingSection accentColor={categoryTheme.primary} />
+        ) : (
+          <>
+            {/* Promo Deals Banners Carousel - Gen Z Coded */}
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.promoCarousel}
+            >
+              {mainCategory === "food" ? (
+                <>
+                  <BorderBeamCard style={[styles.promoCard, { backgroundColor: categoryPalettes.food.primary }]} colors={["#FFD700", "transparent", "transparent"]}>
+                    <ShimmerText style={styles.promoTag}>FASTER THAN YOUR EX</ShimmerText>
+                    <Text style={styles.promoTitle}>Direct Fare Cloner</Text>
+                    <Text style={styles.promoSub}>Match active runners to clone fare down by 50% instantly.</Text>
+                  </BorderBeamCard>
+                  <BorderBeamCard style={[styles.promoCard, { backgroundColor: categoryPalettes.food.primary }]} colors={["#FFF", "transparent", "transparent"]}>
+                    <ShimmerText style={styles.promoTag}>NO CAP ZERO TAX</ShimmerText>
+                    <Text style={styles.promoTitle}>Free Route Stack</Text>
+                    <Text style={styles.promoSub}>Eat for free delivery when stacked on active neighborhood routes.</Text>
+                  </BorderBeamCard>
+                  <BorderBeamCard style={[styles.promoCard, { backgroundColor: categoryPalettes.food.primary }]} colors={["#00FFFF", "transparent", "transparent"]}>
+                    <ShimmerText style={styles.promoTag}>VIBE FEAST</ShimmerText>
+                    <Text style={styles.promoTitle}>Stacked Discounts</Text>
+                    <Text style={styles.promoSub}>High-density hot stacks from local kitchens passing your lane.</Text>
+                  </BorderBeamCard>
+                </>
+              ) : (
+                <>
+                  <BorderBeamCard style={[styles.promoCard, { backgroundColor: categoryPalettes.provisions.primary }]} colors={["#FFD700", "transparent", "transparent"]}>
+                    <ShimmerText style={styles.promoTag}>SPEEDRUN 10-MINS</ShimmerText>
+                    <Text style={styles.promoTitle}>Daily Staples Fast</Text>
+                    <Text style={styles.promoSub}>Instant drop-offs by active route-aligned riders nearby.</Text>
+                  </BorderBeamCard>
+                  <BorderBeamCard style={[styles.promoCard, { backgroundColor: categoryPalettes.provisions.primary }]} colors={["#FFF", "transparent", "transparent"]}>
+                    <ShimmerText style={styles.promoTag}>ROUTE MATCHED</ShimmerText>
+                    <Text style={styles.promoTitle}>Milk & Munchies</Text>
+                    <Text style={styles.promoSub}>Save Rs 100 when delivery runs stack with active lane orders.</Text>
+                  </BorderBeamCard>
+                  <BorderBeamCard style={[styles.promoCard, { backgroundColor: categoryPalettes.provisions.primary }]} colors={["#00FFFF", "transparent", "transparent"]}>
+                    <ShimmerText style={styles.promoTag}>FAST AF OTC</ShimmerText>
+                    <Text style={styles.promoTitle}>Health Quick-Add</Text>
+                    <Text style={styles.promoSub}>Local pharmacy items stacked on on-route neighborhood runs.</Text>
+                  </BorderBeamCard>
+                </>
+              )}
+              <View style={{ width: 24 }} />
+            </ScrollView>
 
           {/* High-density grid visual depending on active category */}
           {mainCategory === "provisions" ? (
@@ -322,40 +495,40 @@ export function ClientHomeScreen({
               </Text>
               
               {/* High-Fidelity Swiggy 3D-emblem cards for provisions */}
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.swiggyCardRow}>
-                <SwiggyDealCard
-                  bgColor="#75E643"
-                  title="Speedrun\nStaples"
-                  titleColor="#155724"
-                  badgeText="FLAT\n50%\nOFF"
-                  badgeBg="#155724"
-                  desc="Order stacked farm fresh veg with half-price express delivery."
-                />
-                <SwiggyDealCard
-                  bgColor="#FFB84D"
-                  title="Route\nRebate"
-                  titleColor="#3E1A0F"
-                  badgeText="SAVE\nRs 100"
-                  badgeBg="#A8201A"
-                  desc="Get instant cashback on grocery stacks aligned with active lanes."
-                />
-              </ScrollView>
+              <InfiniteLoopScrollView
+                items={provisionsDeals}
+                itemWidth={280}
+                renderItem={(item, index) => (
+                  <SwiggyDealCard
+                    key={`prov-deal-${index}`}
+                    index={index}
+                    bgColor={item.bgColor}
+                    title={item.title}
+                    titleColor={item.titleColor}
+                    badgeText={item.badgeText}
+                    badgeBg={item.badgeBg}
+                    desc={item.desc}
+                  />
+                )}
+              />
 
               <Text style={[styles.dashboardTitle, { color: categoryTheme.primary }]}>
                 Trending Categories
               </Text>
 
               {/* Graphical Image Cuisines Row with Interactive Pop-ups */}
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.cuisinesRow}>
-                {provisionsCategories.map((cat, index) => (
+              <InfiniteLoopScrollView
+                items={provisionsCategories}
+                itemWidth={120}
+                renderItem={(cat, index) => (
                   <HoverableCuisineCard
-                    key={index}
+                    key={`prov-cat-${index}`}
                     item={cat}
                     accentColor={categoryTheme.primary}
                     onPress={() => handleCategoryPress(cat.filterKey)}
                   />
-                ))}
-              </ScrollView>
+                )}
+              />
             </View>
           ) : (
             <View style={styles.sectionSpacing}>
@@ -364,40 +537,40 @@ export function ClientHomeScreen({
               </Text>
               
               {/* Graphical Image Cuisines Row with Interactive Pop-ups */}
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.cuisinesRow}>
-                {foodCuisines.map((cuisine, index) => (
+              <InfiniteLoopScrollView
+                items={foodCuisines}
+                itemWidth={120}
+                renderItem={(cuisine, index) => (
                   <HoverableCuisineCard
-                    key={index}
+                    key={`food-cat-${index}`}
                     item={cuisine}
                     accentColor={categoryTheme.primary}
                     onPress={() => handleCategoryPress(cuisine.filterKey)}
                   />
-                ))}
-              </ScrollView>
+                )}
+              />
 
               <Text style={[styles.dashboardTitle, { color: categoryTheme.primary }]}>
                 Deal Feast Banners
               </Text>
 
               {/* Swiggy 3D Coin & Starburst Styled Vouchers */}
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.swiggyCardRow}>
-                <SwiggyDealCard
-                  bgColor="#75E643"
-                  title="Top Brands\nTop Deals"
-                  titleColor="#155724"
-                  badgeText="FLAT\nRs 100\nOFF"
-                  badgeBg="#155724"
-                  desc="Stacked meals from premium kitchens aligned with local runners."
-                />
-                <SwiggyDealCard
-                  bgColor="#FF8C66"
-                  title="Deal\nFeast"
-                  titleColor="#3E1A0F"
-                  badgeText="GET\n70%\nOFF"
-                  badgeBg="#A8201A"
-                  desc="Matched courier routes waive your delivery fee automatically."
-                />
-              </ScrollView>
+              <InfiniteLoopScrollView
+                items={foodDeals}
+                itemWidth={280}
+                renderItem={(item, index) => (
+                  <SwiggyDealCard
+                    key={`food-deal-${index}`}
+                    index={index}
+                    bgColor={item.bgColor}
+                    title={item.title}
+                    titleColor={item.titleColor}
+                    badgeText={item.badgeText}
+                    badgeBg={item.badgeBg}
+                    desc={item.desc}
+                  />
+                )}
+              />
             </View>
           )}
 
@@ -420,12 +593,12 @@ export function ClientHomeScreen({
                       <Text style={styles.munchyUnit}>{item.unit}</Text>
                       <View style={styles.munchyPriceRow}>
                         <Text style={styles.munchyPrice}>Rs {item.price}</Text>
-                        <Pressable
+                        <SpringButton
                           style={[styles.quickAddBtn, { backgroundColor: categoryTheme.primary }]}
                           onPress={() => handleQuickAdd(item)}
                         >
                           <Text style={styles.quickAddBtnText}>+</Text>
-                        </Pressable>
+                        </SpringButton>
                       </View>
                     </View>
                   </View>
@@ -493,9 +666,79 @@ export function ClientHomeScreen({
               )}
             </View>
           ) : null}
+          {flyDotVisible && (
+            <Animated.View
+              style={{
+                position: "absolute",
+                width: 18,
+                height: 18,
+                borderRadius: 9,
+                backgroundColor: flyDotColor,
+                top: "35%",
+                left: "40%",
+                zIndex: 99999,
+                transform: [
+                  { translateX: flyAnimX },
+                  { translateY: flyAnimY }
+                ]
+              }}
+            />
+          )}
         </>
       )}
+      </View>
     </>
+  );
+}
+
+/* ─── Infinite Loop ScrollView for Gen Z Carousel ─── */
+function InfiniteLoopScrollView({
+  items,
+  renderItem,
+  itemWidth,
+  gap = 12
+}: {
+  items: any[];
+  renderItem: (item: any, index: number) => React.ReactNode;
+  itemWidth: number;
+  gap?: number;
+}) {
+  const scrollViewRef = useRef<ScrollView>(null);
+  const duplicatedItems = useMemo(() => {
+    if (items.length === 0) return [];
+    return [...items, ...items, ...items];
+  }, [items]);
+  const singleSetWidth = items.length * (itemWidth + gap);
+
+  useEffect(() => {
+    if (scrollViewRef.current && items.length > 0) {
+      const timer = setTimeout(() => {
+        scrollViewRef.current?.scrollTo({ x: singleSetWidth, animated: false });
+      }, 50);
+      return () => clearTimeout(timer);
+    }
+  }, [items, singleSetWidth]);
+
+  const handleScroll = (event: any) => {
+    const x = event.nativeEvent.contentOffset.x;
+    if (x < singleSetWidth * 0.5) {
+      scrollViewRef.current?.scrollTo({ x: x + singleSetWidth, animated: false });
+    } else if (x > singleSetWidth * 1.8) {
+      scrollViewRef.current?.scrollTo({ x: x - singleSetWidth, animated: false });
+    }
+  };
+
+  return (
+    <ScrollView
+      ref={scrollViewRef}
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      onScroll={handleScroll}
+      scrollEventThrottle={16}
+      contentContainerStyle={{ gap, paddingRight: 24, paddingVertical: 6 }}
+    >
+      {duplicatedItems.map((item, index) => renderItem(item, index))}
+    </ScrollView>
   );
 }
 
@@ -506,7 +749,8 @@ function SwiggyDealCard({
   titleColor,
   badgeText,
   badgeBg,
-  desc
+  desc,
+  index = 0
 }: {
   bgColor: string;
   title: string;
@@ -514,9 +758,30 @@ function SwiggyDealCard({
   badgeText: string;
   badgeBg: string;
   desc: string;
+  index?: number;
 }) {
   const [hovered, setHovered] = useState(false);
-  const scale = useRef(new Animated.Value(1)).current;
+  const [isApplied, setIsApplied] = useState(false);
+  const scale = useRef(new Animated.Value(0.8)).current;
+  const opacity = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.spring(scale, {
+        toValue: 1,
+        tension: 100,
+        friction: 8,
+        delay: index * 100,
+        useNativeDriver: true
+      }),
+      Animated.timing(opacity, {
+        toValue: 1,
+        duration: 400,
+        delay: index * 100,
+        useNativeDriver: true
+      })
+    ]).start();
+  }, [scale, opacity, index]);
 
   useEffect(() => {
     Animated.timing(scale, {
@@ -526,23 +791,40 @@ function SwiggyDealCard({
     }).start();
   }, [hovered, scale]);
 
+  const handlePress = () => {
+    setIsApplied(!isApplied);
+    Animated.sequence([
+      Animated.timing(scale, { toValue: 0.95, duration: 80, useNativeDriver: true }),
+      Animated.spring(scale, { toValue: hovered ? 1.05 : 1, tension: 150, friction: 6, useNativeDriver: true })
+    ]).start();
+  };
+
   return (
-    <Animated.View style={{ transform: [{ scale }] }}>
+    <Animated.View style={{ transform: [{ scale }], opacity }}>
       <Pressable
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
         onPressIn={() => setHovered(true)}
         onPressOut={() => setHovered(false)}
-        style={[styles.swiggyCard, { backgroundColor: bgColor }]}
+        onPress={handlePress}
+        style={[
+          styles.swiggyCard,
+          { backgroundColor: bgColor },
+          isApplied && { borderColor: "#2E7D32", borderWidth: 2, shadowColor: "#2E7D32", shadowRadius: 12 }
+        ]}
       >
         <Text style={[styles.swiggyCardTitle, { color: titleColor }]}>
-          {title.replace("\\n", "\n")}
+          {title.split("\\n").join("\n")}
         </Text>
         <View style={styles.swiggyCardContent}>
-          <View style={[styles.swiggyEmblem, { backgroundColor: badgeBg }]}>
-            <Text style={styles.swiggyEmblemText}>{badgeText.replace("\\n", "\n")}</Text>
+          <View style={[styles.swiggyEmblem, { backgroundColor: isApplied ? "#2E7D32" : badgeBg }]}>
+            <Text style={styles.swiggyEmblemText}>
+              {isApplied ? "APPLIED\nSAVED!" : badgeText.split("\\n").join("\n")}
+            </Text>
           </View>
-          <Text style={styles.swiggyCardDesc} numberOfLines={3}>{desc}</Text>
+          <Text style={styles.swiggyCardDesc}>
+            {isApplied ? "This discount voucher has been successfully applied to your cart!" : desc}
+          </Text>
         </View>
       </Pressable>
     </Animated.View>
@@ -590,15 +872,17 @@ function HoverableCuisineCard({
           style={styles.premiumCuisineCardImgBg}
           imageStyle={{ borderRadius: 18 }}
         >
+          {item.tag ? (
+            <View style={styles.cuisineFloatingTag}>
+              <Text style={styles.cuisineFloatingTagText}>{item.tag}</Text>
+            </View>
+          ) : null}
           <LinearGradient
-            colors={["rgba(0,0,0,0.8)", "rgba(0,0,0,0.3)", "transparent"]}
+            colors={["rgba(0,0,0,0.85)", "rgba(0,0,0,0.3)", "transparent"]}
             start={{ x: 0.5, y: 1 }}
             end={{ x: 0.5, y: 0 }}
             style={styles.premiumCuisineCardOverlay}
           >
-            <View style={styles.cuisineFloatingTag}>
-              <Text style={styles.cuisineFloatingTagText}>{item.tag}</Text>
-            </View>
             <Text style={styles.premiumCuisineCardLabel}>{item.name}</Text>
           </LinearGradient>
         </ImageBackground>
@@ -623,38 +907,31 @@ function SwitcherCard({
   accentColor: string;
   onPress: () => void;
 }) {
-  const scale = useRef(new Animated.Value(1)).current;
-
-  const handlePress = () => {
-    Animated.sequence([
-      Animated.timing(scale, { toValue: 0.94, duration: 80, useNativeDriver: true }),
-      Animated.timing(scale, { toValue: 1, duration: 80, useNativeDriver: true })
-    ]).start();
-    onPress();
-  };
-
   return (
-    <Animated.View style={{ flex: 1, transform: [{ scale }] }}>
-      <Pressable
-        onPress={handlePress}
+    <View style={{ flex: 1 }}>
+      <SpringButton
+        onPress={onPress}
+        scaleTo={0.92}
         style={[
           styles.switcherCard,
-          active && { borderColor: accentColor, backgroundColor: accentColor + "10", borderWidth: 2 }
+          active
+            ? { borderColor: accentColor, backgroundColor: "#FFFFFF", borderWidth: 2 }
+            : { backgroundColor: "rgba(255, 255, 255, 0.12)", borderColor: "transparent", borderWidth: 1 }
         ]}
       >
-        <View style={[styles.switcherTagWrap, active && { backgroundColor: accentColor }]}>
-          <Text style={[styles.switcherTagText, active && { color: "#FAF6F0" }]}>
+        <View style={[styles.switcherTagWrap, active ? { backgroundColor: accentColor } : { backgroundColor: "rgba(255, 255, 255, 0.18)" }]}>
+          <Text style={[styles.switcherTagText, active ? { color: "#FFFFFF" } : { color: "#FAF6F0" }]}>
             {tag}
           </Text>
         </View>
-        <Text style={[styles.switcherCardLabel, active && { color: accentColor }]}>
+        <Text style={[styles.switcherCardLabel, active ? { color: accentColor } : { color: "#FAF6F0" }]}>
           {label}
         </Text>
-        <Text style={[styles.switcherCardSub, active && { color: accentColor }]}>
+        <Text style={[styles.switcherCardSub, active ? { color: accentColor } : { color: "rgba(250, 246, 240, 0.8)" }]}>
           {sublabel}
         </Text>
-      </Pressable>
-    </Animated.View>
+      </SpringButton>
+    </View>
   );
 }
 
@@ -666,6 +943,7 @@ function RideBookingSection({ accentColor }: { accentColor: string }) {
   const [bookingState, setBookingState] = useState<"idle" | "finding" | "confirmed">("idle");
   
   const mapAnim = useRef(new Animated.Value(0)).current;
+  const rideProgress = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     Animated.loop(
@@ -687,19 +965,25 @@ function RideBookingSection({ accentColor }: { accentColor: string }) {
 
   const handleBook = () => {
     setBookingState("finding");
-    setTimeout(() => {
+    rideProgress.setValue(0);
+    Animated.timing(rideProgress, {
+      toValue: 1,
+      duration: 2500,
+      easing: Easing.inOut(Easing.quad),
+      useNativeDriver: false
+    }).start(() => {
       setBookingState("confirmed");
-    }, 2200);
+    });
   };
 
-  const dotX = mapAnim.interpolate({
+  const dotX = rideProgress.interpolate({
     inputRange: [0, 0.4, 0.8, 1],
-    outputRange: ["25%", "55%", "65%", "78%"]
+    outputRange: ["20%", "45%", "60%", "73%"]
   });
 
-  const dotY = mapAnim.interpolate({
+  const dotY = rideProgress.interpolate({
     inputRange: [0, 0.4, 0.8, 1],
-    outputRange: ["65%", "35%", "50%", "28%"]
+    outputRange: ["60%", "45%", "30%", "20%"]
   });
 
   const bikeDetails = {
@@ -715,37 +999,38 @@ function RideBookingSection({ accentColor }: { accentColor: string }) {
         Only displaying bike transit options that fully match your destination route.
       </Text>
 
-      {bookingState === "idle" ? (
+      {bookingState === "idle" || bookingState === "finding" ? (
         <>
-          {/* Pickup/Drop inputs */}
-          <View style={styles.rideInputsWrap}>
-            <View style={styles.inputRow}>
-              <View style={[styles.inputDot, { backgroundColor: "#588157" }]} />
-              <View style={{ flex: 1 }}>
-                <Text style={styles.inputLabel}>PICKUP LOCATION</Text>
-                <TextInput
-                  style={styles.rideInput}
-                  value={pickup}
-                  onChangeText={setPickup}
-                />
+          {bookingState === "idle" ? (
+            <View style={styles.rideInputsWrap}>
+              <View style={styles.inputRow}>
+                <View style={[styles.inputDot, { backgroundColor: "#588157" }]} />
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.inputLabel}>PICKUP LOCATION</Text>
+                  <TextInput
+                    style={styles.rideInput}
+                    value={pickup}
+                    onChangeText={setPickup}
+                  />
+                </View>
+              </View>
+
+              <View style={styles.inputDivider} />
+
+              <View style={styles.inputRow}>
+                <View style={[styles.inputDot, { backgroundColor: accentColor }]} />
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.inputLabel}>DROP-OFF DESTINATION</Text>
+                  <TextInput
+                    style={styles.rideInput}
+                    value={dropoff}
+                    onChangeText={setDropoff}
+                    placeholder="Enter drop-off destination..."
+                  />
+                </View>
               </View>
             </View>
-
-            <View style={styles.inputDivider} />
-
-            <View style={styles.inputRow}>
-              <View style={[styles.inputDot, { backgroundColor: accentColor }]} />
-              <View style={{ flex: 1 }}>
-                <Text style={styles.inputLabel}>DROP-OFF DESTINATION</Text>
-                <TextInput
-                  style={styles.rideInput}
-                  value={dropoff}
-                  onChangeText={setDropoff}
-                  placeholder="Enter drop-off destination..."
-                />
-              </View>
-            </View>
-          </View>
+          ) : null}
 
           {/* Premium Google Maps Vector Mockup */}
           <View style={styles.mapWrap}>
@@ -791,111 +1076,115 @@ function RideBookingSection({ accentColor }: { accentColor: string }) {
             <View style={[styles.mapSampleMarker, { left: "30%", top: "18%", backgroundColor: accentColor }]} />
           </View>
 
-          {/* High-density Mobility Stats Grid using Swiggy Deal Card Style */}
-          <Text style={[styles.dashboardTitle, { color: accentColor }]}>Mobility Analytics</Text>
-          <View style={styles.swiggyCardRow}>
-            <SwiggyDealCard
-              bgColor="#F6ECE8"
-              title="Active Riders"
-              titleColor="#5C2518"
-              badgeText="42"
-              badgeBg={accentColor}
-              desc="Delivery partners active along your commute lane corridor."
-            />
-            <SwiggyDealCard
-              bgColor="#FAF0EF"
-              title="CO2 Saved"
-              titleColor="#6A1B29"
-              badgeText="12.8 kg"
-              badgeBg={accentColor}
-              desc="Carbon emissions offset via shared stacked delivery routing."
-            />
-          </View>
+          {bookingState === "idle" ? (
+            <>
+              {/* High-density Mobility Stats Grid using Swiggy Deal Card Style */}
+              <Text style={[styles.dashboardTitle, { color: accentColor }]}>Mobility Analytics</Text>
+              <View style={styles.swiggyCardRow}>
+                <SwiggyDealCard
+                  bgColor="#F6ECE8"
+                  title="Active Riders"
+                  titleColor="#5C2518"
+                  badgeText="42"
+                  badgeBg={accentColor}
+                  desc="Delivery partners active along your commute lane corridor."
+                />
+                <SwiggyDealCard
+                  bgColor="#FAF0EF"
+                  title="CO2 Saved"
+                  titleColor="#6A1B29"
+                  badgeText="12.8 kg"
+                  badgeBg={accentColor}
+                  desc="Carbon emissions offset via shared stacked delivery routing."
+                />
+              </View>
 
-          {/* Quick Rebook Commutes List */}
-          <Text style={[styles.dashboardTitle, { color: accentColor }]}>Recent Commutes</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.commuteScroll}>
-            <View style={[styles.commuteHistoryCard, { borderLeftColor: accentColor, borderLeftWidth: 3 }]}>
-              <Text style={styles.commuteHistoryDest}>Home to Office</Text>
-              <Text style={[styles.commuteHistoryFare, { color: accentColor }]}>SAVE 40% • Aligned Moto</Text>
-              <Text style={styles.commuteHistoryRate}>Rs 42</Text>
-            </View>
-            <View style={[styles.commuteHistoryCard, { borderLeftColor: accentColor, borderLeftWidth: 3 }]}>
-              <Text style={styles.commuteHistoryDest}>Sector 21 to City Center</Text>
-              <Text style={[styles.commuteHistoryFare, { color: accentColor }]}>SAVE 35% • Premium Moto</Text>
-              <Text style={styles.commuteHistoryRate}>Rs 55</Text>
-            </View>
-          </ScrollView>
+              {/* Quick Rebook Commutes List */}
+              <Text style={[styles.dashboardTitle, { color: accentColor }]}>Recent Commutes</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.commuteScroll}>
+                <View style={[styles.commuteHistoryCard, { borderLeftColor: accentColor, borderLeftWidth: 3 }]}>
+                  <Text style={styles.commuteHistoryDest}>Home to Office</Text>
+                  <Text style={[styles.commuteHistoryFare, { color: accentColor }]}>SAVE 40% • Aligned Moto</Text>
+                  <Text style={styles.commuteHistoryRate}>Rs 42</Text>
+                </View>
+                <View style={[styles.commuteHistoryCard, { borderLeftColor: accentColor, borderLeftWidth: 3 }]}>
+                  <Text style={styles.commuteHistoryDest}>Sector 21 to City Center</Text>
+                  <Text style={[styles.commuteHistoryFare, { color: accentColor }]}>SAVE 35% • Premium Moto</Text>
+                  <Text style={styles.commuteHistoryRate}>Rs 55</Text>
+                </View>
+              </ScrollView>
 
-          {/* Ride Preference Options */}
-          <View style={styles.ridePreferences}>
-            <View style={[styles.preferenceItem, { backgroundColor: accentColor + "15", borderColor: accentColor + "30" }]}>
-              <Text style={[styles.preferenceText, { color: accentColor }]}>Quiet Ride</Text>
-            </View>
-            <View style={[styles.preferenceItem, { backgroundColor: accentColor + "15", borderColor: accentColor + "30" }]}>
-              <Text style={[styles.preferenceText, { color: accentColor }]}>Helmet Included</Text>
-            </View>
-            <View style={[styles.preferenceItem, { backgroundColor: accentColor + "15", borderColor: accentColor + "30" }]}>
-              <Text style={[styles.preferenceText, { color: accentColor }]}>Eco Route</Text>
-            </View>
-          </View>
+              {/* Ride Preference Options */}
+              <View style={styles.ridePreferences}>
+                <View style={[styles.preferenceItem, { backgroundColor: accentColor + "15", borderColor: accentColor + "30" }]}>
+                  <Text style={[styles.preferenceText, { color: accentColor }]}>Quiet Ride</Text>
+                </View>
+                <View style={[styles.preferenceItem, { backgroundColor: accentColor + "15", borderColor: accentColor + "30" }]}>
+                  <Text style={[styles.preferenceText, { color: accentColor }]}>Helmet Included</Text>
+                </View>
+                <View style={[styles.preferenceItem, { backgroundColor: accentColor + "15", borderColor: accentColor + "30" }]}>
+                  <Text style={[styles.preferenceText, { color: accentColor }]}>Eco Route</Text>
+                </View>
+              </View>
 
-          {/* Vehicle selector list */}
-          <View style={styles.onlyDirectBadge}>
-            <Text style={styles.onlyDirectText}>Verified: Direct Route-Aligned Commutes Only</Text>
-          </View>
+              {/* Vehicle selector list */}
+              <View style={styles.onlyDirectBadge}>
+                <Text style={styles.onlyDirectText}>Verified: Direct Route-Aligned Commutes Only</Text>
+              </View>
 
-          <View style={styles.vehicleList}>
-            {(Object.keys(bikeDetails) as Array<keyof typeof bikeDetails>).map((key) => {
-              const item = bikeDetails[key];
-              const isSelected = vehicle === key;
-              return (
-                <Pressable
-                  key={key}
-                  onPress={() => setVehicle(key)}
-                  style={[
-                    styles.vehicleItem,
-                    isSelected && { borderColor: accentColor, backgroundColor: accentColor + "10", borderWidth: 2 }
-                  ]}
-                >
-                  <View style={[styles.vehicleIndicatorIcon, { backgroundColor: accentColor + "20", borderColor: accentColor }]}>
-                    <Text style={[styles.vehicleIndicatorIconText, { color: accentColor }]}>M</Text>
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-                      <Text style={[styles.vehicleName, isSelected && { color: accentColor }]}>
-                        {item.name}
-                      </Text>
-                      <View style={[styles.directPill, { backgroundColor: accentColor }]}>
-                        <Text style={styles.directPillText}>100% aligned</Text>
+              <View style={styles.vehicleList}>
+                {(Object.keys(bikeDetails) as Array<keyof typeof bikeDetails>).map((key) => {
+                  const item = bikeDetails[key];
+                  const isSelected = vehicle === key;
+                  return (
+                    <Pressable
+                      key={key}
+                      onPress={() => setVehicle(key)}
+                      style={[
+                        styles.vehicleItem,
+                        isSelected && { borderColor: accentColor, backgroundColor: accentColor + "10", borderWidth: 2 }
+                      ]}
+                    >
+                      <View style={[styles.vehicleIndicatorIcon, { backgroundColor: accentColor + "20", borderColor: accentColor }]}>
+                        <Text style={[styles.vehicleIndicatorIconText, { color: accentColor }]}>M</Text>
                       </View>
-                    </View>
-                    <Text style={styles.vehicleEta}>{item.eta} • Direct to {dropoff}</Text>
-                  </View>
-                  <Text style={[styles.vehicleRate, isSelected && { color: accentColor }]}>
-                    {item.rate}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </View>
+                      <View style={{ flex: 1 }}>
+                        <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                          <Text style={[styles.vehicleName, isSelected && { color: accentColor }]}>
+                            {item.name}
+                          </Text>
+                          <View style={[styles.directPill, { backgroundColor: accentColor }]}>
+                            <Text style={styles.directPillText}>100% aligned</Text>
+                          </View>
+                        </View>
+                        <Text style={styles.vehicleEta}>{item.eta} • Direct to {dropoff}</Text>
+                      </View>
+                      <Text style={[styles.vehicleRate, isSelected && { color: accentColor }]}>
+                        {item.rate}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
 
-          {/* CTA Book Button */}
-          <Pressable style={[styles.bookBtn, { backgroundColor: accentColor }]} onPress={handleBook}>
-            <Text style={styles.bookBtnText}>Confirm Bike Ride ({bikeDetails[vehicle].rate})</Text>
-          </Pressable>
+              {/* CTA Book Button */}
+              <Pressable style={[styles.bookBtn, { backgroundColor: accentColor }]} onPress={handleBook}>
+                <Text style={styles.bookBtnText}>Confirm Bike Ride ({bikeDetails[vehicle].rate})</Text>
+              </Pressable>
+            </>
+          ) : (
+            <View style={styles.matchingWrap}>
+              <View style={[styles.pulseContainer, { backgroundColor: accentColor + "25" }]}>
+                <View style={[styles.pulseRing, { borderColor: accentColor }]} />
+                <Text style={[styles.matchingSpinner, { color: accentColor }]}>...</Text>
+              </View>
+              <Text style={styles.matchingTitle}>Finding Direct Aligned Rider...</Text>
+              <Text style={styles.matchingSubtitle}>
+                Connecting you with an on-route delivery bike going directly to {dropoff}.
+              </Text>
+            </View>
+          )}
         </>
-      ) : bookingState === "finding" ? (
-        <View style={styles.matchingWrap}>
-          <View style={[styles.pulseContainer, { backgroundColor: accentColor + "25" }]}>
-            <View style={[styles.pulseRing, { borderColor: accentColor }]} />
-            <Text style={[styles.matchingSpinner, { color: accentColor }]}>...</Text>
-          </View>
-          <Text style={styles.matchingTitle}>Finding Direct Aligned Rider...</Text>
-          <Text style={styles.matchingSubtitle}>
-            Connecting you with an on-route delivery bike going directly to {dropoff}.
-          </Text>
-        </View>
       ) : (
         <View style={styles.matchedWrap}>
           <View style={[styles.driverCard, { backgroundColor: accentColor + "10", borderColor: accentColor + "25" }]}>
@@ -905,7 +1194,7 @@ function RideBookingSection({ accentColor }: { accentColor: string }) {
             <View style={{ flex: 1 }}>
               <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
                 <Text style={styles.driverName}>Vikram Singh</Text>
-                <Text style={styles.driverRating}>⭐ 4.9</Text>
+                <Text style={styles.driverRating}>Rating: 4.9</Text>
               </View>
               <Text style={styles.driverVehicle}>Hero Splendor • MH12-EF-4321</Text>
             </View>
@@ -914,7 +1203,7 @@ function RideBookingSection({ accentColor }: { accentColor: string }) {
           <View style={styles.matchingTaglineWrap}>
             <Text style={[styles.matchingTaglineTitle, { color: accentColor }]}>ROUTE ALIGNED RIDESHARE</Text>
             <Text style={styles.matchingTaglineText}>
-              Vikram is carrying a grocery order from **More Daily Mart** to Sector 15 along your route. By sharing this journey, you saved **Rs 30** on standard rates!
+              Vikram is carrying a grocery order from More Daily Mart to Sector 15 along your route. By sharing this journey, you saved Rs 30 on standard rates!
             </Text>
           </View>
 
@@ -1190,11 +1479,13 @@ const styles = StyleSheet.create({
     gap: 8
   },
   emptyTitle: {
+    fontFamily: fontFamilies.display,
     fontSize: 17,
     fontWeight: "700",
     color: colors.ink
   },
   emptyBody: {
+    fontFamily: fontFamilies.body,
     fontSize: 14,
     color: colors.muted,
     textAlign: "center",
@@ -1225,6 +1516,7 @@ const styles = StyleSheet.create({
     elevation: 2
   },
   switcherCardLabel: {
+    fontFamily: fontFamilies.display,
     fontSize: 15,
     fontWeight: "950",
     color: colors.ink,
@@ -1232,6 +1524,7 @@ const styles = StyleSheet.create({
     textTransform: "uppercase"
   },
   switcherCardSub: {
+    fontFamily: fontFamilies.body,
     fontSize: 10,
     fontWeight: "800",
     color: colors.muted,
@@ -1245,6 +1538,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.pill
   },
   switcherTagText: {
+    fontFamily: fontFamilies.body,
     fontSize: 8,
     fontWeight: "955",
     color: colors.muted,
@@ -1261,6 +1555,7 @@ const styles = StyleSheet.create({
     alignItems: "center"
   },
   captionHighlightText: {
+    fontFamily: fontFamilies.body,
     fontSize: 12,
     fontWeight: "900",
     textAlign: "center",
@@ -1290,14 +1585,16 @@ const styles = StyleSheet.create({
     fontWeight: "950",
     color: "#FAF6F0",
     letterSpacing: 1.5,
-    fontFamily: '"Chalkboard SE", "Comic Sans MS", "Bangers", sans-serif'
+    fontFamily: fontFamilies.body
   },
   promoTitle: {
+    fontFamily: fontFamilies.display,
     fontSize: 15,
     fontWeight: "900",
     color: "#FAF6F0"
   },
   promoSub: {
+    fontFamily: fontFamilies.body,
     fontSize: 11,
     color: "rgba(250, 246, 240, 0.8)",
     lineHeight: 15,
@@ -1306,6 +1603,7 @@ const styles = StyleSheet.create({
 
   /* High-density dashboard styles */
   dashboardTitle: {
+    fontFamily: fontFamilies.display,
     fontSize: 15,
     fontWeight: "900",
     textTransform: "uppercase",
@@ -1328,8 +1626,8 @@ const styles = StyleSheet.create({
     paddingVertical: 4
   },
   swiggyCard: {
-    width: 230,
-    height: 150,
+    width: 280,
+    height: 165,
     borderRadius: 22,
     padding: spacing.md,
     justifyContent: "space-between",
@@ -1342,6 +1640,7 @@ const styles = StyleSheet.create({
     borderColor: "rgba(0, 0, 0, 0.04)"
   },
   swiggyCardTitle: {
+    fontFamily: fontFamilies.display,
     fontSize: 16,
     fontWeight: "950",
     lineHeight: 20
@@ -1364,18 +1663,20 @@ const styles = StyleSheet.create({
     elevation: 4
   },
   swiggyEmblemText: {
+    fontFamily: fontFamilies.display,
     color: "#FAF6F0",
     fontSize: 10,
-    fontWeight: "950",
+    fontWeight: "955",
     textAlign: "center",
     lineHeight: 12
   },
   swiggyCardDesc: {
+    fontFamily: fontFamilies.body,
     flex: 1,
-    fontSize: 10,
-    color: "#4A4A4A",
-    lineHeight: 14,
-    fontWeight: "700"
+    fontSize: 11,
+    color: "#333333",
+    lineHeight: 15,
+    fontWeight: "600"
   },
 
   /* Overhauled Premium Full-Box Cuisine Card (Immersive Full Image Background) */
@@ -1406,6 +1707,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4
   },
   premiumCuisineCardLabel: {
+    fontFamily: fontFamilies.display,
     fontSize: 13,
     fontWeight: "950",
     color: "#FAF6F0",
@@ -1441,26 +1743,32 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0, 0, 0, 0.2)"
   },
   cuisineFloatingTag: {
-    backgroundColor: "#FF4A52",
+    position: "absolute",
+    top: 8,
+    left: 8,
+    backgroundColor: "rgba(15, 23, 42, 0.75)",
     paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: radius.pill,
+    paddingVertical: 4,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.2)",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.35,
+    shadowOpacity: 0.15,
     shadowRadius: 3,
     elevation: 3,
     zIndex: 10
   },
   cuisineFloatingTagText: {
-    color: "#FAF6F0",
-    fontSize: 8,
-    fontWeight: "950",
+    color: "#FFFFFF",
+    fontSize: 9,
+    fontWeight: "800",
     letterSpacing: 0.5,
     textAlign: "center",
-    fontFamily: '"Chalkboard SE", "Comic Sans MS", "Bangers", sans-serif'
+    fontFamily: fontFamilies.body
   },
   cuisineTextLabel: {
+    fontFamily: fontFamilies.body,
     fontSize: 11,
     fontWeight: "900",
     color: colors.ink,
@@ -1491,11 +1799,13 @@ const styles = StyleSheet.create({
     gap: 2
   },
   munchyName: {
+    fontFamily: fontFamilies.display,
     fontSize: 13,
     fontWeight: "800",
     color: colors.ink
   },
   munchyUnit: {
+    fontFamily: fontFamilies.body,
     fontSize: 11,
     color: colors.muted,
     fontWeight: "600"
@@ -1507,6 +1817,7 @@ const styles = StyleSheet.create({
     marginTop: 4
   },
   munchyPrice: {
+    fontFamily: fontFamilies.display,
     fontSize: 13,
     fontWeight: "900",
     color: colors.ink
@@ -1519,6 +1830,7 @@ const styles = StyleSheet.create({
     alignItems: "center"
   },
   quickAddBtnText: {
+    fontFamily: fontFamilies.display,
     color: "#FAF6F0",
     fontSize: 15,
     fontWeight: "800",
@@ -1652,10 +1964,12 @@ const styles = StyleSheet.create({
     gap: spacing.md
   },
   rideHeading: {
+    fontFamily: fontFamilies.display,
     fontSize: 22,
     fontWeight: "950"
   },
   rideSubheading: {
+    fontFamily: fontFamilies.body,
     fontSize: 14,
     color: colors.muted,
     lineHeight: 20,
@@ -1686,12 +2000,14 @@ const styles = StyleSheet.create({
     borderRadius: 5
   },
   inputLabel: {
+    fontFamily: fontFamilies.body,
     fontSize: 10,
     fontWeight: "900",
     color: colors.muted,
     letterSpacing: 0.5
   },
   rideInput: {
+    fontFamily: fontFamilies.body,
     fontSize: 15,
     fontWeight: "700",
     color: colors.ink,
@@ -1730,6 +2046,7 @@ const styles = StyleSheet.create({
     borderColor: "#FAF6F0"
   },
   nodeText: {
+    fontFamily: fontFamilies.body,
     fontSize: 11,
     fontWeight: "800",
     color: colors.ink,
@@ -1770,6 +2087,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#FAF6F0"
   },
   vehicleBadgeText: {
+    fontFamily: fontFamilies.body,
     color: "#FAF6F0",
     fontSize: 8,
     fontWeight: "900",
@@ -1790,6 +2108,7 @@ const styles = StyleSheet.create({
     borderWidth: 1
   },
   preferenceText: {
+    fontFamily: fontFamilies.body,
     fontSize: 12,
     fontWeight: "800"
   },
@@ -1804,6 +2123,7 @@ const styles = StyleSheet.create({
     marginTop: -spacing.xs
   },
   onlyDirectText: {
+    fontFamily: fontFamilies.body,
     fontSize: 11,
     color: "#2D8B55",
     fontWeight: "850",
@@ -1832,21 +2152,25 @@ const styles = StyleSheet.create({
     borderWidth: 1.5
   },
   vehicleIndicatorIconText: {
+    fontFamily: fontFamilies.display,
     fontSize: 14,
     fontWeight: "900"
   },
   vehicleName: {
+    fontFamily: fontFamilies.display,
     fontSize: 16,
     fontWeight: "800",
     color: colors.ink
   },
   vehicleEta: {
+    fontFamily: fontFamilies.body,
     fontSize: 12,
     color: colors.muted,
     fontWeight: "600",
     marginTop: 2
   },
   vehicleRate: {
+    fontFamily: fontFamilies.display,
     fontSize: 16,
     fontWeight: "900",
     color: colors.ink
@@ -1857,6 +2181,7 @@ const styles = StyleSheet.create({
     borderRadius: 4
   },
   directPillText: {
+    fontFamily: fontFamilies.body,
     color: "#FAF6F0",
     fontSize: 9,
     fontWeight: "900",
@@ -1873,6 +2198,7 @@ const styles = StyleSheet.create({
     elevation: 4
   },
   bookBtnText: {
+    fontFamily: fontFamilies.display,
     color: "#FAF6F0",
     fontSize: 16,
     fontWeight: "800",
@@ -1902,15 +2228,18 @@ const styles = StyleSheet.create({
     opacity: 0.4
   },
   matchingSpinner: {
+    fontFamily: fontFamilies.display,
     fontSize: 24,
     fontWeight: "900"
   },
   matchingTitle: {
+    fontFamily: fontFamilies.display,
     fontSize: 18,
     fontWeight: "900",
     color: colors.primaryDeep
   },
   matchingSubtitle: {
+    fontFamily: fontFamilies.body,
     fontSize: 13,
     color: colors.muted,
     textAlign: "center",
@@ -1940,20 +2269,24 @@ const styles = StyleSheet.create({
     borderWidth: 1.5
   },
   driverAvatarText: {
+    fontFamily: fontFamilies.display,
     fontSize: 16,
     fontWeight: "900"
   },
   driverName: {
+    fontFamily: fontFamilies.display,
     fontSize: 16,
     fontWeight: "800",
     color: colors.primaryDeep
   },
   driverRating: {
+    fontFamily: fontFamilies.body,
     fontSize: 12,
     fontWeight: "800",
     color: colors.warning
   },
   driverVehicle: {
+    fontFamily: fontFamilies.body,
     fontSize: 13,
     color: colors.muted,
     fontWeight: "600",
@@ -1968,11 +2301,13 @@ const styles = StyleSheet.create({
     gap: 6
   },
   matchingTaglineTitle: {
+    fontFamily: fontFamilies.display,
     fontSize: 11,
     fontWeight: "900",
     letterSpacing: 1
   },
   matchingTaglineText: {
+    fontFamily: fontFamilies.body,
     fontSize: 13,
     color: colors.ink,
     lineHeight: 19,
@@ -1986,11 +2321,13 @@ const styles = StyleSheet.create({
     borderColor: colors.line
   },
   etaText: {
+    fontFamily: fontFamilies.display,
     fontSize: 18,
     fontWeight: "950",
     color: colors.success
   },
   etaSub: {
+    fontFamily: fontFamilies.body,
     fontSize: 13,
     color: colors.muted,
     fontWeight: "600",
@@ -2004,6 +2341,7 @@ const styles = StyleSheet.create({
     marginTop: spacing.xs
   },
   cancelBtnText: {
+    fontFamily: fontFamilies.display,
     fontSize: 15,
     fontWeight: "800"
   },
@@ -2023,17 +2361,20 @@ const styles = StyleSheet.create({
     gap: 4
   },
   commuteHistoryDest: {
+    fontFamily: fontFamilies.display,
     fontSize: 13,
     fontWeight: "900",
     color: colors.ink
   },
   commuteHistoryFare: {
+    fontFamily: fontFamilies.body,
     fontSize: 10,
     fontWeight: "900",
     textTransform: "uppercase",
     letterSpacing: 0.2
   },
   commuteHistoryRate: {
+    fontFamily: fontFamilies.display,
     fontSize: 14,
     color: colors.ink,
     fontWeight: "900",

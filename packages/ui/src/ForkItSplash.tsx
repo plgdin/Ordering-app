@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from "react";
 import { Animated, Easing, StyleSheet, Text, View } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import { colors, radius, spacing } from "./theme";
+import { colors, radius, spacing, fontFamilies } from "./theme";
 
 export function ForkItSplash({ onFinish }: { onFinish: () => void }) {
   const scale = useRef(new Animated.Value(0.3)).current;
@@ -188,6 +188,7 @@ const styles = StyleSheet.create({
     borderRadius: 2,
   },
   appName: {
+    fontFamily: fontFamilies.display,
     fontSize: 42,
     fontWeight: "900",
     color: "#FAF6F0", // Beige
@@ -205,6 +206,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   tagline: {
+    fontFamily: fontFamilies.body,
     fontSize: 14,
     fontWeight: "600",
     color: "#EAD6BD", // beige accent
@@ -216,6 +218,7 @@ const styles = StyleSheet.create({
     bottom: 50,
   },
   footerText: {
+    fontFamily: fontFamilies.body,
     color: "rgba(250, 246, 240, 0.4)",
     fontSize: 12,
     letterSpacing: 1.5,

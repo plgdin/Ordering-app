@@ -17,6 +17,44 @@ export const colors = {
   danger: "#A8201A"
 };
 
+export const categoryPalettes = {
+  food: {
+    primary: "#9B1B15",
+    deep: "#4A0704",
+    mid: "#C94A44",
+    light: "#FAF2EA",
+    soft: "#E9DCC9",
+    surface: "#FFFDF9",
+    canvas: "#FAF2EA",
+    line: "#E6D8C8"
+  },
+  provisions: {
+    primary: "#075E4E",
+    deep: "#022D25",
+    mid: "#2BA88A",
+    light: "#F0FAF7",
+    soft: "#A8E0D1",
+    surface: "#FFFFFF",
+    canvas: "#F0FAF7",
+    line: "#D2EDE7"
+  },
+  ride: {
+    primary: "#3F36C5",
+    deep: "#120E43",
+    mid: "#7C73FA",
+    light: "#F5F6FF",
+    soft: "#C4C1F7",
+    surface: "#FFFFFF",
+    canvas: "#F5F6FF",
+    line: "#DDD9FC"
+  }
+};
+
+export const fontFamilies = {
+  display: Platform.OS === "web" ? "Outfit, sans-serif" : "System",
+  body: Platform.OS === "web" ? "Inter, sans-serif" : "System"
+};
+
 export const spacing = {
   xs: 6,
   sm: 10,

@@ -7,5 +7,8 @@
   "peerDependencies": {
     "react": "19.2.0",
     "react-native": "0.83.4"
+  },
+  "dependencies": {
+    "@react-native-masked-view/masked-view": "^0.3.2"
   }
 }

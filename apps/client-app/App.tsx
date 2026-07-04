@@ -17,6 +17,22 @@ export default function App() {
     document.body.style.margin = "0";
     document.body.style.background = "#F0F4F1";
 
+    // Load Outfit and Inter fonts dynamically on web
+    const styleId = "google-fonts-injection";
+    if (!document.getElementById(styleId)) {
+      const style = document.createElement("style");
+      style.id = styleId;
+      style.appendChild(
+        document.createTextNode(
+          `@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;700;800;900&display=swap');
+           * {
+             font-family: 'Inter', sans-serif;
+           }`
+        )
+      );
+      document.head.appendChild(style);
+    }
+
     const root = document.getElementById("root");
     if (root) {
       root.style.height = "100%";
