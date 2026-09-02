@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { serviceRules } from "@nearnow/config";
-import { categories, Store } from "@nearnow/core";
+import { categories, verticals, Store } from "@nearnow/core";
 import {
   Card,
   CartLoadingIndicator,
@@ -24,6 +24,7 @@ export function ClientHomeScreen({
 }: {
   onStorePress: (store: Store) => void;
 }) {
+  const [activeVertical, setActiveVertical] = useState<string>("Restaurants");
   const [activeFilter, setActiveFilter] = useState<string | null>(null);
   const [pendingFilter, setPendingFilter] = useState<string | null>(null);
   const [isFilterLoading, setIsFilterLoading] = useState(false);
@@ -79,18 +80,45 @@ export function ClientHomeScreen({
 
   return (
     <>
-      <SearchBar label="Search stores, groceries, medicines, bakery..." />
+      <SearchBar label="Search restaurants, dishes, cuisines..." />
 
-      <HeroCard
-        eyebrow="SMART BASKETS FOR YOUR BLOCK"
-        title="Local shopping that feels colorful, fast, and close to home."
-        body="Pick up groceries, bakery treats, wellness essentials, and daily needs from stores clustered around your lane."
-        accent="#F6D57A"
-      />
+      <View style={styles.verticalsContainer}>
+        {verticals.map((vertical) => (
+          <Card
+            key={vertical}
+            style={[
+              styles.verticalCard,
+              activeVertical === vertical && styles.activeVerticalCard
+            ]}
+            onPress={() => {
+              setActiveVertical(vertical);
+              setActiveFilter(null);
+            }}
+          >
+            <Text
+              style={[
+                styles.verticalText,
+                activeVertical === vertical && styles.activeVerticalText
+              ]}
+            >
+              {vertical}
+            </Text>
+          </Card>
+        ))}
+      </View>
+
+      {activeVertical === "Restaurants" ? (
+        <>
+          <HeroCard
+            eyebrow="CRAVINGS SATISFIED"
+            title="Food delivery that feels fast, fresh, and reliable."
+            body="Order from your favorite restaurants and get hot food delivered to your door in minutes."
+            accent="#F6D57A"
+          />
 
       <View style={styles.sectionSpacing}>
         <SectionTitle
-          title="Shop by category"
+          title="Top cuisines for you"
           action={`Within ${serviceRules.localityRadiusKm} km`}
         />
         <View style={styles.rowWrap}>
@@ -109,8 +137,8 @@ export function ClientHomeScreen({
         <CartLoadingIndicator
           title={
             previewFilter
-              ? `Loading ${previewFilter.toLowerCase()} picks`
-              : "Reloading nearby stores"
+              ? `Loading ${previewFilter.toLowerCase()} options`
+              : "Reloading nearby restaurants"
           }
           subtitle="A fresh cart is being filled with the best options around you."
         />
@@ -126,7 +154,7 @@ export function ClientHomeScreen({
       {!isFilterLoading ? (
         <View style={styles.sectionSpacing}>
           <SectionTitle
-            title={previewFilter ? `${previewFilter} stores` : "Popular near you"}
+            title={previewFilter ? `${previewFilter} options` : "Popular restaurants near you"}
           />
           {filteredStores.length > 0 ? (
             filteredStores.map((store) => (
@@ -139,7 +167,7 @@ export function ClientHomeScreen({
             ))
           ) : (
             <View style={styles.emptyState}>
-              <Text style={styles.emptyTitle}>No stores in this category nearby</Text>
+              <Text style={styles.emptyTitle}>No restaurants found</Text>
               <Text style={styles.emptyBody}>
                 Try a different category or clear the filter to explore more.
               </Text>
@@ -147,6 +175,15 @@ export function ClientHomeScreen({
           )}
         </View>
       ) : null}
+        </>
+      ) : (
+        <View style={styles.comingSoonContainer}>
+          <Text style={styles.comingSoonTitle}>{activeVertical}</Text>
+          <Text style={styles.comingSoonBody}>
+            This feature will be implemented in the future. Check back later!
+          </Text>
+        </View>
+      )}
     </>
   );
 }
@@ -275,6 +312,54 @@ function StoreMetaBadge({
 }
 
 const styles = StyleSheet.create({
+  verticalsContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: spacing.sm,
+    marginBottom: spacing.md
+  },
+  verticalCard: {
+    flex: 1,
+    minWidth: '45%',
+    padding: spacing.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FFFFFF',
+    borderColor: '#E5E7EB',
+    borderWidth: 1,
+    borderRadius: radius.md,
+  },
+  activeVerticalCard: {
+    backgroundColor: colors.primaryDeep,
+    borderColor: colors.primaryDeep,
+  },
+  verticalText: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: colors.ink
+  },
+  activeVerticalText: {
+    color: '#FFFFFF'
+  },
+  comingSoonContainer: {
+    padding: spacing.xl,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#F9FAFB",
+    borderRadius: radius.lg,
+    marginTop: spacing.xl
+  },
+  comingSoonTitle: {
+    fontSize: 24,
+    fontWeight: "800",
+    color: colors.ink,
+    marginBottom: spacing.sm
+  },
+  comingSoonBody: {
+    fontSize: 16,
+    color: colors.muted,
+    textAlign: "center"
+  },
   sectionSpacing: {
     gap: spacing.lg
   },

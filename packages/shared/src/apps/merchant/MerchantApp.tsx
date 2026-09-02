@@ -12,8 +12,8 @@ export function MerchantApp() {
 
   return (
     <PageShell
-      title="Merchant Hub"
-      subtitle="Faster packing, cleaner ops, better repeat orders."
+      title="Restaurant Hub"
+      subtitle="Faster cooking, better ratings, more orders."
       activeTab={activeTab}
       onTabChange={setActiveTab}
       tabs={merchantTabs}

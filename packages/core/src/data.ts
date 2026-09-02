@@ -1,106 +1,113 @@
 import { Metric, OrderCard, QuoteStop, Store } from "./types";
 
-export const categories = [
-  "Groceries",
+export const verticals = [
+  "Restaurants",
+  "Stores",
   "Pharmacy",
-  "Bakery",
-  "Fresh Veg",
-  "Daily Needs",
-  "Pet Care",
-  "Home Care",
-  "Snacks"
+  "Fashion"
+];
+
+export const categories = [
+  "Indian",
+  "Pizza",
+  "Burgers",
+  "Healthy",
+  "Desserts",
+  "Beverages",
+  "Chinese",
+  "Street Food"
 ];
 
 export const storeImages: Record<string, string> = {
-  more: "https://images.unsplash.com/photo-1604719312566-8912e9227c6a?w=600&h=300&fit=crop",
-  pharma: "https://images.unsplash.com/photo-1631549916768-4119b2e5f926?w=600&h=300&fit=crop",
-  bakery: "https://images.unsplash.com/photo-1509440159596-0249088772ff?w=600&h=300&fit=crop"
+  indian: "https://images.unsplash.com/photo-1585937421612-70a008356fbe?w=600&h=300&fit=crop",
+  pizza: "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=600&h=300&fit=crop",
+  burger: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=600&h=300&fit=crop"
 };
 
 export const featuredStores: Store[] = [
   {
-    id: "more",
-    name: "More Daily Mart",
-    category: "Groceries",
-    eta: "18-25 min",
+    id: "indian_delight",
+    name: "Indian Delight",
+    category: "Indian",
+    eta: "25-35 min",
     distanceKm: 2.1,
     rating: 4.7,
-    deliveryTag: "Free pickup if clubbed with nearby stores",
-    highlight: "Fruits, milk, staples, and premium pantry",
+    deliveryTag: "Free delivery on orders above ₹300",
+    highlight: "Authentic North Indian curries and tandoori",
     featured: true,
     enabledDiscountKeys: ["combo30", "save10"],
-    image: storeImages.more,
+    image: storeImages.indian,
     inventory: [
-      { id: "m1", name: "Toned Milk 500ml", price: 28, unit: "pack", inStock: true },
-      { id: "m2", name: "Basmati Rice 1kg", price: 98, unit: "bag", inStock: true },
-      { id: "m3", name: "Farm Eggs (6 pcs)", price: 54, unit: "tray", inStock: true },
-      { id: "m4", name: "Amul Butter 100g", price: 56, unit: "pack", inStock: true },
-      { id: "m5", name: "Aashirvaad Atta 5kg", price: 265, unit: "bag", inStock: true },
-      { id: "m6", name: "Sugar 1kg", price: 46, unit: "bag", inStock: false },
-      { id: "m7", name: "Sunflower Oil 1L", price: 142, unit: "bottle", inStock: true },
-      { id: "m8", name: "Fresh Paneer 200g", price: 80, unit: "pack", inStock: true }
+      { id: "i1", name: "Butter Chicken", price: 320, unit: "plate", inStock: true },
+      { id: "i2", name: "Garlic Naan", price: 50, unit: "pc", inStock: true },
+      { id: "i3", name: "Paneer Tikka Masala", price: 280, unit: "plate", inStock: true },
+      { id: "i4", name: "Dal Makhani", price: 220, unit: "plate", inStock: true },
+      { id: "i5", name: "Jeera Rice", price: 150, unit: "plate", inStock: true },
+      { id: "i6", name: "Chicken Biryani", price: 350, unit: "plate", inStock: false },
+      { id: "i7", name: "Gulab Jamun", price: 80, unit: "plate", inStock: true },
+      { id: "i8", name: "Lassi", price: 90, unit: "glass", inStock: true }
     ]
   },
   {
-    id: "pharma",
-    name: "HealthPoint Pharmacy",
-    category: "Pharmacy",
-    eta: "20-28 min",
+    id: "pizza_house",
+    name: "Pizza House",
+    category: "Pizza",
+    eta: "30-40 min",
     distanceKm: 3.4,
     rating: 4.8,
-    deliveryTag: "Only non-prescription items enabled",
-    highlight: "Wellness, baby care, hygiene, OTC products",
+    deliveryTag: "Bestseller in your area",
+    highlight: "Wood-fired pizzas with fresh toppings",
     featured: true,
     enabledDiscountKeys: ["combo30"],
-    image: storeImages.pharma,
+    image: storeImages.pizza,
     inventory: [
-      { id: "p1", name: "Vitamin C 500mg (30)", price: 145, unit: "strip", inStock: true },
-      { id: "p2", name: "Band-Aid Pack (10)", price: 35, unit: "box", inStock: true },
-      { id: "p3", name: "Hand Sanitizer 200ml", price: 85, unit: "bottle", inStock: true },
-      { id: "p4", name: "Dettol Soap (3 pack)", price: 120, unit: "pack", inStock: true },
-      { id: "p5", name: "Baby Lotion 200ml", price: 195, unit: "bottle", inStock: true },
-      { id: "p6", name: "Cough Drops (20)", price: 30, unit: "pack", inStock: true }
+      { id: "p1", name: "Margherita Pizza", price: 250, unit: "pc", inStock: true },
+      { id: "p2", name: "Pepperoni Pizza", price: 450, unit: "pc", inStock: true },
+      { id: "p3", name: "Farmhouse Pizza", price: 350, unit: "pc", inStock: true },
+      { id: "p4", name: "Garlic Breadsticks", price: 120, unit: "plate", inStock: true },
+      { id: "p5", name: "Cheese Dip", price: 30, unit: "cup", inStock: true },
+      { id: "p6", name: "Choco Lava Cake", price: 110, unit: "pc", inStock: true }
     ]
   },
   {
-    id: "bakery",
-    name: "Daily Crust Bakery",
-    category: "Bakery",
-    eta: "16-22 min",
+    id: "burger_joint",
+    name: "The Burger Joint",
+    category: "Burgers",
+    eta: "15-25 min",
     distanceKm: 1.6,
     rating: 4.9,
-    deliveryTag: "Stack on-route pickups to save delivery fees",
-    highlight: "Fresh breads, cakes, buns, and tea-time snacks",
+    deliveryTag: "Superfast delivery",
+    highlight: "Juicy smash burgers and crispy fries",
     featured: true,
     enabledDiscountKeys: ["flat75", "save10"],
-    image: storeImages.bakery,
+    image: storeImages.burger,
     inventory: [
-      { id: "b1", name: "Sandwich Loaf", price: 45, unit: "loaf", inStock: true },
-      { id: "b2", name: "Butter Croissant", price: 60, unit: "piece", inStock: true },
-      { id: "b3", name: "Chocolate Cake Slice", price: 85, unit: "slice", inStock: true },
-      { id: "b4", name: "Pav Buns (6 pcs)", price: 30, unit: "pack", inStock: true },
-      { id: "b5", name: "Veg Puff", price: 25, unit: "piece", inStock: false },
-      { id: "b6", name: "Banana Muffin", price: 40, unit: "piece", inStock: true },
-      { id: "b7", name: "Garlic Bread Stick", price: 55, unit: "piece", inStock: true }
+      { id: "b1", name: "Classic Cheeseburger", price: 180, unit: "pc", inStock: true },
+      { id: "b2", name: "Double Patty Burger", price: 280, unit: "pc", inStock: true },
+      { id: "b3", name: "Spicy Chicken Burger", price: 220, unit: "pc", inStock: true },
+      { id: "b4", name: "French Fries (M)", price: 100, unit: "plate", inStock: true },
+      { id: "b5", name: "Peri Peri Fries", price: 130, unit: "plate", inStock: false },
+      { id: "b6", name: "Vanilla Milkshake", price: 150, unit: "glass", inStock: true },
+      { id: "b7", name: "Onion Rings", price: 120, unit: "plate", inStock: true }
     ]
   }
 ];
 
 export const multiStoreStops: QuoteStop[] = [
   {
-    storeName: "More Daily Mart",
+    storeName: "Indian Delight",
     distanceFromCustomerKm: 1.8,
     direction: "same-route",
     isAlongCurrentRoute: true
   },
   {
-    storeName: "HealthPoint Pharmacy",
+    storeName: "Pizza House",
     distanceFromCustomerKm: 2.2,
     direction: "same-route",
     isAlongCurrentRoute: true
   },
   {
-    storeName: "Daily Crust Bakery",
+    storeName: "The Burger Joint",
     distanceFromCustomerKm: 0.8,
     direction: "same-route"
   }
@@ -108,12 +115,12 @@ export const multiStoreStops: QuoteStop[] = [
 
 export const splitDirectionStops: QuoteStop[] = [
   {
-    storeName: "More Daily Mart",
+    storeName: "Indian Delight",
     distanceFromCustomerKm: 2.4,
     direction: "north"
   },
   {
-    storeName: "Daily Crust Bakery",
+    storeName: "The Burger Joint",
     distanceFromCustomerKm: 3.1,
     direction: "west"
   }
@@ -122,17 +129,17 @@ export const splitDirectionStops: QuoteStop[] = [
 export const clientOrders: OrderCard[] = [
   {
     id: "ORD-2401",
-    title: "Order packed and waiting for rider",
-    subtitle: "More Daily Mart + HealthPoint Pharmacy",
-    status: "Stacked order",
+    title: "Food prepared and waiting for rider",
+    subtitle: "Indian Delight",
+    status: "Preparing",
     amount: "Rs 624"
   },
   {
     id: "ORD-2402",
-    title: "Fresh bakery order delivered",
-    subtitle: "Daily Crust Bakery",
+    title: "Pizza delivered",
+    subtitle: "Pizza House",
     status: "Delivered",
-    amount: "Rs 182"
+    amount: "Rs 450"
   }
 ];
 
@@ -145,16 +152,16 @@ export const merchantMetrics: Metric[] = [
 export const merchantOrders: OrderCard[] = [
   {
     id: "MER-801",
-    title: "Express grocery basket",
-    subtitle: "Pack in 4 min, rider arriving in 6 min",
+    title: "New order: Butter Chicken",
+    subtitle: "Prepare in 15 min, rider arriving in 12 min",
     status: "High priority",
     amount: "Rs 980"
   },
   {
     id: "MER-802",
-    title: "Pharmacy essentials basket",
-    subtitle: "Verify OTC-only items before packing",
-    status: "Review basket",
+    title: "Burger & Fries combo",
+    subtitle: "Customer requested extra mayo",
+    status: "Review order",
     amount: "Rs 365"
   }
 ];

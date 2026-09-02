@@ -16,9 +16,9 @@ export function MerchantDashboardScreen() {
   return (
     <>
       <HeroCard
-        eyebrow="Merchant app"
-        title="Run your local store like a fast fulfillment center."
-        body="See live orders, stock risks, and dispatch readiness in a single mobile workspace."
+        eyebrow="Restaurant App"
+        title="Run your kitchen smoothly and efficiently."
+        body="Manage incoming food orders, kitchen prep, and handoffs seamlessly in one mobile workspace."
         accent="#BDEFD0"
       />
       <SectionTitle title="Today's pulse" />
@@ -33,11 +33,10 @@ export function MerchantDashboardScreen() {
         ))}
       </View>
       <Card>
-        <Text style={styles.cardTitle}>Dispatch readiness</Text>
-        <Notice text="2 stacked baskets are ready. Next rider arrival is estimated in 6 minutes." />
+        <Text style={styles.cardTitle}>Kitchen readiness</Text>
+        <Notice text="2 food orders are ready for pickup. Next rider arrival is estimated in 6 minutes." />
         <Text style={styles.bodyText}>
-          A shared shopper experience means baskets can come from multiple nearby
-          stores, so packing speed becomes a competitive advantage.
+          Quick kitchen prep and seamless rider handoffs are the key to good ratings and returning customers.
         </Text>
       </Card>
     </>
