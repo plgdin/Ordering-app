@@ -57,28 +57,46 @@ export function PageShell<T extends string>({
   tabs: TabOption<T>[];
 }>) {
   const fade = useRef(new Animated.Value(0)).current;
-  const lift = useRef(new Animated.Value(18)).current;
+  const lift = useRef(new Animated.Value(24)).current;
+  const headerScale = useRef(new Animated.Value(0.96)).current;
+  const headerOpacity = useRef(new Animated.Value(0)).current;
   const useNativeDriver = Platform.OS !== "web";
   const webViewportStyle = Platform.OS === "web" ? styles.webViewport : null;
 
   useEffect(() => {
     fade.setValue(0);
-    lift.setValue(18);
+    lift.setValue(24);
+    headerScale.setValue(0.96);
+    headerOpacity.setValue(0);
     Animated.parallel([
+      Animated.timing(headerOpacity, {
+        toValue: 1,
+        duration: 300,
+        easing: Easing.out(Easing.quad),
+        useNativeDriver
+      }),
+      Animated.spring(headerScale, {
+        toValue: 1,
+        friction: 8,
+        tension: 120,
+        useNativeDriver
+      }),
       Animated.timing(fade, {
         toValue: 1,
-        duration: 420,
+        duration: 480,
+        delay: 80,
         easing: Easing.out(Easing.cubic),
         useNativeDriver
       }),
-      Animated.timing(lift, {
+      Animated.spring(lift, {
         toValue: 0,
-        duration: 460,
-        easing: Easing.out(Easing.cubic),
+        friction: 10,
+        tension: 90,
+        delay: 60,
         useNativeDriver
-      })
+      } as any)
     ]).start();
-  }, [activeTab, fade, lift, useNativeDriver]);
+  }, [activeTab, fade, lift, headerScale, headerOpacity, useNativeDriver]);
 
   return (
     <View style={[styles.background, webViewportStyle]}>
@@ -86,13 +104,18 @@ export function PageShell<T extends string>({
       <SafeAreaView style={[styles.safeArea, webViewportStyle]}>
         {locationBar}
         {title ? (
-          <View style={styles.header}>
+          <Animated.View
+            style={[
+              styles.header,
+              { opacity: headerOpacity, transform: [{ scale: headerScale }] }
+            ]}
+          >
             <View>
               <Text style={styles.title}>{title}</Text>
               {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
             </View>
-            <View style={styles.profileDot} />
-          </View>
+            <AnimatedProfileDot />
+          </Animated.View>
         ) : null}
         <Animated.View
           style={[
@@ -113,6 +136,22 @@ export function PageShell<T extends string>({
   );
 }
 
+function AnimatedProfileDot() {
+  const useNativeDriver = Platform.OS !== "web";
+  const glowScale = useRef(new Animated.Value(1)).current;
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(glowScale, { toValue: 1.18, duration: 1800, easing: Easing.inOut(Easing.sin), useNativeDriver }),
+        Animated.timing(glowScale, { toValue: 1, duration: 1800, easing: Easing.inOut(Easing.sin), useNativeDriver })
+      ])
+    ).start();
+  }, [glowScale, useNativeDriver]);
+  return (
+    <Animated.View style={[styles.profileDot, { transform: [{ scale: glowScale }] }]} />
+  );
+}
+
 /* ─── Location Bar ─── */
 export function LocationBar({
   address,
@@ -122,22 +161,62 @@ export function LocationBar({
   onEditAddress: (addr: SavedAddress) => void;
 }) {
   const [modalVisible, setModalVisible] = useState(false);
+  const useNativeDriver = Platform.OS !== "web";
   const displayText = [address.houseNo, address.street, address.area]
     .filter(Boolean)
     .join(", ");
 
+  // Pulsing location dot
+  const dotPulse = useRef(new Animated.Value(1)).current;
+  const dotOpacity = useRef(new Animated.Value(0.5)).current;
+  const pressScale = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    Animated.loop(
+      Animated.parallel([
+        Animated.sequence([
+          Animated.timing(dotPulse, { toValue: 1.5, duration: 900, easing: Easing.out(Easing.quad), useNativeDriver }),
+          Animated.timing(dotPulse, { toValue: 1, duration: 900, easing: Easing.in(Easing.quad), useNativeDriver })
+        ]),
+        Animated.sequence([
+          Animated.timing(dotOpacity, { toValue: 0.15, duration: 900, useNativeDriver }),
+          Animated.timing(dotOpacity, { toValue: 0.5, duration: 900, useNativeDriver })
+        ])
+      ])
+    ).start();
+  }, [dotPulse, dotOpacity, useNativeDriver]);
+
+  const handlePressIn = () => {
+    Animated.spring(pressScale, { toValue: 0.97, friction: 8, tension: 200, useNativeDriver }).start();
+  };
+  const handlePressOut = () => {
+    Animated.spring(pressScale, { toValue: 1, friction: 6, tension: 120, useNativeDriver }).start();
+  };
+
   return (
     <>
-      <Pressable onPress={() => setModalVisible(true)} style={styles.locationBar}>
-        <View style={styles.locationDot} />
-        <View style={styles.locationContent}>
-          <Text style={styles.locationLabel}>DELIVER TO</Text>
-          <Text style={styles.locationAddress} numberOfLines={1}>
-            {displayText || `${address.city} ${address.pincode}`}
-          </Text>
-        </View>
-        <Text style={styles.locationChevron}>Change</Text>
-      </Pressable>
+      <Animated.View style={{ transform: [{ scale: pressScale }] }}>
+        <Pressable
+          onPress={() => setModalVisible(true)}
+          onPressIn={handlePressIn}
+          onPressOut={handlePressOut}
+          style={styles.locationBar}
+        >
+          <View style={styles.locationDotWrap}>
+            <Animated.View
+              style={[styles.locationDotRing, { transform: [{ scale: dotPulse }], opacity: dotOpacity }]}
+            />
+            <View style={styles.locationDot} />
+          </View>
+          <View style={styles.locationContent}>
+            <Text style={styles.locationLabel}>DELIVER TO</Text>
+            <Text style={styles.locationAddress} numberOfLines={1}>
+              {displayText || `${address.city} ${address.pincode}`}
+            </Text>
+          </View>
+          <Text style={styles.locationChevron}>Change ›</Text>
+        </Pressable>
+      </Animated.View>
       <AddressEditorModal
         visible={modalVisible}
         address={address}
@@ -329,17 +408,39 @@ export function Card({
   style,
   onPress
 }: PropsWithChildren<{ style?: StyleProp<ViewStyle>; onPress?: () => void }>) {
+  const useNativeDriver = Platform.OS !== "web";
+  const scale = useRef(new Animated.Value(1)).current;
+  const shadowAnim = useRef(new Animated.Value(0)).current;
+
+  const handlePressIn = () => {
+    Animated.parallel([
+      Animated.spring(scale, { toValue: 0.974, friction: 8, tension: 300, useNativeDriver }),
+      Animated.timing(shadowAnim, { toValue: 1, duration: 100, useNativeDriver: false })
+    ]).start();
+  };
+  const handlePressOut = () => {
+    Animated.parallel([
+      Animated.spring(scale, { toValue: 1, friction: 5, tension: 100, useNativeDriver }),
+      Animated.timing(shadowAnim, { toValue: 0, duration: 200, useNativeDriver: false })
+    ]).start();
+  };
+
   if (onPress) {
     return (
       <Pressable
         onPress={onPress}
-        style={({ pressed }) => [
-          styles.card,
-          style,
-          pressed && styles.cardPressed
-        ]}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
       >
-        {children}
+        <Animated.View
+          style={[
+            styles.card,
+            style,
+            { transform: [{ scale }] }
+          ]}
+        >
+          {children}
+        </Animated.View>
       </Pressable>
     );
   }
@@ -356,9 +457,32 @@ export function SectionTitle({
   action?: string;
   onActionPress?: () => void;
 }) {
+  const useNativeDriver = Platform.OS !== "web";
+  const lineWidth = useRef(new Animated.Value(0)).current;
+  const titleOpacity = useRef(new Animated.Value(0)).current;
+  const titleX = useRef(new Animated.Value(-8)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(titleOpacity, { toValue: 1, duration: 350, easing: Easing.out(Easing.cubic), useNativeDriver }),
+      Animated.spring(titleX, { toValue: 0, friction: 9, tension: 120, useNativeDriver }),
+      Animated.timing(lineWidth, { toValue: 1, duration: 500, delay: 150, easing: Easing.out(Easing.quad), useNativeDriver: false })
+    ]).start();
+  }, [title, lineWidth, titleOpacity, titleX, useNativeDriver]);
+
   return (
     <View style={styles.sectionHeader}>
-      <Text style={styles.sectionTitle}>{title}</Text>
+      <View>
+        <Animated.Text style={[styles.sectionTitle, { opacity: titleOpacity, transform: [{ translateX: titleX }] }]}>
+          {title}
+        </Animated.Text>
+        <Animated.View
+          style={[
+            styles.sectionUnderline,
+            { transform: [{ scaleX: lineWidth }], transformOrigin: "left" as never }
+          ]}
+        />
+      </View>
       {action ? (
         <Pressable onPress={onActionPress}>
           <Text style={styles.sectionAction}>{action}</Text>
@@ -368,7 +492,7 @@ export function SectionTitle({
   );
 }
 
-/* ─── Category Chip (no emoji, with swoosh animation) ─── */
+/* ─── Category Chip (with ripple + spring animation) ─── */
 export function CategoryChip({
   label,
   solid = false,
@@ -379,43 +503,52 @@ export function CategoryChip({
   onPress?: () => void;
 }) {
   const scale = useRef(new Animated.Value(1)).current;
-  const translateY = useRef(new Animated.Value(0)).current;
+  const ripple = useRef(new Animated.Value(0)).current;
+  const rippleOpacity = useRef(new Animated.Value(0)).current;
   const useNativeDriver = Platform.OS !== "web";
 
   const handlePress = useCallback(() => {
     onPress?.();
-    scale.setValue(0.94);
-    translateY.setValue(2);
+    // Ripple burst
+    ripple.setValue(0);
+    rippleOpacity.setValue(0.35);
+    // Spring press
+    scale.setValue(0.91);
     Animated.parallel([
-      Animated.spring(scale, {
-        toValue: 1,
-        friction: 5,
-        tension: 180,
-        useNativeDriver
-      }),
-      Animated.spring(translateY, {
-        toValue: 0,
-        friction: 6,
-        tension: 170,
-        useNativeDriver
-      })
+      Animated.spring(scale, { toValue: 1, friction: 4, tension: 200, useNativeDriver }),
+      Animated.timing(ripple, { toValue: 1, duration: 400, easing: Easing.out(Easing.quad), useNativeDriver: false }),
+      Animated.timing(rippleOpacity, { toValue: 0, duration: 400, delay: 100, useNativeDriver: false })
     ]).start();
-  }, [onPress, scale, translateY, useNativeDriver]);
+  }, [onPress, scale, ripple, rippleOpacity, useNativeDriver]);
+
+  const rippleSize = ripple.interpolate({ inputRange: [0, 1], outputRange: [0, 120] });
 
   return (
     <Animated.View
       style={[
         styles.categoryChipWrap,
-        { transform: [{ scale }, { translateY }] }
+        { transform: [{ scale }] }
       ]}
     >
-      <Pressable onPress={handlePress}>
+      <Pressable onPress={handlePress} style={{ overflow: "hidden" as never }}>
         <View
           style={[
             styles.categoryChip,
             solid ? styles.categoryChipSolid : styles.categoryChipOutline
           ]}
         >
+          <Animated.View
+            style={[
+              styles.chipRipple,
+              {
+                width: rippleSize,
+                height: rippleSize,
+                borderRadius: ripple.interpolate({ inputRange: [0, 1], outputRange: [0, 60] }),
+                opacity: rippleOpacity,
+                backgroundColor: solid ? "rgba(255,255,255,0.4)" : colors.primarySoft
+              }
+            ]}
+          />
           <Text style={[styles.categoryChipText, solid && styles.chipSolidText]}>
             {label}
           </Text>
@@ -459,7 +592,7 @@ export function RatingPill({
 
   return (
     <LinearGradient
-      colors={palette.colors}
+      colors={palette.colors as [string, string, ...string[]]}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
       style={[styles.ratingPill, { borderColor: palette.borderColor }]}
@@ -560,7 +693,7 @@ export function CartLoadingIndicator({
           })
         }
       ]
-    };
+    } as any;
   };
 
   const dropAnimatedStyle = (index: number) => {
@@ -590,7 +723,7 @@ export function CartLoadingIndicator({
           })
         }
       ]
-    };
+    } as any;
   };
 
   return (
@@ -685,27 +818,92 @@ export function BottomTabs<T extends string>({
   activeTab: T;
   onTabChange: (tab: T) => void;
 }) {
+  const useNativeDriver = Platform.OS !== "web";
+  const activeIndex = tabs.findIndex((t) => t.id === activeTab);
+  const indicatorX = useRef(new Animated.Value(activeIndex)).current;
+  const tabWidth = 100 / tabs.length;
+
+  useEffect(() => {
+    Animated.spring(indicatorX, {
+      toValue: activeIndex,
+      friction: 8,
+      tension: 120,
+      useNativeDriver: false
+    }).start();
+  }, [activeIndex, indicatorX]);
+
+  const indicatorLeft = indicatorX.interpolate({
+    inputRange: tabs.map((_, i) => i),
+    outputRange: tabs.map((_, i) => `${i * tabWidth}%` as unknown as number)
+  });
+
   return (
     <View style={styles.tabBar}>
+      <Animated.View
+        style={[
+          styles.tabIndicator,
+          { left: indicatorLeft, width: `${tabWidth}%` as never }
+        ]}
+      />
       {tabs.map((tab) => {
         const active = tab.id === activeTab;
         return (
-          <Pressable
+          <AnimatedTabButton
             key={tab.id}
+            tab={tab}
+            active={active}
             onPress={() => onTabChange(tab.id)}
-            style={[styles.tabButton, active && styles.tabButtonActive]}
-          >
-            <Text style={[styles.tabLabel, active && styles.tabLabelActive]}>
-              {tab.label}
-            </Text>
-          </Pressable>
+            useNativeDriver={useNativeDriver}
+          />
         );
       })}
     </View>
   );
 }
 
-/* ─── Search Bar (no emoji) ─── */
+function AnimatedTabButton<T extends string>({
+  tab,
+  active,
+  onPress,
+  useNativeDriver
+}: {
+  tab: TabOption<T>;
+  active: boolean;
+  onPress: () => void;
+  useNativeDriver: boolean;
+}) {
+  const bounce = useRef(new Animated.Value(1)).current;
+  const prevActive = useRef(active);
+
+  useEffect(() => {
+    if (active && !prevActive.current) {
+      Animated.sequence([
+        Animated.timing(bounce, { toValue: 0.82, duration: 80, useNativeDriver }),
+        Animated.spring(bounce, { toValue: 1, friction: 4, tension: 220, useNativeDriver })
+      ]).start();
+    }
+    prevActive.current = active;
+  }, [active, bounce, useNativeDriver]);
+
+  return (
+    <Pressable
+      onPress={onPress}
+      style={styles.tabButton}
+    >
+      <Animated.Text
+        style={[
+          styles.tabLabel,
+          active && styles.tabLabelActive,
+          { transform: [{ scale: bounce }] }
+        ]}
+      >
+        {tab.label}
+      </Animated.Text>
+    </Pressable>
+  );
+}
+
+/* ─── Search Bar (with focus glow ring) ─── */
 export function SearchBar({
   label,
   value,
@@ -715,11 +913,49 @@ export function SearchBar({
   value?: string;
   onChangeText?: (text: string) => void;
 }) {
+  const [focused, setFocused] = useState(false);
+  const useNativeDriver = Platform.OS !== "web";
+  const glowAnim = useRef(new Animated.Value(0)).current;
+  const iconScale = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(glowAnim, {
+        toValue: focused ? 1 : 0,
+        duration: 250,
+        easing: Easing.out(Easing.quad),
+        useNativeDriver: false
+      }),
+      Animated.spring(iconScale, {
+        toValue: focused ? 1.15 : 1,
+        friction: 6,
+        tension: 180,
+        useNativeDriver
+      })
+    ]).start();
+  }, [focused, glowAnim, iconScale, useNativeDriver]);
+
+  const borderColor = glowAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ["#DCE7DE", colors.primaryMid]
+  });
+  const shadowOpacity = glowAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0.04, 0.18]
+  });
+
   return (
-    <View style={styles.searchBar}>
-      <View style={styles.searchIconCircle}>
-        <Text style={styles.searchIconText}>S</Text>
-      </View>
+    <Animated.View
+      style={[
+        styles.searchBar,
+        { borderColor, shadowOpacity, shadowColor: colors.primaryMid }
+      ]}
+    >
+      <Animated.View
+        style={[styles.searchIconCircle, { transform: [{ scale: iconScale }], backgroundColor: focused ? colors.primarySoft : "#E6F3E7" }]}
+      >
+        <Text style={[styles.searchIconText, focused && { color: colors.primaryDeep }]}>⌕</Text>
+      </Animated.View>
       <TextInput
         style={styles.searchText}
         placeholder={label}
@@ -727,8 +963,10 @@ export function SearchBar({
         value={value}
         onChangeText={onChangeText}
         autoCapitalize="none"
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
       />
-    </View>
+    </Animated.View>
   );
 }
 
@@ -816,27 +1054,40 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: colors.surface,
     borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.primarySoft,
+    borderWidth: 1.5,
+    borderColor: colors.line,
     paddingHorizontal: spacing.md,
     paddingVertical: 12,
     marginBottom: spacing.md,
     gap: 10,
     ...shadow
   },
+  locationDotWrap: {
+    width: 18,
+    height: 18,
+    justifyContent: "center",
+    alignItems: "center"
+  },
+  locationDotRing: {
+    position: "absolute",
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: "rgba(0, 230, 118, 0.2)"
+  },
   locationDot: {
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: colors.primaryMid
+    backgroundColor: "#00E676"
   },
   locationContent: {
     flex: 1
   },
   locationLabel: {
-    fontSize: 11,
-    fontWeight: "700",
-    color: colors.primaryMid,
+    fontSize: 10,
+    fontWeight: "800",
+    color: "#00E676",
     letterSpacing: 0.8
   },
   locationAddress: {
@@ -846,8 +1097,8 @@ const styles = StyleSheet.create({
     marginTop: 2
   },
   locationChevron: {
-    fontSize: 13,
-    color: colors.primaryMid,
+    fontSize: 12,
+    color: "#00E676",
     fontWeight: "700"
   },
   /* Hero */
@@ -856,6 +1107,8 @@ const styles = StyleSheet.create({
     padding: spacing.xl,
     gap: spacing.sm,
     overflow: "hidden",
+    borderWidth: 1.5,
+    borderColor: colors.line,
     ...shadow
   },
   heroGlowLarge: {
@@ -863,7 +1116,7 @@ const styles = StyleSheet.create({
     width: 180,
     height: 180,
     borderRadius: 90,
-    backgroundColor: "rgba(255, 214, 112, 0.18)",
+    backgroundColor: "rgba(255, 46, 99, 0.12)",
     top: -36,
     right: -32
   },
@@ -872,27 +1125,27 @@ const styles = StyleSheet.create({
     width: 94,
     height: 94,
     borderRadius: 47,
-    backgroundColor: "rgba(133, 200, 155, 0.18)",
+    backgroundColor: "rgba(0, 230, 118, 0.12)",
     bottom: -18,
     right: 56
   },
   eyebrow: {
-    color: colors.primarySoft,
+    color: "#FF2E63",
     textTransform: "uppercase",
-    fontWeight: "700",
+    fontWeight: "800",
     letterSpacing: 1.1,
-    fontSize: 12
+    fontSize: 11
   },
   heroTitle: {
-    color: "#FFFFFF",
-    fontSize: 26,
-    lineHeight: 32,
-    fontWeight: "800"
+    color: colors.ink,
+    fontSize: 24,
+    lineHeight: 30,
+    fontWeight: "900"
   },
   heroBody: {
-    color: "#D4E8D9",
+    color: colors.muted,
     fontSize: fonts.body,
-    lineHeight: 22
+    lineHeight: 20
   },
   accentBadge: {
     alignSelf: "flex-start",
@@ -902,9 +1155,9 @@ const styles = StyleSheet.create({
     marginTop: 8
   },
   accentText: {
-    color: colors.primaryDeep,
+    color: "#FFFFFF",
     fontWeight: "700",
-    fontSize: 13
+    fontSize: 12
   },
   /* Store image */
   storeImage: {
@@ -925,7 +1178,7 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: colors.surface,
     borderColor: colors.line,
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderRadius: radius.md,
     padding: spacing.md,
     gap: spacing.sm,
@@ -944,13 +1197,22 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: fonts.heading,
-    fontWeight: "800",
-    color: colors.ink
+    fontWeight: "900",
+    color: colors.ink,
+    letterSpacing: 0.5
+  },
+  sectionUnderline: {
+    height: 3,
+    width: 40,
+    backgroundColor: "#FFC244", // Glovo Yellow Accent
+    borderRadius: 999,
+    marginTop: 4,
+    opacity: 0.95
   },
   sectionAction: {
     fontSize: fonts.caption,
-    color: colors.primaryMid,
-    fontWeight: "700"
+    color: "#00A082", // Glovo Emerald Teal
+    fontWeight: "800"
   },
   /* Category chip */
   categoryChipWrap: {
@@ -959,23 +1221,30 @@ const styles = StyleSheet.create({
   categoryChip: {
     borderRadius: radius.pill,
     paddingHorizontal: 18,
-    paddingVertical: 12
+    paddingVertical: 12,
+    overflow: "hidden" as never,
+    alignItems: "center",
+    justifyContent: "center"
+  },
+  chipRipple: {
+    position: "absolute",
+    alignSelf: "center"
   },
   categoryChipOutline: {
     borderWidth: 1.5,
-    borderColor: "#D7DFD8",
-    backgroundColor: "#FFFFFF"
+    borderColor: colors.line,
+    backgroundColor: colors.surface
   },
   categoryChipSolid: {
-    backgroundColor: "#254734",
+    backgroundColor: "#00A082", // Glovo Emerald Teal
     borderWidth: 1,
-    borderColor: "#254734",
+    borderColor: "#00A082",
     ...shadow
   },
   categoryChipText: {
-    color: colors.ink,
-    fontWeight: "700",
-    fontSize: 14
+    color: "#FFFFFF",
+    fontWeight: "800",
+    fontSize: 13
   },
   ratingPill: {
     minWidth: 94,
@@ -987,14 +1256,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 9,
     borderWidth: 1,
-    borderColor: "#FFE1A8",
+    borderColor: colors.line,
     flexShrink: 0
   },
   ratingPillDot: {
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: "#FFF6DA",
+    backgroundColor: "#FFB300",
     borderWidth: 2,
     borderColor: "rgba(255,255,255,0.7)"
   },
@@ -1004,12 +1273,12 @@ const styles = StyleSheet.create({
     gap: 4
   },
   ratingPillValue: {
-    color: "#4B2202",
+    color: colors.ink,
     fontWeight: "900",
     fontSize: 15
   },
   ratingPillCaption: {
-    color: "#7A3D00",
+    color: "#FFB300",
     fontWeight: "700",
     fontSize: 11,
     textTransform: "uppercase",
@@ -1027,7 +1296,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface
   },
   chipSolid: {
-    backgroundColor: colors.primaryMid,
+    backgroundColor: "#FF2E63",
     borderWidth: 0
   },
   chipText: {
@@ -1047,12 +1316,12 @@ const styles = StyleSheet.create({
   },
   metricValue: {
     fontSize: 24,
-    fontWeight: "800",
+    fontWeight: "900",
     color: colors.ink
   },
   metricTrend: {
     fontSize: fonts.caption,
-    color: colors.primaryMid,
+    color: "#FF2E63",
     fontWeight: "700"
   },
   /* Tab bar */
@@ -1061,32 +1330,39 @@ const styles = StyleSheet.create({
     left: spacing.md,
     right: spacing.md,
     bottom: spacing.md,
-    backgroundColor: "#FFFFFFF0",
-    borderRadius: 26,
-    padding: 8,
-    borderWidth: 1,
-    borderColor: colors.line,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 28,
+    padding: 6,
+    borderWidth: 1.5,
+    borderColor: "#E6E8EC",
     flexDirection: "row",
-    gap: 8,
+    gap: 0,
     ...shadow
+  },
+  tabIndicator: {
+    position: "absolute",
+    top: 6,
+    bottom: 6,
+    backgroundColor: "#FFC244", // Glovo Yellow
+    borderRadius: 22,
+    zIndex: 0
   },
   tabButton: {
     flex: 1,
-    borderRadius: 20,
-    paddingVertical: 14,
+    borderRadius: 22,
+    paddingVertical: 12,
     alignItems: "center",
-    justifyContent: "center"
+    justifyContent: "center",
+    zIndex: 1
   },
-  tabButtonActive: {
-    backgroundColor: colors.primary
-  },
+  tabButtonActive: {},
   tabLabel: {
     fontSize: 13,
-    fontWeight: "700",
-    color: colors.muted
+    fontWeight: "800",
+    color: "#757575"
   },
   tabLabelActive: {
-    color: "#FFFFFF"
+    color: "#222222" // Glovo Dark Slate on Yellow
   },
   /* Search */
   searchBar: {
@@ -1094,8 +1370,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 12,
     backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: "#DCE7DE",
+    borderWidth: 1.5,
+    borderColor: colors.line,
     borderRadius: radius.md,
     paddingHorizontal: spacing.md,
     paddingVertical: 14,
@@ -1105,47 +1381,46 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: "#E6F3E7",
+    backgroundColor: "rgba(0, 0, 0, 0.04)",
     alignItems: "center",
     justifyContent: "center"
   },
   searchIconText: {
-    color: colors.primaryMid,
+    color: "#FF2E63",
     fontWeight: "800",
-    fontSize: 13
+    fontSize: 16
   },
   searchText: {
-    color: colors.muted,
+    color: colors.ink,
     fontSize: fonts.body,
     flex: 1
   },
   /* Notice */
   notice: {
     borderRadius: radius.md,
-    borderWidth: 1,
+    borderWidth: 1.5,
     paddingHorizontal: spacing.md,
     paddingVertical: 12
   },
   noticeText: {
-    color: colors.primaryDeep,
     fontSize: fonts.body,
-    lineHeight: 21,
-    fontWeight: "600"
+    lineHeight: 18,
+    fontWeight: "700"
   },
   /* Featured badge */
   featuredBadge: {
     alignSelf: "flex-start",
-    backgroundColor: "#FFF2D9",
-    borderColor: "#FFDDA3",
+    backgroundColor: "rgba(255, 179, 0, 0.15)",
+    borderColor: "rgba(255, 179, 0, 0.3)",
     borderWidth: 1,
     borderRadius: radius.pill,
     paddingHorizontal: 12,
     paddingVertical: 5
   },
   featuredBadgeText: {
-    fontSize: 12,
-    fontWeight: "700",
-    color: "#9A5A00"
+    fontSize: 11,
+    fontWeight: "800",
+    color: "#FFB300"
   },
   cartLoader: {
     alignItems: "center",

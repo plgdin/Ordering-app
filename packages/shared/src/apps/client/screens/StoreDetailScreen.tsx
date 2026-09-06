@@ -83,13 +83,13 @@ const styles = StyleSheet.create({
   },
   backArrow: {
     fontSize: 15,
-    fontWeight: "700",
-    color: colors.primaryMid
+    fontWeight: "800",
+    color: "#00A082"
   },
   storeInfo: {
     backgroundColor: colors.surface,
     borderRadius: radius.lg,
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: colors.line,
     padding: spacing.lg,
     gap: spacing.sm,
@@ -107,7 +107,7 @@ const styles = StyleSheet.create({
   },
   storeName: {
     fontSize: 24,
-    fontWeight: "800",
+    fontWeight: "900",
     color: colors.ink
   },
   storeMeta: {
@@ -132,7 +132,7 @@ const styles = StyleSheet.create({
   },
   itemName: {
     fontSize: 16,
-    fontWeight: "700",
+    fontWeight: "800",
     color: colors.ink
   },
   itemUnit: {
@@ -141,19 +141,24 @@ const styles = StyleSheet.create({
   },
   itemPrice: {
     fontSize: 18,
-    fontWeight: "800",
+    fontWeight: "900",
     color: colors.ink
   },
   addButton: {
-    backgroundColor: colors.primaryMid,
+    backgroundColor: "#00A082",
     borderRadius: radius.pill,
-    paddingHorizontal: 20,
-    paddingVertical: 9
+    paddingHorizontal: 22,
+    paddingVertical: 10,
+    shadowColor: "#00A082",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 4
   },
   addButtonText: {
     color: "#FFFFFF",
-    fontWeight: "700",
-    fontSize: 13
+    fontWeight: "900",
+    fontSize: 14
   },
   outOfStockBadge: {
     backgroundColor: colors.primaryFaint,

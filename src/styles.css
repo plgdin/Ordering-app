@@ -1,0 +1,1990 @@
+/* ─── 21st.dev Official Component Registry & 4Kit Dynamic Design System ─── */
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Outfit:wght@500;700;800;900&display=swap');
+
+:root {
+  /* 🎨 DYNAMIC THEME DEFAULTS (Crimson Paprika - Non-Competitor, High-End) */
+  --active-primary: #DC2626;
+  --active-dark: #991B1B;
+  --active-gradient: linear-gradient(135deg, #DC2626 0%, #991B1B 100%);
+  --active-glow: 0 12px 36px rgba(220, 38, 38, 0.5);
+  --active-light-bg: #FEF2F2;
+
+  --food-cacao: #140C09;           /* Deep Roasted Charcoal Truffle */
+  --food-espresso: #241610;
+  --food-oat: #F8F5F0;             /* Warm Oat Milk Canvas */
+  --food-card: #FFFFFF;
+  --food-border: #EADBCE;
+
+  --text-primary: #140C09;
+  --text-secondary: #6B5548;
+  --text-muted: #9C8578;
+
+  --shadow-food-sm: 0 4px 14px rgba(20, 12, 9, 0.05);
+  --shadow-food-md: 0 12px 30px rgba(20, 12, 9, 0.08);
+  --shadow-food-lg: 0 24px 60px rgba(20, 12, 9, 0.14);
+
+  --radius-sm: 16px;
+  --radius-md: 26px;
+  --radius-lg: 36px;
+  --radius-pill: 9999px;
+  --font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
+  --font-display: 'Outfit', sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: var(--font-family);
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  background-color: #FFFFFF;
+  color: var(--text-primary);
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 0;
+}
+
+/* ─── Mobile App Frame (Strict 480px Boundary) ─── */
+.app-container {
+  width: 100%;
+  max-width: 480px;
+  min-height: 100vh;
+  background: #FFFFFF;
+  box-shadow: 0 0 40px rgba(0, 0, 0, 0.08);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding-bottom: 120px;
+  overflow-x: hidden;
+}
+
+/* ─── 4KIT CINEMATIC VIDEO LOGO SPLASH SCREEN (NO SOUND) ─── */
+.kit4-splash-screen {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 9999;
+  background: #FFFFFF;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.splash-video-wrapper {
+  width: 100%;
+  max-width: 480px;
+  height: 100%;
+  max-height: 90vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  background: #FFFFFF;
+}
+
+.splash-video-element {
+  width: 100%;
+  max-width: 480px;
+  height: auto;
+  max-height: 80vh;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+.splash-skip-btn {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  background: rgba(0, 0, 0, 0.06);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  color: #1F2937;
+  font-size: 13px;
+  font-weight: 800;
+  padding: 8px 18px;
+  border-radius: 9999px;
+  cursor: pointer;
+  z-index: 10000;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.splash-skip-btn:hover {
+  background: rgba(0, 0, 0, 0.12);
+  transform: scale(1.05);
+}
+
+.splash-laser-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(220, 38, 38, 0) 0%, rgba(220, 38, 38, 0.15) 50%, rgba(220, 38, 38, 0) 100%);
+  height: 200%;
+  animation: laserGridSweep 4s linear infinite;
+  pointer-events: none;
+}
+
+.splash-glow-aura {
+  position: absolute;
+  width: 360px;
+  height: 360px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #DC2626 0%, transparent 70%);
+  opacity: 0.4;
+  filter: blur(50px);
+  pointer-events: none;
+}
+
+.splash-logo-container {
+  position: relative;
+  margin-bottom: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 4Kit Mega Emblem: Red Background, White Fonts, Crisp Black Outline */
+.splash-brand-emblem {
+  background: #DC2626;
+  color: #FFFFFF;
+  font-family: var(--font-display);
+  font-size: 52px;
+  font-weight: 900;
+  padding: 18px 44px;
+  border-radius: 28px;
+  border: 4px solid #000000;
+  box-shadow: 6px 6px 0px #000000, 0 20px 50px rgba(220, 38, 38, 0.6);
+  letter-spacing: 0.5px;
+  -webkit-text-stroke: 2.5px #000000;
+  text-shadow: 2px 2px 0px #000, -2px -2px 0px #000, 2px -2px 0px #000, -2px 2px 0px #000, 0 8px 20px rgba(0,0,0,0.8);
+  position: relative;
+  z-index: 2;
+}
+
+/* 21st.dev Laser Pulse Line */
+.splash-laser-line {
+  width: 220px;
+  height: 3px;
+  background: linear-gradient(90deg, transparent 0%, #DC2626 50%, transparent 100%);
+  box-shadow: 0 0 14px #DC2626;
+  margin: 16px 0 24px;
+  position: relative;
+  overflow: hidden;
+}
+
+.splash-laser-line::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: #FFFFFF;
+  animation: laserPulse 1.8s ease-in-out infinite;
+}
+
+@keyframes laserPulse {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.splash-kinetic-words {
+  display: flex;
+  gap: 8px;
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.splash-kinetic-tagline {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #DC2626;
+  margin-top: 8px;
+}
+
+/* ─── 4Kit Brand Logo (Red Background, White Font, Black Outline) ─── */
+.kit4-logo-badge {
+  background: #DC2626;
+  color: #FFFFFF;
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 900;
+  padding: 6px 16px;
+  border-radius: 14px;
+  border: 2.5px solid #000000;
+  box-shadow: 3px 3px 0px #000000, 0 8px 24px rgba(220, 38, 38, 0.45);
+  letter-spacing: -0.5px;
+  -webkit-text-stroke: 1.5px #000000;
+  text-shadow: 1px 1px 0px #000, -1px -1px 0px #000, 1px -1px 0px #000, -1px 1px 0px #000;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.kit4-logo-badge:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 4px 4px 0px #000000, 0 12px 30px rgba(220, 38, 38, 0.6);
+}
+
+
+
+/* ─── 4KIT HERO LANDING SECTION (PURE WHITE CLEAN) ─── */
+.kit4-hero-header {
+  background: #FFFFFF;
+  padding: 16px 20px 20px;
+  border-bottom: 1px solid #F3F4F6;
+  color: #111827;
+  position: relative;
+  overflow: hidden;
+}
+
+.ios-status-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  font-weight: 800;
+  margin-bottom: 14px;
+  color: #111827;
+}
+
+/* 4Kit Brand Logo Bar */
+.kit4-logo-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.kit4-brand-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.kit4-logo-badge {
+  background: var(--active-gradient);
+  color: #FFFFFF;
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 900;
+  padding: 6px 14px;
+  border-radius: 14px;
+  letter-spacing: -0.5px;
+  box-shadow: var(--active-glow);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.35s ease;
+}
+
+.kit4-tagline {
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--active-primary);
+  transition: color 0.35s ease;
+}
+
+.kit4-hero-badge-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #F3F4F6;
+  border: 1px solid #E5E7EB;
+  padding: 5px 12px;
+  border-radius: var(--radius-pill);
+  font-size: 11px;
+  font-weight: 800;
+  color: #374151;
+}
+
+/* Location Selector */
+.header-location-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #F9FAFB;
+  padding: 12px 18px;
+  border-radius: var(--radius-pill);
+  border: 1px solid #E5E7EB;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.header-location-box:hover {
+  background: #F3F4F6;
+  border-color: var(--active-primary);
+}
+
+.location-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.location-icon-circle {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--active-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  box-shadow: var(--active-glow);
+  transition: all 0.35s ease;
+}
+
+.location-title {
+  font-size: 13px;
+  font-weight: 900;
+  color: #111827;
+}
+
+.location-address {
+  font-size: 11px;
+  color: #6B7280;
+  font-weight: 600;
+}
+
+/* ─── 21st.dev BUTTON TEMPLATES ─── */
+
+/* 1. 21st.dev Shimmer CTA Button */
+@keyframes shimmerSweep {
+  0% { transform: translateX(-120%) rotate(25deg); }
+  100% { transform: translateX(220%) rotate(25deg); }
+}
+
+.shimmer-btn {
+  position: relative;
+  overflow: hidden;
+  background: var(--active-gradient);
+  color: #FFFFFF;
+  border: none;
+  padding: 16px 28px;
+  border-radius: var(--radius-pill);
+  font-size: 15px;
+  font-weight: 900;
+  cursor: pointer;
+  box-shadow: var(--active-glow);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.shimmer-btn::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 50%;
+  height: 200%;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.45) 50%, rgba(255, 255, 255, 0) 100%);
+  animation: shimmerSweep 2.8s infinite;
+  pointer-events: none;
+}
+
+.shimmer-btn:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: var(--active-glow);
+}
+
+.shimmer-btn:active {
+  transform: scale(0.96);
+}
+
+/* 2. 21st.dev Border Beam Light Button */
+.border-beam-btn {
+  background: var(--food-cacao);
+  color: #FFFFFF;
+  border: 1.5px solid var(--active-primary);
+  border-radius: var(--radius-pill);
+  padding: 8px 18px;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 6px 20px rgba(20, 12, 9, 0.3);
+  transition: all 0.25s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.border-beam-btn:hover {
+  transform: scale(1.04);
+}
+
+/* 3. 21st.dev Expandable Counter Button (+ / - Pill) */
+.dev21-counter-pill {
+  display: inline-flex;
+  align-items: center;
+  background: var(--active-light-bg);
+  border: 1.5px solid var(--active-primary);
+  border-radius: var(--radius-pill);
+  padding: 4px 6px;
+  gap: 10px;
+  transition: all 0.3s ease;
+}
+
+.counter-btn-trigger {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--active-primary);
+  color: #FFFFFF;
+  border: none;
+  font-size: 18px;
+  font-weight: 900;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.3s ease;
+  box-shadow: var(--active-glow);
+}
+
+.counter-btn-trigger:hover {
+  transform: scale(1.15);
+}
+
+.counter-qty-val {
+  font-size: 14px;
+  font-weight: 900;
+  color: var(--active-primary);
+  min-width: 16px;
+  text-align: center;
+  transition: color 0.3s ease;
+}
+
+/* ─── 21st.dev Bento Grid & Floating Bubbles ─── */
+@keyframes floatWobbleEven {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-6px) rotate(1.5deg); }
+}
+
+@keyframes floatWobbleOdd {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(6px) rotate(-1.5deg); }
+}
+
+.glovo-bubbles-section {
+  padding: 24px 16px 14px;
+}
+
+.section-label-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--active-primary);
+  margin-bottom: 12px;
+  transition: color 0.35s ease;
+}
+
+.glovo-bubbles-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px 12px;
+}
+
+.glovo-bubble-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+  transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.22s ease;
+}
+
+.glovo-bubble-item:hover {
+  transform: translateY(-8px) scale(1.1) !important;
+}
+
+.glovo-bubble-item:hover .bubble-outer-circle {
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.16), var(--active-glow);
+}
+
+.glovo-bubble-item:active {
+  transform: scale(0.95) !important;
+}
+
+.bubble-outer-circle {
+  width: 74px;
+  height: 74px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36px;
+  box-shadow: var(--shadow-food-md);
+  border: 4px solid var(--food-card);
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.glovo-bubble-item.active .bubble-outer-circle {
+  border-color: var(--food-cacao);
+  box-shadow: 0 0 0 4px var(--active-primary), var(--active-glow);
+  transform: scale(1.08);
+}
+
+.bubble-active-dot {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  background: var(--active-primary);
+  color: #FFFFFF;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid var(--food-card);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 900;
+  transition: background 0.35s ease;
+}
+
+.bubble-name {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin-top: 8px;
+  text-align: center;
+}
+
+/* ─── 21st.dev Spotlight Cards & Bento Banner ─── */
+.bento-banner-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  padding: 0 16px 24px;
+}
+
+.spotlight-card {
+  background: var(--food-card);
+  border-radius: var(--radius-md);
+  padding: 24px;
+  border: 1.5px solid var(--food-border);
+  box-shadow: var(--shadow-food-sm);
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.spotlight-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: var(--active-gradient);
+  transition: background 0.35s ease;
+}
+
+.spotlight-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-food-md);
+  border-color: var(--active-primary);
+}
+
+.spotlight-card-content {
+  position: relative;
+  z-index: 2;
+}
+
+/* ─── 21st.dev Search Input Component ─── */
+.glovo-search-container {
+  padding: 6px 16px 16px;
+}
+
+.glovo-search-bar {
+  background: var(--food-card);
+  border-radius: var(--radius-pill);
+  padding: 14px 22px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: var(--shadow-food-md);
+  border: 1.5px solid var(--food-border);
+  transition: all 0.25s ease;
+}
+
+.glovo-search-bar:focus-within {
+  border-color: var(--active-primary);
+  box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.15), var(--shadow-food-md);
+}
+
+.search-input-field {
+  border: none;
+  outline: none;
+  width: 100%;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+  background: transparent;
+}
+
+.sample-chips-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 10px 0 4px;
+  margin-top: 4px;
+  scroll-behavior: smooth;
+}
+
+.sample-chips-row::-webkit-scrollbar {
+  display: none;
+}
+
+.sample-chip-label {
+  font-size: 11px;
+  font-weight: 800;
+  color: #6B7280;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.sample-chip {
+  background: #F3F4F6;
+  color: #374151;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 6px 14px;
+  border-radius: 9999px;
+  border: 1px solid #E5E7EB;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.sample-chip:hover, .sample-chip.active {
+  background: var(--active-primary);
+  color: #FFFFFF;
+  border-color: var(--active-primary);
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.25);
+}
+
+/* ─── Store & Menu Cards ─── */
+.stores-section {
+  padding: 0 16px 24px;
+}
+
+.section-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.section-h2 {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 900;
+  color: var(--text-primary);
+}
+
+.store-ios-card {
+  background: var(--food-card);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow: var(--shadow-food-sm);
+  border: 1.5px solid var(--food-border);
+  margin-bottom: 20px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+}
+
+.store-ios-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-food-md);
+  border-color: var(--active-primary);
+}
+
+.store-cover-img {
+  width: 100%;
+  height: 175px;
+  object-fit: cover;
+}
+
+.store-card-content {
+  padding: 18px;
+}
+
+.store-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.store-name-text {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 900;
+  color: var(--text-primary);
+}
+
+.rating-green-pill {
+  background: var(--active-light-bg);
+  color: var(--active-primary);
+  border: 1px solid var(--active-primary);
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+  font-size: 12px;
+  font-weight: 900;
+  transition: all 0.35s ease;
+}
+
+.store-meta-line {
+  font-size: 13px;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+/* ─── Dish Menu Item ─── */
+.dish-menu-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px;
+  background: var(--food-card);
+  border-radius: var(--radius-sm);
+  border: 1.5px solid var(--food-border);
+  margin-bottom: 14px;
+  transition: all 0.2s ease;
+}
+
+.dish-menu-item:hover {
+  border-color: var(--active-primary);
+  box-shadow: var(--shadow-food-sm);
+}
+
+.dish-left {
+  flex: 1;
+  padding-right: 14px;
+}
+
+.dish-name {
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+.dish-desc {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin: 4px 0 8px;
+  line-height: 1.4;
+}
+
+.dish-price {
+  font-size: 16px;
+  font-weight: 900;
+  color: var(--active-primary);
+  transition: color 0.35s ease;
+}
+
+/* ─── 21st.dev Glassmorphic Dock Navigation (Strictly Centered Fixed at Bottom) ─── */
+.glovo-bottom-dock {
+  position: fixed;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(calc(100% - 32px), 448px);
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(18px);
+  border: 1.5px solid #E5E7EB;
+  border-radius: var(--radius-pill);
+  display: flex;
+  justify-content: space-around;
+  padding: 8px 12px;
+  z-index: 1000;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+}
+
+.dock-tab-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  background: none;
+  border: none;
+  color: #6B7280;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+  padding: 6px 16px;
+  border-radius: var(--radius-pill);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.dock-tab-btn:hover {
+  color: #111827;
+}
+
+.dock-tab-btn.active {
+  background: var(--active-gradient);
+  color: #FFFFFF;
+  box-shadow: var(--active-glow);
+  transition: all 0.35s ease;
+}
+
+.dock-tab-icon {
+  font-size: 18px;
+}
+
+/* ─── 21st.dev FLOATING CART BAR (Strictly Pinned above Bottom Dock with Perfect Alignment) ─── */
+.glovo-cart-float-bar {
+  position: fixed;
+  bottom: 84px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(calc(100% - 32px), 448px);
+  height: 56px;
+  background: var(--active-gradient);
+  color: #FFFFFF;
+  padding: 0 20px;
+  border-radius: var(--radius-pill);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 999;
+  box-shadow: var(--active-glow), 0 12px 28px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.glovo-cart-float-bar:hover {
+  transform: translateX(-50%) translateY(-3px);
+  box-shadow: var(--active-glow), 0 16px 36px rgba(0, 0, 0, 0.25);
+}
+
+.cart-left-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.cart-badge-yellow {
+  background: #FFFFFF;
+  color: var(--active-primary);
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 900;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+  flex-shrink: 0;
+  transition: color 0.35s ease;
+}
+
+.cart-title-text {
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 900;
+  letter-spacing: -0.2px;
+  color: #FFFFFF;
+}
+
+.cart-cta-text {
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 900;
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ─── Item Customization Drawer (21st.dev Modal Template) ─── */
+.dev21-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(20, 12, 9, 0.65);
+  backdrop-filter: blur(8px);
+  z-index: 1200;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.dev21-modal-drawer {
+  width: 100%;
+  max-width: 480px;
+  background: var(--food-oat);
+  border-radius: 36px 36px 0 0;
+  padding: 24px;
+  box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.3);
+}
+
+/* ─── PLACED ORDER VIDEO OVERLAY & NIKHIL CELEBRATION CARD ─── */
+/* ─── PLACED ORDER VIDEO OVERLAY & NIKHIL CELEBRATION CARD ─── */
+.video-modal-fullscreen {
+  position: absolute;
+  inset: 0;
+  z-index: 3000;
+  background: #000000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  overflow: hidden;
+}
+
+.video-container-card {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  background: #000000;
+  border-radius: 0;
+  overflow: hidden;
+  box-shadow: none;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.placed-video-element {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.video-skip-pill {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  background: rgba(0, 0, 0, 0.75);
+  color: #FFFFFF;
+  backdrop-filter: blur(12px);
+  border: 1.5px solid rgba(255, 255, 255, 0.3);
+  padding: 8px 16px;
+  border-radius: 9999px;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+
+.video-skip-pill:hover {
+  background: rgba(220, 38, 38, 0.9);
+  border-color: #FFFFFF;
+}
+
+/* ─── 21st.dev MODERN GLASSMORPHIC DELIVERY CELEBRATION CARD ─── */
+.nikhil-celebration-card {
+  width: 100%;
+  max-width: 400px;
+  background: rgba(18, 10, 8, 0.94);
+  backdrop-filter: blur(28px);
+  color: #FFFFFF;
+  border-radius: 36px;
+  padding: 28px 24px;
+  text-align: center;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.9), var(--active-glow);
+  border: 1.5px solid rgba(255, 255, 255, 0.18);
+  position: relative;
+  overflow: hidden;
+}
+
+.nikhil-card-glow-aura {
+  position: absolute;
+  top: -80px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 260px;
+  height: 260px;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--active-primary) 0%, transparent 70%);
+  opacity: 0.35;
+  filter: blur(40px);
+  pointer-events: none;
+}
+
+.nikhil-avatar-ring {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: var(--active-gradient);
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 14px;
+  box-shadow: var(--active-glow);
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  position: relative;
+}
+
+.nikhil-badge-online {
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  width: 18px;
+  height: 18px;
+  background: #10B981;
+  border: 3px solid #140C09;
+  border-radius: 50%;
+  box-shadow: 0 0 10px #10B981;
+}
+
+.nikhil-headline {
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 900;
+  margin-bottom: 4px;
+  letter-spacing: -0.3px;
+  color: #FFFFFF;
+}
+
+.nikhil-subtext {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.7);
+  font-weight: 600;
+  margin-bottom: 20px;
+}
+
+.rider-status-box {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 24px;
+  padding: 16px;
+  margin-bottom: 20px;
+  text-align: left;
+}
+
+.rider-info-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.rider-name {
+  font-weight: 800;
+  font-size: 15px;
+  color: #FFFFFF;
+}
+
+.rider-rating {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.7);
+  font-weight: 700;
+  margin-top: 2px;
+}
+
+.call-rider-btn {
+  background: #FFFFFF;
+  color: #140C09;
+  border: none;
+  border-radius: 9999px;
+  padding: 8px 18px;
+  font-size: 12px;
+  font-weight: 900;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: transform 0.2s ease, background-color 0.2s ease;
+  box-shadow: 0 4px 14px rgba(255, 255, 255, 0.15);
+}
+
+.call-rider-btn:hover {
+  transform: scale(1.05);
+  background: #F8F5F0;
+}
+
+.rider-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.rider-name {
+  font-weight: 800;
+  font-size: 15px;
+}
+
+/* ─── DIETARY & LIFESTYLE SPOTLIGHT (EMERALD HEALTH GLOW) ─── */
+.diet-card {
+  background: #FFFFFF;
+  border-radius: 24px;
+  border: 1.5px solid #A7F3D0;
+  padding: 16px;
+  margin-bottom: 14px;
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  box-shadow: 0 10px 25px rgba(5, 150, 105, 0.08);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.diet-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 36px rgba(5, 150, 105, 0.18);
+  border-color: #10B981;
+}
+
+.diet-img {
+  width: 90px;
+  height: 90px;
+  border-radius: 18px;
+  object-fit: cover;
+  flex-shrink: 0;
+  background-color: #FFFFFF;
+  mix-blend-mode: multiply;
+  filter: contrast(1.22) brightness(1.15);
+}
+
+.diet-badge-pill {
+  background: #ECFDF5;
+  color: #047857;
+  font-size: 10px;
+  font-weight: 900;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  border: 1px solid #6EE7B7;
+  display: inline-block;
+  margin-bottom: 6px;
+  letter-spacing: 0.5px;
+}
+
+.diet-macros-tag {
+  font-size: 11px;
+  color: #059669;
+  font-weight: 800;
+  margin-top: 6px;
+}
+
+/* ─── SUGAR & SWEET CRAVINGS COLLECTION (ROSE NEON TILT) ─── */
+.cravings-card {
+  background: #FFFFFF;
+  border-radius: 26px;
+  border: 1.5px solid #FBCFE8;
+  padding: 16px;
+  margin-bottom: 14px;
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  box-shadow: 0 4px 16px rgba(219, 39, 119, 0.06);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.cravings-card:hover {
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: 0 20px 45px rgba(219, 39, 119, 0.22);
+  border-color: #F472B6;
+}
+
+.cravings-img {
+  width: 90px;
+  height: 90px;
+  border-radius: 20px;
+  object-fit: cover;
+  flex-shrink: 0;
+  background-color: #FFFFFF;
+  mix-blend-mode: multiply;
+  filter: contrast(1.22) brightness(1.15);
+}
+
+.cravings-badge-pink {
+  background: #BE185D;
+  color: #FFFFFF;
+  font-size: 10px;
+  font-weight: 900;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  display: inline-block;
+  margin-bottom: 6px;
+  letter-spacing: 0.5px;
+  box-shadow: 0 4px 12px rgba(190, 24, 93, 0.3);
+}
+
+/* ─── GLOBAL CUISINE EXPLORER HORIZONTAL SCROLL ─── */
+.cuisine-scroll-row {
+  display: flex;
+  gap: 14px;
+  overflow-x: auto;
+  padding-bottom: 12px;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+.cuisine-scroll-row::-webkit-scrollbar {
+  display: none;
+}
+
+.cuisine-pill-card {
+  min-width: 170px;
+  background: #FFFFFF;
+  border-radius: 24px;
+  border: 1.5px solid var(--food-border);
+  overflow: hidden;
+  box-shadow: var(--shadow-food-sm);
+  transition: all 0.25s ease;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.cuisine-pill-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--active-primary);
+  box-shadow: var(--shadow-food-md);
+}
+
+.cuisine-cover {
+  width: 100%;
+  height: 95px;
+  object-fit: cover;
+}
+
+.cuisine-info {
+  padding: 12px;
+}
+
+.cuisine-title {
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 900;
+  color: var(--text-primary);
+}
+
+.cuisine-tagline {
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+/* ─── CUSTOM MULTI-STORE ORDER BUILDER DRAWER ─── */
+.custom-builder-box {
+  background: #FFFFFF;
+  border-radius: 28px;
+  border: 2px dashed var(--active-primary);
+  padding: 20px;
+  margin-bottom: 24px;
+  box-shadow: var(--active-glow);
+}
+
+.store-select-dropdown {
+  width: 100%;
+  padding: 12px 16px;
+  border-radius: 16px;
+  border: 1.5px solid var(--food-border);
+  background: var(--food-oat);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+  outline: none;
+  margin-top: 6px;
+}
+
+.store-select-dropdown:focus {
+  border-color: var(--active-primary);
+}
+
+
+.rider-rating {
+  font-size: 12px;
+  opacity: 0.85;
+  font-weight: 700;
+}
+
+.call-rider-btn {
+  background: #FFFFFF;
+  color: var(--active-primary);
+  border: none;
+  border-radius: 9999px;
+  padding: 8px 16px;
+  font-size: 12px;
+  font-weight: 900;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: transform 0.2s ease;
+}
+
+.call-rider-btn:hover {
+  transform: scale(1.05);
+}
+
+.delivery-eta-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+  font-weight: 800;
+  background: rgba(0, 0, 0, 0.2);
+  padding: 10px 14px;
+  border-radius: 16px;
+}
+
+/* ─── Top-Left Header Back Button ─── */
+.header-back-circle-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #F3F4F6;
+  border: 1.5px solid #E5E7EB;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.header-back-circle-btn:hover {
+  background: #E5E7EB;
+  border-color: var(--active-primary);
+  transform: translateX(-2px);
+}
+
+/* ─── Stores Screen Quick Filter Chips ─── */
+.quick-filter-scroll {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 4px 0 16px;
+  margin-bottom: 8px;
+  scroll-behavior: smooth;
+}
+
+.quick-filter-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.quick-filter-btn {
+  background: #FFFFFF;
+  color: #374151;
+  border: 1.5px solid #E5E7EB;
+  border-radius: var(--radius-pill);
+  padding: 6px 14px;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.quick-filter-btn:hover {
+  border-color: var(--active-primary);
+}
+
+.quick-filter-btn.active {
+  background: var(--active-primary);
+  color: #FFFFFF;
+  border-color: var(--active-primary);
+  box-shadow: var(--active-glow);
+}
+
+/* ─── Location & Distance Badges ─── */
+.distance-pill-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #F3F4F6;
+  color: #374151;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 9999px;
+  border: 1px solid #E5E7EB;
+}
+
+.distance-pill-badge.within-range {
+  background: #ECFDF5;
+  color: #059669;
+  border-color: #A7F3D0;
+}
+
+.distance-pill-badge.out-range {
+  background: #FEF2F2;
+  color: #DC2626;
+  border-color: #FECACA;
+}
+
+/* ─── Filter Modal Multi-Section Pills ─── */
+.filter-section-title {
+  font-size: 13px;
+  font-weight: 900;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.filter-chips-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.filter-chip-option {
+  background: #FFFFFF;
+  color: #374151;
+  border: 1.5px solid #E5E7EB;
+  border-radius: var(--radius-pill);
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.filter-chip-option:hover {
+  border-color: var(--active-primary);
+}
+
+.filter-chip-option.active {
+  background: var(--active-primary);
+  color: #FFFFFF;
+  border-color: var(--active-primary);
+  font-weight: 800;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
+}
+
+/* ─── Multi-Store 5KM Distance Indicator Box ─── */
+.multi-store-distance-box {
+  background: #F9FAFB;
+  border: 1.5px solid #E5E7EB;
+  border-radius: 18px;
+  padding: 12px 14px;
+  margin: 12px 0 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.multi-item-limit-alert {
+  background: #FEF2F2;
+  border: 1.5px solid #FECACA;
+  color: #991B1B;
+  padding: 10px 14px;
+  border-radius: 14px;
+  font-size: 12px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+/* ─── 4Kit Category Promotional Banner Carousel ─── */
+.category-promo-carousel {
+  display: flex;
+  gap: 14px;
+  overflow-x: auto;
+  padding: 4px 16px 18px;
+}
+
+.category-promo-carousel::-webkit-scrollbar {
+  display: none;
+}
+
+.category-promo-card {
+  min-width: 300px;
+  border-radius: 24px;
+  padding: 20px 22px;
+  color: #FFFFFF;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: transform 0.25s ease;
+}
+
+.category-promo-card:hover {
+  transform: translateY(-3px) scale(1.01);
+}
+
+.category-promo-left {
+  position: relative;
+  z-index: 2;
+  max-width: 60%;
+}
+
+.category-promo-title {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 900;
+  line-height: 1.15;
+  margin-bottom: 4px;
+}
+
+.category-promo-sub {
+  font-size: 12px;
+  font-weight: 700;
+  opacity: 0.95;
+  margin-bottom: 14px;
+}
+
+.category-promo-cta-btn {
+  background: #FFFFFF;
+  color: #1F2937;
+  border: none;
+  font-size: 11px;
+  font-weight: 900;
+  padding: 6px 14px;
+  border-radius: 9999px;
+  cursor: pointer;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+  letter-spacing: 0.3px;
+}
+
+.category-promo-img {
+  width: 100px;
+  height: 90px;
+  border-radius: 18px;
+  object-fit: cover;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
+  position: relative;
+  z-index: 2;
+}
+
+/* ─── 4Kit Food & Restaurant Cards ─── */
+.swiggy-rest-card {
+  display: flex;
+  gap: 14px;
+  background: #FFFFFF;
+  border-radius: 24px;
+  border: 1.5px solid #F1F5F9;
+  padding: 12px;
+  margin-bottom: 16px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+}
+
+.swiggy-rest-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--active-primary);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.08);
+}
+
+.swiggy-rest-img-col {
+  width: 125px;
+  height: 140px;
+  position: relative;
+  flex-shrink: 0;
+  border-radius: 18px;
+  overflow: hidden;
+}
+
+.swiggy-rest-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.swiggy-fav-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 28px;
+  height: 28px;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(6px);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  cursor: pointer;
+  color: #FFFFFF;
+  transition: transform 0.2s ease;
+}
+
+.swiggy-fav-btn:hover {
+  transform: scale(1.15);
+}
+
+.swiggy-fav-btn.favorited {
+  background: #EF4444;
+  color: #FFFFFF;
+}
+
+.swiggy-discount-ribbon {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.85) 100%);
+  color: #FFFFFF;
+  font-size: 11px;
+  font-weight: 900;
+  padding: 18px 8px 6px;
+  text-align: center;
+  letter-spacing: 0.3px;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.6);
+}
+
+.swiggy-rest-info-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.swiggy-rest-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 4px;
+}
+
+.swiggy-rest-name {
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 900;
+  color: #1F2937;
+  line-height: 1.2;
+}
+
+.swiggy-rating-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 800;
+  color: #1F2937;
+  margin-bottom: 4px;
+}
+
+.swiggy-star-circle {
+  width: 18px;
+  height: 18px;
+  background: var(--active-primary);
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #FFFFFF;
+  font-size: 10px;
+}
+
+.swiggy-cuisines-text {
+  font-size: 12px;
+  color: #6B7280;
+  font-weight: 600;
+  margin-bottom: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.swiggy-loc-dist {
+  font-size: 12px;
+  color: #6B7280;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.swiggy-benefits-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.swiggy-free-del-text {
+  font-size: 11px;
+  font-weight: 900;
+  color: var(--active-primary);
+  letter-spacing: 0.3px;
+}
+
+.swiggy-one-pill {
+  background: var(--active-light-bg);
+  color: var(--active-primary);
+  border: 1px solid var(--active-primary);
+  padding: 2px 8px;
+  border-radius: 9999px;
+  font-size: 10px;
+  font-weight: 900;
+}
+
+/* ─── Circular Mind / Cravings Horizontal Scroll ─── */
+.swiggy-mind-section {
+  padding: 16px 0;
+  margin: 12px 0 16px;
+}
+
+.swiggy-mind-header {
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 900;
+  color: var(--text-primary);
+  padding: 0 16px 8px;
+}
+
+.swiggy-mind-scroll {
+  display: flex;
+  gap: 16px;
+  overflow-x: auto;
+  padding: 12px 16px 14px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.swiggy-mind-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.swiggy-mind-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  width: 72px;
+  text-align: center;
+}
+
+.swiggy-mind-circle-img {
+  width: 68px;
+  height: 68px;
+  border-radius: 50%;
+  object-fit: cover;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border: 2.5px solid #FFFFFF;
+  margin-bottom: 6px;
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.swiggy-mind-label {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+/* ─── Cuisine Collections Row ─── */
+.cuisine-scroll-row {
+  display: flex;
+  gap: 14px;
+  overflow-x: auto;
+  padding: 8px 4px 14px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.cuisine-scroll-row::-webkit-scrollbar {
+  display: none;
+}
+
+.cuisine-pill-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #FFFFFF;
+  border-radius: 20px;
+  border: 1.5px solid #F1F5F9;
+  padding: 10px 14px;
+  min-width: 210px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.04);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.cuisine-pill-card:hover {
+  border-color: var(--active-primary);
+}
+
+.cuisine-cover {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.cuisine-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.cuisine-title {
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 900;
+  color: #1F2937;
+}
+
+.cuisine-tagline {
+  font-size: 11px;
+  color: #6B7280;
+  font-weight: 600;
+}
+
+/* ─── Floating View Order Bar (Centered & Pinned above dock) ─── */
+.glovo-cart-float-bar {
+  position: fixed;
+  bottom: 82px;
+  left: 50%;
+  transform: translateX(-50%) !important;
+  width: min(calc(100% - 32px), 440px);
+  border-radius: var(--radius-pill);
+  padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: #FFFFFF;
+  cursor: pointer;
+  z-index: 999;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.glovo-cart-float-bar:hover {
+  filter: brightness(1.06);
+}
+
+.cart-left-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.cart-badge-yellow {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.cart-title-text {
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 900;
+  letter-spacing: 0.3px;
+}
+
+.cart-cta-text {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+  font-weight: 900;
+}
+
+/* ─── 4Kit 4-Tab Bottom Navigation Dock ─── */
+.glovo-bottom-dock {
+  position: fixed;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(calc(100% - 32px), 440px);
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border-radius: var(--radius-pill);
+  padding: 6px 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+  border: 1.5px solid rgba(0, 0, 0, 0.06);
+  z-index: 1000;
+}
+
+.dock-tab-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  background: transparent;
+  border: none;
+  padding: 8px 6px;
+  border-radius: var(--radius-pill);
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.dock-tab-btn.active {
+  color: #FFFFFF;
+}
+
+.dock-tab-btn:hover:not(.active) {
+  color: var(--text-primary);
+  background: #F3F4F6;
+}
+
+.dock-tab-icon {
+  transition: transform 0.2s ease;
+}
+
+.dock-tab-btn:hover .dock-tab-icon {
+  transform: scale(1.15);
+}
+
+
+
+

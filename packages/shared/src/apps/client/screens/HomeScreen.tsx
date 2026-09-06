@@ -47,12 +47,67 @@ const foodCuisines = [
   { name: "Desserts", filterKey: "Bakery", tag: "30% OFF", image: "https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=200&h=280&fit=crop" }
 ];
 
-const provisionsCategories = [
-  { name: "Vegetables", filterKey: "Groceries", tag: "FRESH 40%", image: "https://images.unsplash.com/photo-1540420773420-3366772f4999?w=200&h=280&fit=crop" },
-  { name: "Milk & Dairy", filterKey: "Groceries", tag: "DAILY SAVE", image: "https://images.unsplash.com/photo-1563636619-e9143da7973b?w=200&h=280&fit=crop" },
-  { name: "Wellness OTC", filterKey: "Pharmacy", tag: "10-MIN", image: "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=200&h=280&fit=crop" },
-  { name: "Daily Bakery", filterKey: "Bakery", tag: "WARM BREAD", image: "https://images.unsplash.com/photo-1509440159596-0249088772ff?w=200&h=280&fit=crop" }
+const instamartGridCategories = [
+  { name: "Vegetables & Fruit", filterKey: "Groceries", tag: "40% OFF", image: "https://images.unsplash.com/photo-1540420773420-3366772f4999?w=150&h=150&fit=crop" },
+  { name: "Dairy & Bread", filterKey: "Groceries", tag: "BUY 1 GET 1", image: "https://images.unsplash.com/photo-1563636619-e9143da7973b?w=150&h=150&fit=crop" },
+  { name: "Snacks & Munchies", filterKey: "Groceries", tag: "FLAT 30%", image: "https://images.unsplash.com/photo-1566478989037-eec170784d20?w=150&h=150&fit=crop" },
+  { name: "Wellness OTC", filterKey: "Pharmacy", tag: "10-MIN Drop", image: "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=150&h=150&fit=crop" },
+  { name: "Daily Bakery", filterKey: "Bakery", tag: "WARM BREAD", image: "https://images.unsplash.com/photo-1509440159596-0249088772ff?w=150&h=150&fit=crop" },
+  { name: "Drinks & Soda", filterKey: "Groceries", tag: "FREE Delivery", image: "https://images.unsplash.com/photo-1517701604599-bb29b565090c?w=150&h=150&fit=crop" },
+  { name: "Atta, Rice & Dals", filterKey: "Groceries", tag: "SAVE Rs 100", image: "https://images.unsplash.com/photo-1586201375761-83865001e31c?w=150&h=150&fit=crop" },
+  { name: "Baby Care & Toys", filterKey: "Groceries", tag: "15% OFF", image: "https://images.unsplash.com/photo-1515488042361-404e9250afef?w=150&h=150&fit=crop" }
 ];
+
+/* ─── InfiniteLoopScroll (seamless loop carousel using duplication resets) ─── */
+function InfiniteLoopScroll<T>({
+  data,
+  itemWidth,
+  gap = 12,
+  renderItem
+}: {
+  data: T[];
+  itemWidth: number;
+  gap?: number;
+  renderItem: (item: T, index: number) => React.ReactNode;
+}) {
+  const scrollViewRef = useRef<ScrollView>(null);
+  const singleSetWidth = data.length * (itemWidth + gap);
+  const duplicatedData = useMemo(() => [...data, ...data, ...data], [data]);
+
+  useEffect(() => {
+    // Initial mount position at start of set 1 (the middle set)
+    setTimeout(() => {
+      scrollViewRef.current?.scrollTo({ x: singleSetWidth, animated: false });
+    }, 120);
+  }, [singleSetWidth]);
+
+  const handleScroll = (event: any) => {
+    const x = event.nativeEvent.contentOffset.x;
+    if (x >= singleSetWidth * 2) {
+      scrollViewRef.current?.scrollTo({ x: x - singleSetWidth, animated: false });
+    } else if (x <= singleSetWidth - itemWidth) {
+      scrollViewRef.current?.scrollTo({ x: x + singleSetWidth, animated: false });
+    }
+  };
+
+  return (
+    <ScrollView
+      ref={scrollViewRef}
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      onScroll={handleScroll}
+      scrollEventThrottle={16}
+      contentContainerStyle={{ gap }}
+    >
+      {duplicatedData.map((item, idx) => (
+        <View key={idx} style={{ width: itemWidth }}>
+          {renderItem(item, idx % data.length)}
+        </View>
+      ))}
+    </ScrollView>
+  );
+}
+
 
 export function ClientHomeScreen({
   onStorePress,
@@ -72,6 +127,33 @@ export function ClientHomeScreen({
   const [searchQuery, setSearchQuery] = useState("");
   const filterTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   
+  // Custom states for Swiggy/Uber/Instamart parity
+  const [quantities, setQuantities] = useState<Record<string, number>>({});
+  const [flashTimeLeft, setFlashTimeLeft] = useState(522);
+  const [foodFilters, setFoodFilters] = useState({
+    fastDelivery: false,
+    topRated: false,
+    pureVeg: false,
+    offers: false
+  });
+  const [isScheduleOpen, setIsScheduleOpen] = useState(false);
+  const [scheduledTime, setScheduledTime] = useState("");
+  const [scheduleSuccess, setScheduleSuccess] = useState(false);
+
+  // Flash timer decrement
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setFlashTimeLeft((prev) => (prev > 0 ? prev - 1 : 600));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const formattedFlashTime = useMemo(() => {
+    const mins = Math.floor(flashTimeLeft / 60);
+    const secs = flashTimeLeft % 60;
+    return `${mins.toString().padStart(2, "0")}m ${secs.toString().padStart(2, "0")}s`;
+  }, [flashTimeLeft]);
+
   const allStores = useClientStores();
 
   const handleMainCategoryChange = (category: MainCategory) => {
@@ -87,25 +169,52 @@ export function ClientHomeScreen({
     }
   };
 
+  const handleIncrement = (itemId: string, item: any) => {
+    setQuantities((prev) => ({
+      ...prev,
+      [itemId]: (prev[itemId] || 0) + 1
+    }));
+    handleQuickAdd(item);
+  };
+
+  const handleDecrement = (itemId: string) => {
+    setQuantities((prev) => {
+      const next = { ...prev };
+      if (next[itemId] > 1) {
+        next[itemId] -= 1;
+      } else {
+        delete next[itemId];
+      }
+      return next;
+    });
+  };
+
+  const cartTotal = useMemo(() => {
+    return Object.entries(quantities).reduce((acc, [id, qty]) => {
+      const item = munchiesItems.find((i) => i.id === id);
+      return acc + (item ? item.price * qty : 0);
+    }, 0);
+  }, [quantities]);
+
   // Dynamic colors for categories
   const categoryTheme = useMemo(() => {
     if (mainCategory === "ride") {
       return {
-        primary: "#B05B48",
-        faint: "#F6ECE8",
-        soft: "#E4C5BD"
+        primary: "#FFB300", // Sunset Amber/Gold
+        faint: "#FFF8E1", // Soft amber pastel background
+        soft: "#FFE082" // Light amber border
       };
     } else if (mainCategory === "food") {
       return {
-        primary: "#A8201A",
-        faint: "#FAF0EF",
-        soft: "#EAC7C0"
+        primary: "#FF2E63", // Pink/red
+        faint: "#FFEBEE", // Soft crimson pastel background
+        soft: "#FFCDD2" // Light crimson border
       };
     } else {
       return {
-        primary: "#C88E52",
-        faint: "#FAF6F0",
-        soft: "#EAD6BD"
+        primary: "#00C853", // Green
+        faint: "#E8F5E9", // Soft green pastel background
+        soft: "#C8E6C9" // Light green border
       };
     }
   }, [mainCategory]);
@@ -134,6 +243,23 @@ export function ClientHomeScreen({
         (store) => store.category.toLowerCase() === previewFilter.toLowerCase()
       );
     }
+    if (mainCategory === "food") {
+      if (foodFilters.fastDelivery) {
+        result = result.filter((s) => {
+          const m = parseInt(s.eta) || 30;
+          return m <= 25;
+        });
+      }
+      if (foodFilters.topRated) {
+        result = result.filter((s) => s.rating >= 4.5);
+      }
+      if (foodFilters.pureVeg) {
+        result = result.filter((s) => s.name.toLowerCase().includes("veg") || s.featured);
+      }
+      if (foodFilters.offers) {
+        result = result.filter((s) => s.highlight && s.highlight.length > 0);
+      }
+    }
     if (searchQuery.trim().length > 0) {
       const q = searchQuery.toLowerCase();
       result = result.filter(
@@ -144,7 +270,7 @@ export function ClientHomeScreen({
       );
     }
     return result;
-  }, [previewFilter, categoryStores, searchQuery]);
+  }, [previewFilter, categoryStores, searchQuery, foodFilters, mainCategory]);
 
   const filteredStores = useMemo(() => {
     let result = categoryStores;
@@ -153,6 +279,23 @@ export function ClientHomeScreen({
         (store) => store.category.toLowerCase() === activeFilter.toLowerCase()
       );
     }
+    if (mainCategory === "food") {
+      if (foodFilters.fastDelivery) {
+        result = result.filter((s) => {
+          const m = parseInt(s.eta) || 30;
+          return m <= 25;
+        });
+      }
+      if (foodFilters.topRated) {
+        result = result.filter((s) => s.rating >= 4.5);
+      }
+      if (foodFilters.pureVeg) {
+        result = result.filter((s) => s.name.toLowerCase().includes("veg") || s.featured);
+      }
+      if (foodFilters.offers) {
+        result = result.filter((s) => s.highlight && s.highlight.length > 0);
+      }
+    }
     if (searchQuery.trim().length > 0) {
       const q = searchQuery.toLowerCase();
       result = result.filter(
@@ -163,7 +306,7 @@ export function ClientHomeScreen({
       );
     }
     return result;
-  }, [activeFilter, categoryStores, searchQuery]);
+  }, [activeFilter, categoryStores, searchQuery, foodFilters, mainCategory]);
 
   const featuredOnly = useMemo(
     () => categoryStores.filter((store) => store.featured),
@@ -217,7 +360,7 @@ export function ClientHomeScreen({
           label="RIDE"
           tag="COMMUTE"
           sublabel="Direct Transit"
-          accentColor="#B05B48"
+          accentColor="#FFB300"
           onPress={() => handleMainCategoryChange("ride")}
         />
         <SwitcherCard
@@ -225,7 +368,7 @@ export function ClientHomeScreen({
           label="FOOD"
           tag="RESTAURANTS"
           sublabel="Zero Fee Eats"
-          accentColor="#A8201A"
+          accentColor="#FF2E63"
           onPress={() => handleMainCategoryChange("food")}
         />
         <SwitcherCard
@@ -233,31 +376,84 @@ export function ClientHomeScreen({
           label="PROVISIONS"
           tag="ESSENTIALS"
           sublabel="10-Min Fast"
-          accentColor="#C88E52"
+          accentColor="#00E676"
           onPress={() => handleMainCategoryChange("provisions")}
         />
       </View>
 
       {/* Category Slogan Highlight */}
-      <View
-        style={[
-          styles.captionHighlightBar,
-          {
-            backgroundColor: categoryTheme.faint,
-            borderColor: categoryTheme.soft
-          }
-        ]}
-      >
-        <Text style={[styles.captionHighlightText, { color: categoryTheme.primary }]}>
-          {categoryCaption}
-        </Text>
-      </View>
+      <AnimatedCaptionBar
+        text={categoryCaption}
+        primaryColor={categoryTheme.primary}
+        faintColor={categoryTheme.faint}
+        softColor={categoryTheme.soft}
+        categoryKey={mainCategory}
+      />
+
+      {/* Live Corridor Matches Ticker */}
+      <LiveTicker accentColor={categoryTheme.primary} />
 
       {/* ─── Down Side: Content ─── */}
       {mainCategory === "ride" ? (
-        <RideBookingSection accentColor={categoryTheme.primary} />
+        <RideBookingSection
+          accentColor={categoryTheme.primary}
+          isScheduleOpen={isScheduleOpen}
+          setIsScheduleOpen={setIsScheduleOpen}
+          scheduledTime={scheduledTime}
+          setScheduledTime={setScheduledTime}
+          scheduleSuccess={scheduleSuccess}
+          setScheduleSuccess={setScheduleSuccess}
+        />
       ) : (
         <>
+          {/* Instamart Free Delivery Goal Bar (Only for Provisions) */}
+          {mainCategory === "provisions" && (
+            <View style={styles.deliveryGoalWrap}>
+              <View style={styles.deliveryGoalHeader}>
+                <Text style={styles.deliveryGoalTitle}>
+                  {cartTotal >= 250
+                    ? "Congratulations! You unlocked FREE express delivery!"
+                    : `Add Rs ${250 - cartTotal} more for FREE express delivery`}
+                </Text>
+                <Text style={styles.deliveryGoalValue}>Rs {cartTotal} / Rs 250</Text>
+              </View>
+              <View style={styles.deliveryProgressBarBg}>
+                <View
+                  style={[
+                    styles.deliveryProgressBarFill,
+                    { width: `${(Math.min(250, cartTotal) / 250) * 100}%`, backgroundColor: "#00E676" }
+                  ]}
+                />
+              </View>
+            </View>
+          )}
+
+          {/* Glovo Signature Floating Category Bubbles Grid */}
+          <View style={styles.glovoBubbleGridWrap}>
+            <View style={styles.glovoBubbleHeaderRow}>
+              <Text style={styles.glovoBubbleGridTitle}>What can we deliver for you?</Text>
+              <Text style={styles.glovoBubbleGridSub}>Explore categories</Text>
+            </View>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.glovoBubbleScrollContent}
+            >
+              {glovoCategoriesList.map((cat, idx) => {
+                const isActive = previewFilter?.toLowerCase() === cat.filterKey.toLowerCase();
+                return (
+                  <GlovoCategoryBubbleItem
+                    key={cat.id}
+                    item={cat}
+                    active={isActive}
+                    index={idx}
+                    onPress={() => handleCategoryPress(cat.filterKey)}
+                  />
+                );
+              })}
+            </ScrollView>
+          </View>
+
           <SearchBar
             label={
               mainCategory === "food"
@@ -268,51 +464,74 @@ export function ClientHomeScreen({
             onChangeText={setSearchQuery}
           />
 
-          {/* Promo Deals Banners Carousel - Gen Z Coded */}
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.promoCarousel}
-          >
-            {mainCategory === "food" ? (
-              <>
-                <View style={[styles.promoCard, { backgroundColor: "#A8201A" }]}>
-                  <Text style={styles.promoTag}>FASTER THAN YOUR EX ⚡</Text>
-                  <Text style={styles.promoTitle}>Direct Fare Cloner</Text>
-                  <Text style={styles.promoSub}>Match active runners to clone fare down by 50% instantly.</Text>
-                </View>
-                <View style={[styles.promoCard, { backgroundColor: "#A8201A", opacity: 0.9 }]}>
-                  <Text style={styles.promoTag}>NO CAP ZERO TAX 🍔</Text>
-                  <Text style={styles.promoTitle}>Free Route Stack</Text>
-                  <Text style={styles.promoSub}>Eat for free delivery when stacked on active neighborhood routes.</Text>
-                </View>
-                <View style={[styles.promoCard, { backgroundColor: "#A8201A", opacity: 0.8 }]}>
-                  <Text style={styles.promoTag}>VIBE FEAST 🍕</Text>
-                  <Text style={styles.promoTitle}>Stacked Discounts</Text>
-                  <Text style={styles.promoSub}>High-density hot stacks from local kitchens passing your lane.</Text>
-                </View>
-              </>
-            ) : (
-              <>
-                <View style={[styles.promoCard, { backgroundColor: "#C88E52" }]}>
-                  <Text style={styles.promoTag}>SPEEDRUN 10-MINS 🛒</Text>
-                  <Text style={styles.promoTitle}>Daily Staples Fast</Text>
-                  <Text style={styles.promoSub}>Instant drop-offs by active route-aligned riders nearby.</Text>
-                </View>
-                <View style={[styles.promoCard, { backgroundColor: "#C88E52", opacity: 0.9 }]}>
-                  <Text style={styles.promoTag}>ROUTE MATCHED 🥛</Text>
-                  <Text style={styles.promoTitle}>Milk & Munchies</Text>
-                  <Text style={styles.promoSub}>Save Rs 100 when delivery runs stack with active lane orders.</Text>
-                </View>
-                <View style={[styles.promoCard, { backgroundColor: "#C88E52", opacity: 0.8 }]}>
-                  <Text style={styles.promoTag}>FAST AF OTC 💊</Text>
-                  <Text style={styles.promoTitle}>Health Quick-Add</Text>
-                  <Text style={styles.promoSub}>Local pharmacy items stacked on on-route neighborhood runs.</Text>
-                </View>
-              </>
-            )}
-            <View style={{ width: 24 }} />
-          </ScrollView>
+          {/* Interactive Food Filters Row (Only for Food) */}
+          {mainCategory === "food" && (
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.filterChipsScroll}
+            >
+              <Pressable
+                onPress={() => setFoodFilters(p => ({ ...p, fastDelivery: !p.fastDelivery }))}
+                style={[styles.filterChip, foodFilters.fastDelivery && { backgroundColor: "#FF2E63", borderColor: "#FF2E63" }]}
+              >
+                <Text style={[styles.filterChipText, foodFilters.fastDelivery && { color: "#FFFFFF" }]}>Fast Delivery (under 25 mins)</Text>
+              </Pressable>
+              <Pressable
+                onPress={() => setFoodFilters(p => ({ ...p, topRated: !p.topRated }))}
+                style={[styles.filterChip, foodFilters.topRated && { backgroundColor: "#FF2E63", borderColor: "#FF2E63" }]}
+              >
+                <Text style={[styles.filterChipText, foodFilters.topRated && { color: "#FFFFFF" }]}>Ratings 4.5+</Text>
+              </Pressable>
+              <Pressable
+                onPress={() => setFoodFilters(p => ({ ...p, pureVeg: !p.pureVeg }))}
+                style={[styles.filterChip, foodFilters.pureVeg && { backgroundColor: "#FF2E63", borderColor: "#FF2E63" }]}
+              >
+                <Text style={[styles.filterChipText, foodFilters.pureVeg && { color: "#FFFFFF" }]}>Pure Veg</Text>
+              </Pressable>
+              <Pressable
+                onPress={() => setFoodFilters(p => ({ ...p, offers: !p.offers }))}
+                style={[styles.filterChip, foodFilters.offers && { backgroundColor: "#FF2E63", borderColor: "#FF2E63" }]}
+              >
+                <Text style={[styles.filterChipText, foodFilters.offers && { color: "#FFFFFF" }]}>Great Offers</Text>
+              </Pressable>
+            </ScrollView>
+          )}
+
+          {/* Flash Deal countdown banner (Only for Provisions) */}
+          {mainCategory === "provisions" && (
+            <View style={styles.flashBanner}>
+              <View style={styles.flashBadge}>
+                <Text style={styles.flashBadgeText}>FLASH DEAL</Text>
+              </View>
+              <Text style={styles.flashText}>STAPLES STOCK CLEARANCE</Text>
+              <Text style={styles.flashTimer}>ENDS IN {formattedFlashTime}</Text>
+            </View>
+          )}
+
+          {/* Promo Deals Banners Carousel - Infinite loop */}
+          <View style={{ marginBottom: spacing.md }}>
+            <InfiniteLoopScroll
+              itemWidth={260}
+              gap={12}
+              data={mainCategory === "food" ? [
+                { tag: "EXPRESS FARE CLONE", title: "Direct Fare Cloner", sub: "Match active runners to clone fare down by 50% instantly." },
+                { tag: "ZERO TAX STACK", title: "Free Route Stack", sub: "Eat for free delivery when stacked on active neighborhood routes." },
+                { tag: "ROUTE DISCOUNTS", title: "Stacked Discounts", sub: "High-density hot stacks from local kitchens passing your lane." }
+              ] : [
+                { tag: "10-MIN SPEEDRUN", title: "Daily Staples Fast", sub: "Instant drop-offs by active route-aligned riders nearby." },
+                { tag: "ROUTE MATCHED", title: "Milk & Munchies", sub: "Save Rs 100 when delivery runs stack with active lane orders." },
+                { tag: "OTC QUICK ADD", title: "Health Quick-Add", sub: "Local pharmacy items stacked on on-route neighborhood runs." }
+              ]}
+              renderItem={(item, idx) => (
+                <AnimatedPromoCard delay={0} bgColor={mainCategory === "food" ? "#451421" : "#143322"}>
+                  <Text style={styles.promoTag}>{item.tag}</Text>
+                  <Text style={styles.promoTitle}>{item.title}</Text>
+                  <Text style={styles.promoSub}>{item.sub}</Text>
+                </AnimatedPromoCard>
+              )}
+            />
+          </View>
 
           {/* High-density grid visual depending on active category */}
           {mainCategory === "provisions" ? (
@@ -321,41 +540,48 @@ export function ClientHomeScreen({
                 Essentials Deal Zones
               </Text>
               
-              {/* High-Fidelity Swiggy 3D-emblem cards for provisions */}
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.swiggyCardRow}>
-                <SwiggyDealCard
-                  bgColor="#75E643"
-                  title="Speedrun\nStaples"
-                  titleColor="#155724"
-                  badgeText="FLAT\n50%\nOFF"
-                  badgeBg="#155724"
-                  desc="Order stacked farm fresh veg with half-price express delivery."
-                />
-                <SwiggyDealCard
-                  bgColor="#FFB84D"
-                  title="Route\nRebate"
-                  titleColor="#3E1A0F"
-                  badgeText="SAVE\nRs 100"
-                  badgeBg="#A8201A"
-                  desc="Get instant cashback on grocery stacks aligned with active lanes."
-                />
-              </ScrollView>
+              {/* Infinite scroll loop for provisions deals */}
+              <InfiniteLoopScroll
+                itemWidth={230}
+                gap={16}
+                data={[
+                  { title: "Speedrun\nStaples", badgeText: "FLAT\n50%\nOFF", badgeBg: "#00E676", desc: "Order stacked farm fresh veg with half-price express delivery." },
+                  { title: "Route\nRebate", badgeText: "SAVE\nRs 100", badgeBg: "#FFB300", desc: "Get instant cashback on grocery stacks aligned with active lanes." },
+                  { title: "Pantry\nFeast", badgeText: "FLAT\n30%\nOFF", badgeBg: "#00E676", desc: "Local warehouse essentials stacked along active rider corridors." }
+                ]}
+                renderItem={(item) => (
+                  <SwiggyDealCard
+                    bgColor="#161824"
+                    title={item.title}
+                    titleColor="#FFFFFF"
+                    badgeText={item.badgeText}
+                    badgeBg={item.badgeBg}
+                    desc={item.desc}
+                  />
+                )}
+              />
 
-              <Text style={[styles.dashboardTitle, { color: categoryTheme.primary }]}>
+              {/* Instamart-style 2x4 category grid (Crowded & structured category listing) */}
+              <Text style={[styles.dashboardTitle, { color: categoryTheme.primary, marginTop: spacing.md }]}>
                 Trending Categories
               </Text>
-
-              {/* Graphical Image Cuisines Row with Interactive Pop-ups */}
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.cuisinesRow}>
-                {provisionsCategories.map((cat, index) => (
-                  <HoverableCuisineCard
+              <View style={styles.instamartGrid}>
+                {instamartGridCategories.map((cat, index) => (
+                  <Pressable
                     key={index}
-                    item={cat}
-                    accentColor={categoryTheme.primary}
+                    style={styles.instamartGridCard}
                     onPress={() => handleCategoryPress(cat.filterKey)}
-                  />
+                  >
+                    <Image source={{ uri: cat.image }} style={styles.instamartGridCardImg as any} />
+                    <View style={styles.instamartGridLabelWrap}>
+                      <Text style={styles.instamartGridCardLabel} numberOfLines={1}>{cat.name}</Text>
+                      <View style={[styles.instamartGridTag, { borderColor: categoryTheme.primary }]}>
+                        <Text style={[styles.instamartGridTagText, { color: categoryTheme.primary }]}>{cat.tag}</Text>
+                      </View>
+                    </View>
+                  </Pressable>
                 ))}
-              </ScrollView>
+              </View>
             </View>
           ) : (
             <View style={styles.sectionSpacing}>
@@ -363,41 +589,44 @@ export function ClientHomeScreen({
                 Cuisine Quick Select
               </Text>
               
-              {/* Graphical Image Cuisines Row with Interactive Pop-ups */}
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.cuisinesRow}>
-                {foodCuisines.map((cuisine, index) => (
+              {/* Infinite loop scroll for cuisines selection list */}
+              <InfiniteLoopScroll
+                itemWidth={105}
+                gap={12}
+                data={foodCuisines}
+                renderItem={(cuisine) => (
                   <HoverableCuisineCard
-                    key={index}
                     item={cuisine}
                     accentColor={categoryTheme.primary}
                     onPress={() => handleCategoryPress(cuisine.filterKey)}
                   />
-                ))}
-              </ScrollView>
+                )}
+              />
 
-              <Text style={[styles.dashboardTitle, { color: categoryTheme.primary }]}>
+              <Text style={[styles.dashboardTitle, { color: categoryTheme.primary, marginTop: spacing.md }]}>
                 Deal Feast Banners
               </Text>
 
-              {/* Swiggy 3D Coin & Starburst Styled Vouchers */}
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.swiggyCardRow}>
-                <SwiggyDealCard
-                  bgColor="#75E643"
-                  title="Top Brands\nTop Deals"
-                  titleColor="#155724"
-                  badgeText="FLAT\nRs 100\nOFF"
-                  badgeBg="#155724"
-                  desc="Stacked meals from premium kitchens aligned with local runners."
-                />
-                <SwiggyDealCard
-                  bgColor="#FF8C66"
-                  title="Deal\nFeast"
-                  titleColor="#3E1A0F"
-                  badgeText="GET\n70%\nOFF"
-                  badgeBg="#A8201A"
-                  desc="Matched courier routes waive your delivery fee automatically."
-                />
-              </ScrollView>
+              {/* Infinite scroll loop for deal vouchers */}
+              <InfiniteLoopScroll
+                itemWidth={230}
+                gap={16}
+                data={[
+                  { title: "Top Brands\nTop Deals", badgeText: "FLAT\nRs 100\nOFF", badgeBg: "#FF2E63", desc: "Stacked meals from premium kitchens aligned with local runners." },
+                  { title: "Deal\nFeast", badgeText: "GET\n70%\nOFF", badgeBg: "#00E676", desc: "Matched courier routes waive your delivery fee automatically." },
+                  { title: "Direct\nFare Split", badgeText: "SPLIT\n50%\nSAVE", badgeBg: "#FFB300", desc: "Eat with nearby neighbors on route to clone your delivery costs down." }
+                ]}
+                renderItem={(item) => (
+                  <SwiggyDealCard
+                    bgColor="#161824"
+                    title={item.title}
+                    titleColor="#FFFFFF"
+                    badgeText={item.badgeText}
+                    badgeBg={item.badgeBg}
+                    desc={item.desc}
+                  />
+                )}
+              />
             </View>
           )}
 
@@ -410,26 +639,29 @@ export function ClientHomeScreen({
                 showsHorizontalScrollIndicator={false}
                 contentContainerStyle={styles.munchiesScroll}
               >
-                {munchiesItems.map((item) => (
-                  <View key={item.id} style={styles.munchyCard}>
-                    <Image source={{ uri: item.image }} style={styles.munchyImage} />
-                    <View style={styles.munchyInfo}>
-                      <Text style={styles.munchyName} numberOfLines={1}>
-                        {item.name}
-                      </Text>
-                      <Text style={styles.munchyUnit}>{item.unit}</Text>
-                      <View style={styles.munchyPriceRow}>
-                        <Text style={styles.munchyPrice}>Rs {item.price}</Text>
-                        <Pressable
-                          style={[styles.quickAddBtn, { backgroundColor: categoryTheme.primary }]}
-                          onPress={() => handleQuickAdd(item)}
-                        >
-                          <Text style={styles.quickAddBtnText}>+</Text>
-                        </Pressable>
+                {munchiesItems.map((item) => {
+                  const qty = quantities[item.id] || 0;
+                  return (
+                    <View key={item.id} style={styles.munchyCard}>
+                      <Image source={{ uri: item.image }} style={styles.munchyImage as any} />
+                      <View style={styles.munchyInfo}>
+                        <Text style={styles.munchyName} numberOfLines={1}>
+                          {item.name}
+                        </Text>
+                        <Text style={styles.munchyUnit}>{item.unit}</Text>
+                        <View style={styles.munchyPriceRow}>
+                          <Text style={styles.munchyPrice}>Rs {item.price}</Text>
+                          <QuantitySelector
+                            count={qty}
+                            onIncrement={() => handleIncrement(item.id, item)}
+                            onDecrement={() => handleDecrement(item.id)}
+                            accentColor={categoryTheme.primary}
+                          />
+                        </View>
                       </View>
                     </View>
-                  </View>
-                ))}
+                  );
+                })}
               </ScrollView>
             </View>
           )}
@@ -475,12 +707,13 @@ export function ClientHomeScreen({
                 title={previewFilter ? `${previewFilter} stores` : "Popular near you"}
               />
               {filteredStores.length > 0 ? (
-                filteredStores.map((store) => (
+                filteredStores.map((store, index) => (
                   <StoreCardBlock
                     key={store.id}
                     store={store}
                     featured={store.featured}
                     onPress={onStorePress}
+                    entranceIndex={index}
                   />
                 ))
               ) : (
@@ -496,6 +729,126 @@ export function ClientHomeScreen({
         </>
       )}
     </>
+  );
+}
+
+/* ─── Animated Caption Bar (cross-fade on category change) ─── */
+function AnimatedCaptionBar({
+  text,
+  primaryColor,
+  faintColor,
+  softColor,
+  categoryKey
+}: {
+  text: string;
+  primaryColor: string;
+  faintColor: string;
+  softColor: string;
+  categoryKey: string;
+}) {
+  const fadeAnim = useRef(new Animated.Value(1)).current;
+  const slideAnim = useRef(new Animated.Value(0)).current;
+  const prevKey = useRef(categoryKey);
+
+  useEffect(() => {
+    if (prevKey.current !== categoryKey) {
+      prevKey.current = categoryKey;
+      Animated.sequence([
+        Animated.parallel([
+          Animated.timing(fadeAnim, { toValue: 0, duration: 120, useNativeDriver: true }),
+          Animated.timing(slideAnim, { toValue: -6, duration: 120, useNativeDriver: true })
+        ]),
+        Animated.parallel([
+          Animated.timing(fadeAnim, { toValue: 1, duration: 280, easing: Easing.out(Easing.quad), useNativeDriver: true }),
+          Animated.spring(slideAnim, { toValue: 0, friction: 8, tension: 120, useNativeDriver: true })
+        ])
+      ]).start();
+    }
+  }, [categoryKey, fadeAnim, slideAnim]);
+
+  return (
+    <Animated.View
+      style={[
+        styles.captionHighlightBar,
+        {
+          backgroundColor: faintColor,
+          borderColor: softColor,
+          opacity: fadeAnim,
+          transform: [{ translateY: slideAnim }]
+        }
+      ]}
+    >
+      <Text style={[styles.captionHighlightText, { color: primaryColor }]}>
+        {text}
+      </Text>
+    </Animated.View>
+  );
+}
+
+/* ─── Animated Promo Card (entrance stagger) ─── */
+function AnimatedPromoCard({
+  delay = 0,
+  bgColor,
+  opacity = 1,
+  children
+}: {
+  delay?: number;
+  bgColor: string;
+  opacity?: number;
+  children: React.ReactNode;
+}) {
+  const enterAnim = useRef(new Animated.Value(0)).current;
+  const enterX = useRef(new Animated.Value(30)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(enterAnim, { toValue: 1, duration: 380, delay, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
+      Animated.spring(enterX, { toValue: 0, friction: 9, tension: 100, delay, useNativeDriver: true } as any)
+    ]).start();
+  }, [enterAnim, enterX, delay]);
+
+  return (
+    <Animated.View
+      style={[
+        styles.promoCard,
+        { backgroundColor: bgColor, opacity: enterAnim.interpolate({ inputRange: [0, 1], outputRange: [0, opacity] }), transform: [{ translateX: enterX }] }
+      ]}
+    >
+      {children}
+    </Animated.View>
+  );
+}
+
+/* ─── Animated Quick Add Button ─── */
+function AnimatedQuickAddBtn({
+  accentColor,
+  onPress
+}: {
+  accentColor: string;
+  onPress: () => void;
+}) {
+  const scale = useRef(new Animated.Value(1)).current;
+  const rotation = useRef(new Animated.Value(0)).current;
+
+  const handlePress = () => {
+    onPress();
+    Animated.sequence([
+      Animated.parallel([
+        Animated.timing(scale, { toValue: 1.4, duration: 100, useNativeDriver: true }),
+        Animated.timing(rotation, { toValue: 1, duration: 200, easing: Easing.out(Easing.back(2)), useNativeDriver: true })
+      ]),
+      Animated.spring(scale, { toValue: 1, friction: 4, tension: 200, useNativeDriver: true }),
+    ]).start(() => rotation.setValue(0));
+  };
+
+  const rotate = rotation.interpolate({ inputRange: [0, 1], outputRange: ["0deg", "90deg"] });
+
+  return (
+    <Pressable onPress={handlePress}>
+      <Animated.View style={[styles.quickAddBtn, { backgroundColor: accentColor, transform: [{ scale }, { rotate }] }]}>
+        <Text style={styles.quickAddBtnText}>+</Text>
+      </Animated.View>
+    </Pressable>
   );
 }
 
@@ -529,18 +882,20 @@ function SwiggyDealCard({
   return (
     <Animated.View style={{ transform: [{ scale }] }}>
       <Pressable
-        onMouseEnter={() => setHovered(true)}
-        onMouseLeave={() => setHovered(false)}
-        onPressIn={() => setHovered(true)}
-        onPressOut={() => setHovered(false)}
-        style={[styles.swiggyCard, { backgroundColor: bgColor }]}
+        {...({
+          onMouseEnter: () => setHovered(true),
+          onMouseLeave: () => setHovered(false),
+          onPressIn: () => setHovered(true),
+          onPressOut: () => setHovered(false)
+        } as any)}
+        style={[styles.swiggyCard, { backgroundColor: "#FFFFFF", borderColor: badgeBg }]}
       >
-        <Text style={[styles.swiggyCardTitle, { color: titleColor }]}>
+        <Text style={[styles.swiggyCardTitle, { color: "#1E202C" }]}>
           {title.replace("\\n", "\n")}
         </Text>
         <View style={styles.swiggyCardContent}>
-          <View style={[styles.swiggyEmblem, { backgroundColor: badgeBg }]}>
-            <Text style={styles.swiggyEmblemText}>{badgeText.replace("\\n", "\n")}</Text>
+          <View style={[styles.swiggyEmblem, { backgroundColor: badgeBg + "12", borderColor: badgeBg, borderWidth: 1.5 }]}>
+            <Text style={[styles.swiggyEmblemText, { color: badgeBg }]}>{badgeText.replace("\\n", "\n")}</Text>
           </View>
           <Text style={styles.swiggyCardDesc} numberOfLines={3}>{desc}</Text>
         </View>
@@ -573,10 +928,12 @@ function HoverableCuisineCard({
   return (
     <Pressable
       onPress={onPress}
-      onPressIn={() => setHovered(true)}
-      onPressOut={() => setHovered(false)}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
+      {...({
+        onPressIn: () => setHovered(true),
+        onPressOut: () => setHovered(false),
+        onMouseEnter: () => setHovered(true),
+        onMouseLeave: () => setHovered(false)
+      } as any)}
     >
       <Animated.View
         style={[
@@ -590,20 +947,100 @@ function HoverableCuisineCard({
           style={styles.premiumCuisineCardImgBg}
           imageStyle={{ borderRadius: 18 }}
         >
+          <View style={[styles.cuisineFloatingTag, { position: "absolute", top: 8, right: 8, borderColor: accentColor }]}>
+            <Text style={[styles.cuisineFloatingTagText, { color: accentColor }]}>{item.tag}</Text>
+          </View>
           <LinearGradient
-            colors={["rgba(0,0,0,0.8)", "rgba(0,0,0,0.3)", "transparent"]}
+            colors={["rgba(11, 12, 16, 0.95)", "rgba(11, 12, 16, 0.2)", "transparent"]}
             start={{ x: 0.5, y: 1 }}
             end={{ x: 0.5, y: 0 }}
             style={styles.premiumCuisineCardOverlay}
           >
-            <View style={styles.cuisineFloatingTag}>
-              <Text style={styles.cuisineFloatingTagText}>{item.tag}</Text>
-            </View>
             <Text style={styles.premiumCuisineCardLabel}>{item.name}</Text>
           </LinearGradient>
         </ImageBackground>
       </Animated.View>
     </Pressable>
+  );
+}
+
+/* ─── Glovo Signature Floating Category Bubble Component ─── */
+const glovoCategoriesList = [
+  { id: "food", name: "Food", sub: "Restaurants", icon: "🍔", bg: "#FFC244", ring: "#F2AB00", filterKey: "Restaurants" },
+  { id: "groceries", name: "Supermarket", sub: "15-min drop", icon: "🛒", bg: "#00A082", ring: "#00836B", filterKey: "Groceries" },
+  { id: "pharmacy", name: "Pharmacy", sub: "Meds & Care", icon: "💊", bg: "#2980B9", ring: "#1F618D", filterKey: "Pharmacy" },
+  { id: "courier", name: "Express", sub: "Send Anything", icon: "📦", bg: "#8E44AD", ring: "#6C3483", filterKey: "Daily Needs" },
+  { id: "munchies", name: "Snacks", sub: "Drinks & Chips", icon: "🍿", bg: "#FF5252", ring: "#C0392B", filterKey: "Bakery" },
+  { id: "pastry", name: "Bakery", sub: "Pastry & Cakes", icon: "🥐", bg: "#FF9800", ring: "#D35400", filterKey: "Bakery" }
+];
+
+function GlovoCategoryBubbleItem({
+  item,
+  active,
+  onPress,
+  index
+}: {
+  item: typeof glovoCategoriesList[0];
+  active: boolean;
+  onPress: () => void;
+  index: number;
+}) {
+  const scale = useRef(new Animated.Value(1)).current;
+  const floatAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    const floatLoop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(floatAnim, {
+          toValue: index % 2 === 0 ? -4 : 4,
+          duration: 1300 + index * 150,
+          easing: Easing.inOut(Easing.quad),
+          useNativeDriver: true
+        }),
+        Animated.timing(floatAnim, {
+          toValue: 0,
+          duration: 1300 + index * 150,
+          easing: Easing.inOut(Easing.quad),
+          useNativeDriver: true
+        })
+      ])
+    );
+    floatLoop.start();
+    return () => floatLoop.stop();
+  }, [floatAnim, index]);
+
+  const handlePress = () => {
+    Animated.sequence([
+      Animated.timing(scale, { toValue: 0.85, duration: 80, useNativeDriver: true }),
+      Animated.spring(scale, { toValue: 1, friction: 4, tension: 220, useNativeDriver: true })
+    ]).start();
+    onPress();
+  };
+
+  return (
+    <Animated.View
+      style={[
+        styles.glovoBubbleItemWrap,
+        { transform: [{ translateY: floatAnim }, { scale }] }
+      ]}
+    >
+      <Pressable onPress={handlePress} style={styles.glovoBubblePressable}>
+        <View
+          style={[
+            styles.glovoBubbleCircle,
+            { backgroundColor: item.bg, borderColor: active ? "#222222" : item.ring },
+            active && styles.glovoBubbleActiveRing
+          ]}
+        >
+          <Text style={styles.glovoBubbleIconText}>{item.icon}</Text>
+          {active && <View style={styles.glovoBubbleActiveDot} />}
+        </View>
+        <Text style={[styles.glovoBubbleLabelText, active && styles.glovoBubbleLabelActive]}>
+          {item.name}
+        </Text>
+        <Text style={styles.glovoBubbleSubText} numberOfLines={1}>{item.sub}</Text>
+      </Pressable>
+    </Animated.View>
   );
 }
 
@@ -624,14 +1061,39 @@ function SwitcherCard({
   onPress: () => void;
 }) {
   const scale = useRef(new Animated.Value(1)).current;
+  const shimmerAnim = useRef(new Animated.Value(0)).current;
+  const glowOpacity = useRef(new Animated.Value(0)).current;
+
+  // Shimmer sweep on active
+  useEffect(() => {
+    if (active) {
+      glowOpacity.setValue(0);
+      Animated.timing(glowOpacity, { toValue: 1, duration: 250, useNativeDriver: true }).start();
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(shimmerAnim, { toValue: 1, duration: 1200, easing: Easing.linear, useNativeDriver: true }),
+          Animated.timing(shimmerAnim, { toValue: 0, duration: 0, useNativeDriver: true })
+        ])
+      ).start();
+    } else {
+      Animated.timing(glowOpacity, { toValue: 0, duration: 200, useNativeDriver: true }).start();
+      shimmerAnim.stopAnimation();
+      shimmerAnim.setValue(0);
+    }
+  }, [active, shimmerAnim, glowOpacity]);
 
   const handlePress = () => {
     Animated.sequence([
-      Animated.timing(scale, { toValue: 0.94, duration: 80, useNativeDriver: true }),
-      Animated.timing(scale, { toValue: 1, duration: 80, useNativeDriver: true })
+      Animated.timing(scale, { toValue: 0.90, duration: 70, useNativeDriver: true }),
+      Animated.spring(scale, { toValue: 1, friction: 4, tension: 200, useNativeDriver: true })
     ]).start();
     onPress();
   };
+
+  const shimmerTranslate = shimmerAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [-80, 160]
+  });
 
   return (
     <Animated.View style={{ flex: 1, transform: [{ scale }] }}>
@@ -642,6 +1104,15 @@ function SwitcherCard({
           active && { borderColor: accentColor, backgroundColor: accentColor + "10", borderWidth: 2 }
         ]}
       >
+        {/* Shimmer highlight on active */}
+        {active && (
+          <Animated.View
+            style={[
+              styles.switcherShimmer,
+              { transform: [{ translateX: shimmerTranslate }], opacity: glowOpacity }
+            ]}
+          />
+        )}
         <View style={[styles.switcherTagWrap, active && { backgroundColor: accentColor }]}>
           <Text style={[styles.switcherTagText, active && { color: "#FAF6F0" }]}>
             {tag}
@@ -659,7 +1130,23 @@ function SwitcherCard({
 }
 
 /* ─── Ride Booking Section UI (Google Maps Vibe + Bike Only) ─── */
-function RideBookingSection({ accentColor }: { accentColor: string }) {
+function RideBookingSection({
+  accentColor,
+  isScheduleOpen,
+  setIsScheduleOpen,
+  scheduledTime,
+  setScheduledTime,
+  scheduleSuccess,
+  setScheduleSuccess
+}: {
+  accentColor: string;
+  isScheduleOpen: boolean;
+  setIsScheduleOpen: (val: boolean) => void;
+  scheduledTime: string;
+  setScheduledTime: (val: string) => void;
+  scheduleSuccess: boolean;
+  setScheduleSuccess: (val: boolean) => void;
+}) {
   const [pickup, setPickup] = useState("Flat 301, Tower B, MG Road");
   const [dropoff, setDropoff] = useState("City Center Mall, Sector 15");
   const [vehicle, setVehicle] = useState<"bike" | "bikeprime" | "bikeeco">("bike");
@@ -795,17 +1282,17 @@ function RideBookingSection({ accentColor }: { accentColor: string }) {
           <Text style={[styles.dashboardTitle, { color: accentColor }]}>Mobility Analytics</Text>
           <View style={styles.swiggyCardRow}>
             <SwiggyDealCard
-              bgColor="#F6ECE8"
+              bgColor="#161824"
               title="Active Riders"
-              titleColor="#5C2518"
+              titleColor="#FFFFFF"
               badgeText="42"
               badgeBg={accentColor}
               desc="Delivery partners active along your commute lane corridor."
             />
             <SwiggyDealCard
-              bgColor="#FAF0EF"
+              bgColor="#161824"
               title="CO2 Saved"
-              titleColor="#6A1B29"
+              titleColor="#FFFFFF"
               badgeText="12.8 kg"
               badgeBg={accentColor}
               desc="Carbon emissions offset via shared stacked delivery routing."
@@ -880,58 +1367,331 @@ function RideBookingSection({ accentColor }: { accentColor: string }) {
             })}
           </View>
 
-          {/* CTA Book Button */}
-          <Pressable style={[styles.bookBtn, { backgroundColor: accentColor }]} onPress={handleBook}>
-            <Text style={styles.bookBtnText}>Confirm Bike Ride ({bikeDetails[vehicle].rate})</Text>
-          </Pressable>
+          {/* Uber-style Scheduling sheet */}
+          {isScheduleOpen && (
+            <View style={[styles.scheduleSheet, { borderColor: accentColor }]}>
+              <Text style={styles.scheduleTitle}>Select Commute Slot</Text>
+              <View style={styles.scheduleTimeRow}>
+                {["09:00 AM", "10:30 AM", "05:30 PM", "06:00 PM"].map((t) => (
+                  <Pressable
+                    key={t}
+                    onPress={() => setScheduledTime(t)}
+                    style={[styles.timeChip, scheduledTime === t && { backgroundColor: accentColor }]}
+                  >
+                    <Text style={[styles.timeChipText, scheduledTime === t && { color: "#1E202C" }]}>{t}</Text>
+                  </Pressable>
+                ))}
+              </View>
+              <View style={{ flexDirection: "row", gap: 10, marginTop: 10 }}>
+                <Pressable
+                  onPress={() => {
+                    if (scheduledTime) {
+                      setScheduleSuccess(true);
+                      setTimeout(() => {
+                        setScheduleSuccess(false);
+                        setIsScheduleOpen(false);
+                      }, 2200);
+                    }
+                  }}
+                  style={[styles.scheduleConfirmBtn, { backgroundColor: accentColor }]}
+                >
+                  <Text style={styles.scheduleConfirmBtnText}>Confirm Schedule</Text>
+                </Pressable>
+                <Pressable
+                  onPress={() => setIsScheduleOpen(false)}
+                  style={styles.scheduleCancelBtn}
+                >
+                  <Text style={styles.scheduleCancelBtnText}>Cancel</Text>
+                </Pressable>
+              </View>
+              {scheduleSuccess && (
+                <Text style={[styles.scheduleSuccessText, { color: accentColor }]}>Ride scheduled for {scheduledTime}</Text>
+              )}
+            </View>
+          )}
+
+          {/* CTA Book & Schedule Panel */}
+          <View style={{ flexDirection: "row", gap: spacing.sm, marginTop: spacing.md }}>
+            <View style={{ flex: 2 }}>
+              <AnimatedBookButton
+                accentColor={accentColor}
+                label={`Confirm Ride (${bikeDetails[vehicle].rate})`}
+                onPress={handleBook}
+              />
+            </View>
+            <Pressable
+              onPress={() => setIsScheduleOpen(true)}
+              style={[styles.scheduleBtn, { borderColor: accentColor }]}
+            >
+              <Text style={[styles.scheduleBtnText, { color: accentColor }]}>Schedule</Text>
+            </Pressable>
+          </View>
         </>
       ) : bookingState === "finding" ? (
         <View style={styles.matchingWrap}>
-          <View style={[styles.pulseContainer, { backgroundColor: accentColor + "25" }]}>
-            <View style={[styles.pulseRing, { borderColor: accentColor }]} />
-            <Text style={[styles.matchingSpinner, { color: accentColor }]}>...</Text>
-          </View>
+          <PulseRings accentColor={accentColor} />
           <Text style={styles.matchingTitle}>Finding Direct Aligned Rider...</Text>
           <Text style={styles.matchingSubtitle}>
             Connecting you with an on-route delivery bike going directly to {dropoff}.
           </Text>
         </View>
       ) : (
-        <View style={styles.matchedWrap}>
-          <View style={[styles.driverCard, { backgroundColor: accentColor + "10", borderColor: accentColor + "25" }]}>
-            <View style={[styles.driverAvatar, { borderColor: accentColor }]}>
-              <Text style={[styles.driverAvatarText, { color: accentColor }]}>VS</Text>
-            </View>
-            <View style={{ flex: 1 }}>
-              <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-                <Text style={styles.driverName}>Vikram Singh</Text>
-                <Text style={styles.driverRating}>⭐ 4.9</Text>
-              </View>
-              <Text style={styles.driverVehicle}>Hero Splendor • MH12-EF-4321</Text>
-            </View>
-          </View>
-
-          <View style={styles.matchingTaglineWrap}>
-            <Text style={[styles.matchingTaglineTitle, { color: accentColor }]}>ROUTE ALIGNED RIDESHARE</Text>
-            <Text style={styles.matchingTaglineText}>
-              Vikram is carrying a grocery order from **More Daily Mart** to Sector 15 along your route. By sharing this journey, you saved **Rs 30** on standard rates!
-            </Text>
-          </View>
-
-          <View style={styles.etaContainer}>
-            <Text style={styles.etaText}>Rider Arriving in 3 Mins</Text>
-            <Text style={styles.etaSub}>OTP: 4921 • Fare: {bikeDetails[vehicle].rate}</Text>
-          </View>
-
-          <Pressable
-            style={[styles.cancelBtn, { borderColor: accentColor }]}
-            onPress={() => setBookingState("idle")}
-          >
-            <Text style={[styles.cancelBtnText, { color: accentColor }]}>Cancel Bike Request</Text>
-          </Pressable>
-        </View>
+        <AnimatedMatchedCard
+          accentColor={accentColor}
+          dropoff={dropoff}
+          vehicle={vehicle}
+          bikeDetails={bikeDetails}
+          onCancel={() => setBookingState("idle")}
+        />
       )}
     </View>
+  );
+}
+
+/* ─── Pulse Rings (expanding concentric rings for finding state) ─── */
+function PulseRings({ accentColor }: { accentColor: string }) {
+  const ring1 = useRef(new Animated.Value(0)).current;
+  const ring2 = useRef(new Animated.Value(0)).current;
+  const ring3 = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    const createPulse = (anim: Animated.Value, delay: number) =>
+      Animated.loop(
+        Animated.sequence([
+          Animated.delay(delay),
+          Animated.timing(anim, { toValue: 1, duration: 1600, easing: Easing.out(Easing.quad), useNativeDriver: true }),
+          Animated.timing(anim, { toValue: 0, duration: 0, useNativeDriver: true })
+        ])
+      );
+    createPulse(ring1, 0).start();
+    createPulse(ring2, 500).start();
+    createPulse(ring3, 1000).start();
+  }, [ring1, ring2, ring3]);
+
+  const ringStyle = (anim: Animated.Value) => ({
+    position: "absolute" as const,
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    borderWidth: 2,
+    borderColor: accentColor,
+    opacity: anim.interpolate({ inputRange: [0, 0.5, 1], outputRange: [0.7, 0.3, 0] }),
+    transform: [{ scale: anim.interpolate({ inputRange: [0, 1], outputRange: [0.4, 1.8] }) }]
+  });
+
+  return (
+    <View style={styles.pulseContainer}>
+      <Animated.View style={ringStyle(ring1)} />
+      <Animated.View style={ringStyle(ring2)} />
+      <Animated.View style={ringStyle(ring3)} />
+      <View style={[styles.pulseCore, { backgroundColor: accentColor + "30", borderColor: accentColor }]}>
+        <Text style={[styles.matchingSpinner, { color: accentColor }]}>M</Text>
+      </View>
+    </View>
+  );
+}
+
+/* ─── Animated Book Button (shimmer + press) ─── */
+function AnimatedBookButton({
+  accentColor,
+  label,
+  onPress
+}: {
+  accentColor: string;
+  label: string;
+  onPress: () => void;
+}) {
+  const scale = useRef(new Animated.Value(1)).current;
+  const shimmer = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(shimmer, { toValue: 1, duration: 1800, easing: Easing.linear, useNativeDriver: true }),
+        Animated.timing(shimmer, { toValue: 0, duration: 0, useNativeDriver: true })
+      ])
+    ).start();
+  }, [shimmer]);
+
+  const handlePressIn = () => {
+    Animated.spring(scale, { toValue: 0.95, friction: 8, tension: 300, useNativeDriver: true }).start();
+  };
+  const handlePressOut = () => {
+    Animated.spring(scale, { toValue: 1, friction: 4, tension: 150, useNativeDriver: true }).start();
+  };
+
+  const shimmerX = shimmer.interpolate({ inputRange: [0, 1], outputRange: [-120, 320] });
+
+  return (
+    <Pressable onPress={onPress} onPressIn={handlePressIn} onPressOut={handlePressOut}>
+      <Animated.View style={[styles.bookBtn, { backgroundColor: accentColor, transform: [{ scale }], overflow: "hidden" as never }]}>
+        <Animated.View
+          style={[
+            styles.bookBtnShimmer,
+            { transform: [{ translateX: shimmerX }] }
+          ]}
+        />
+        <Text style={styles.bookBtnText}>{label}</Text>
+      </Animated.View>
+    </Pressable>
+  );
+}
+
+/* ─── Animated Matched Card (spring bounce entrance) ─── */
+function AnimatedMatchedCard({
+  accentColor,
+  dropoff,
+  vehicle,
+  bikeDetails,
+  onCancel
+}: {
+  accentColor: string;
+  dropoff: string;
+  vehicle: "bike" | "bikeprime" | "bikeeco";
+  bikeDetails: Record<string, { name: string; rate: string; eta: string }>;
+  onCancel: () => void;
+}) {
+  const slideAnim = useRef(new Animated.Value(40)).current;
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const bounceScale = useRef(new Animated.Value(0.9)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, { toValue: 1, duration: 300, easing: Easing.out(Easing.quad), useNativeDriver: true }),
+      Animated.spring(slideAnim, { toValue: 0, friction: 7, tension: 100, useNativeDriver: true } as any),
+      Animated.spring(bounceScale, { toValue: 1, friction: 6, tension: 120, useNativeDriver: true })
+    ]).start();
+  }, [fadeAnim, slideAnim, bounceScale]);
+
+  return (
+    <Animated.View
+      style={[
+        styles.matchedWrap,
+        { opacity: fadeAnim, transform: [{ translateY: slideAnim }, { scale: bounceScale }] }
+      ]}
+    >
+      <View style={[styles.driverCard, { backgroundColor: accentColor + "10", borderColor: accentColor + "25" }]}>
+        <View style={[styles.driverAvatar, { borderColor: accentColor }]}>
+          <Text style={[styles.driverAvatarText, { color: accentColor }]}>VS</Text>
+        </View>
+        <View style={{ flex: 1 }}>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+            <Text style={styles.driverName}>Vikram Singh</Text>
+            <Text style={styles.driverRating}>Rating: 4.9</Text>
+          </View>
+          <Text style={styles.driverVehicle}>Hero Splendor • MH12-EF-4321</Text>
+        </View>
+      </View>
+
+      <View style={styles.matchingTaglineWrap}>
+        <Text style={[styles.matchingTaglineTitle, { color: accentColor }]}>ROUTE ALIGNED RIDESHARE</Text>
+        <Text style={styles.matchingTaglineText}>
+          Vikram is carrying a grocery order from More Daily Mart to Sector 15 along your route. By sharing this journey, you saved Rs 30 on standard rates!
+        </Text>
+      </View>
+
+      <View style={styles.etaContainer}>
+        <Text style={styles.etaText}>Rider Arriving in 3 Mins</Text>
+        <Text style={styles.etaSub}>OTP: 4921 • Fare: {bikeDetails[vehicle].rate}</Text>
+      </View>
+
+      <Pressable
+        style={[styles.cancelBtn, { borderColor: accentColor }]}
+        onPress={onCancel}
+      >
+        <Text style={[styles.cancelBtnText, { color: accentColor }]}>Cancel Bike Request</Text>
+      </Pressable>
+    </Animated.View>
+  );
+}
+
+/* ─── Live Ticker (rotating alignment banner) ─── */
+function LiveTicker({ accentColor }: { accentColor: string }) {
+  const [tickerIndex, setTickerIndex] = useState(0);
+  const fadeAnim = useRef(new Animated.Value(1)).current;
+
+  const messages = [
+    "CORRIDOR MATCH: 14 deliveries aligned on MG Road lane - SAVE UP TO 55%",
+    "ROUTE ALIGNED: 3 bike transits matched Sector 15 corridor - FARE CLONED 45%",
+    "HOT LANE ALERT: 8 orders stacked on City Center Mall lane - DELIVERIES CONSOLIDATED",
+    "COMMUTE STACK: High courier density on MG Road corridor - EXPRESS SAVINGS ACTIVE"
+  ];
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      Animated.sequence([
+        Animated.timing(fadeAnim, { toValue: 0, duration: 200, useNativeDriver: true }),
+        Animated.timing(fadeAnim, { toValue: 1, duration: 300, useNativeDriver: true })
+      ]).start();
+      setTimeout(() => {
+        setTickerIndex((prev) => (prev + 1) % messages.length);
+      }, 200);
+    }, 4500);
+    return () => clearInterval(interval);
+  }, [fadeAnim]);
+
+  return (
+    <View style={styles.tickerContainer}>
+      <View style={[styles.tickerBadge, { backgroundColor: accentColor + "15", borderColor: accentColor }]}>
+        <View style={[styles.tickerPulseDot, { backgroundColor: accentColor }]} />
+        <Text style={[styles.tickerBadgeText, { color: accentColor }]}>LIVE ALIGNMENTS</Text>
+      </View>
+      <Animated.Text style={[styles.tickerText, { opacity: fadeAnim }]} numberOfLines={1}>
+        {messages[tickerIndex]}
+      </Animated.Text>
+    </View>
+  );
+}
+
+/* ─── Instamart-style QuantitySelector with spring pop scale ─── */
+function QuantitySelector({
+  count,
+  onIncrement,
+  onDecrement,
+  accentColor
+}: {
+  count: number;
+  onIncrement: () => void;
+  onDecrement: () => void;
+  accentColor: string;
+}) {
+  const scale = useRef(new Animated.Value(1)).current;
+
+  const triggerAnimation = () => {
+    Animated.sequence([
+      Animated.timing(scale, { toValue: 1.25, duration: 80, useNativeDriver: true }),
+      Animated.spring(scale, { toValue: 1, friction: 3, tension: 200, useNativeDriver: true })
+    ]).start();
+  };
+
+  const handleInc = () => {
+    triggerAnimation();
+    onIncrement();
+  };
+
+  const handleDec = () => {
+    triggerAnimation();
+    onDecrement();
+  };
+
+  if (count === 0) {
+    return (
+      <Pressable onPress={handleInc} style={[styles.instamartAddBtn, { borderColor: accentColor }]}>
+        <Text style={[styles.instamartAddBtnText, { color: accentColor }]}>ADD</Text>
+      </Pressable>
+    );
+  }
+
+  return (
+    <Animated.View style={[styles.instamartCounterWrap, { borderColor: accentColor, transform: [{ scale }] }]}>
+      <Pressable onPress={handleDec} style={styles.counterBtn}>
+        <Text style={[styles.counterBtnText, { color: accentColor }]}>-</Text>
+      </Pressable>
+      <Text style={styles.counterValue}>{count}</Text>
+      <Pressable onPress={handleInc} style={styles.counterBtn}>
+        <Text style={[styles.counterBtnText, { color: accentColor }]}>+</Text>
+      </Pressable>
+    </Animated.View>
   );
 }
 
@@ -981,52 +1741,67 @@ function FeaturedSpotlight({
 function StoreCardBlock({
   store,
   featured,
-  onPress
+  onPress,
+  entranceIndex = 0
 }: {
   store: Store;
   featured?: boolean;
   onPress: (store: Store) => void;
+  entranceIndex?: number;
 }) {
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(22)).current;
+
+  useEffect(() => {
+    const delay = entranceIndex * 65;
+    Animated.parallel([
+      Animated.timing(fadeAnim, { toValue: 1, duration: 420, delay, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
+      Animated.spring(slideAnim, { toValue: 0, friction: 9, tension: 90, delay, useNativeDriver: true } as any)
+    ]).start();
+  }, [fadeAnim, slideAnim, entranceIndex]);
+
   return (
-    <Card
-      style={[styles.storeCard, featured && styles.storeCardFeatured]}
-      onPress={() => onPress(store)}
-    >
-      <View style={styles.storeImageWrap}>
-        <StoreImageCard imageUri={store.image} storeName={store.name} />
-        <View style={styles.imageOverlay}>
-          {featured ? (
-            <FeaturedBadge />
-          ) : (
-            <View style={styles.categoryBadge}>
-              <Text style={styles.categoryBadgeText}>{store.category}</Text>
+    <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
+      <Card
+        style={[styles.storeCard, featured && styles.storeCardFeatured]}
+        onPress={() => onPress(store)}
+      >
+        <View style={styles.storeImageWrap}>
+          <StoreImageCard imageUri={store.image} storeName={store.name} />
+          <View style={styles.imageOverlay}>
+            {featured ? (
+              <FeaturedBadge />
+            ) : (
+              <View style={styles.categoryBadge}>
+                <Text style={styles.categoryBadgeText}>{store.category}</Text>
+              </View>
+            )}
+            <View style={styles.imageEtaPill}>
+              <Text style={styles.imageEtaText}>{store.eta}</Text>
             </View>
-          )}
-          <View style={styles.imageEtaPill}>
-            <Text style={styles.imageEtaText}>{store.eta}</Text>
           </View>
         </View>
-      </View>
 
-      <View style={styles.storeHeader}>
-        <View style={styles.storeText}>
-          <Text style={styles.storeName}>{store.name}</Text>
-          <Text style={styles.storeMeta}>
-            {store.category} | {store.distanceKm} km away
-          </Text>
+        <View style={styles.storeHeader}>
+          <View style={styles.storeText}>
+            <Text style={styles.storeName}>{store.name}</Text>
+            <Text style={styles.storeMeta}>
+              {store.category} | {store.distanceKm} km away
+            </Text>
+          </View>
+          <RatingPill rating={store.rating} caption="rated" />
         </View>
-        <RatingPill rating={store.rating} caption="rated" />
-      </View>
 
-      <Text style={styles.storeHighlight}>{store.highlight}</Text>
+        <Text style={styles.storeHighlight}>{store.highlight}</Text>
 
-      <View style={styles.metaRow}>
-        <StoreMetaBadge label={store.category} tone="green" />
-        <StoreMetaBadge label={store.eta} tone="light" />
-      </View>
+        <View style={styles.metaRow}>
+          <StoreMetaBadge label={store.category} tone="green" />
+          <StoreMetaBadge label={store.eta} tone="light" />
+        </View>
 
-      <Notice text={store.deliveryTag} />
-    </Card>
+        <Notice text={store.deliveryTag} />
+      </Card>
+    </Animated.View>
   );
 }
 
@@ -1165,24 +1940,29 @@ const styles = StyleSheet.create({
   metaBadge: {
     borderRadius: radius.pill,
     paddingHorizontal: 12,
-    paddingVertical: 8
+    paddingVertical: 6,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.08)"
   },
   metaBadgeGreen: {
-    backgroundColor: "#EAF6ED"
+    backgroundColor: "rgba(0, 230, 118, 0.12)",
+    borderColor: "rgba(0, 230, 118, 0.2)"
   },
   metaBadgeWarm: {
-    backgroundColor: colors.primaryFaint
+    backgroundColor: "rgba(255, 179, 0, 0.12)",
+    borderColor: "rgba(255, 179, 0, 0.2)"
   },
   metaBadgeLight: {
-    backgroundColor: "#FAF6F0"
+    backgroundColor: "rgba(255, 255, 255, 0.05)",
+    borderColor: "rgba(255, 255, 255, 0.08)"
   },
   metaBadgeText: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: "800",
-    color: colors.primaryMid
+    color: "#00E676"
   },
   metaBadgeWarmText: {
-    color: colors.primary
+    color: "#FFB300"
   },
   emptyState: {
     alignItems: "center",
@@ -1190,15 +1970,15 @@ const styles = StyleSheet.create({
     gap: 8
   },
   emptyTitle: {
-    fontSize: 17,
-    fontWeight: "700",
-    color: colors.ink
+    fontSize: 16,
+    fontWeight: "800",
+    color: "#FFFFFF"
   },
   emptyBody: {
-    fontSize: 14,
-    color: colors.muted,
+    fontSize: 13,
+    color: "#8E95A5",
     textAlign: "center",
-    lineHeight: 21
+    lineHeight: 18
   },
 
   /* Switcher card */
@@ -1210,50 +1990,59 @@ const styles = StyleSheet.create({
   switcherCard: {
     flex: 1,
     height: 106,
-    backgroundColor: colors.surface,
-    borderColor: colors.line,
+    backgroundColor: "#161824",
+    borderColor: "rgba(255, 255, 255, 0.08)",
     borderWidth: 1.5,
     borderRadius: radius.md,
     paddingVertical: 12,
     paddingHorizontal: 6,
     justifyContent: "space-between",
     alignItems: "center",
-    shadowColor: colors.primaryDeep,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.04,
-    shadowRadius: 8,
-    elevation: 2
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
+    elevation: 2,
+    overflow: "hidden" as never
+  },
+  switcherShimmer: {
+    position: "absolute",
+    top: -10,
+    width: 40,
+    height: 130,
+    backgroundColor: "rgba(255,255,255,0.08)",
+    transform: [{ rotate: "15deg" }]
   },
   switcherCardLabel: {
-    fontSize: 15,
-    fontWeight: "950",
-    color: colors.ink,
-    letterSpacing: 1.2,
+    fontSize: 14,
+    fontWeight: "900",
+    color: "#FFFFFF",
+    letterSpacing: 1.1,
     textTransform: "uppercase"
   },
   switcherCardSub: {
     fontSize: 10,
-    fontWeight: "800",
-    color: colors.muted,
+    fontWeight: "700",
+    color: "#8E95A5",
     textAlign: "center",
     letterSpacing: 0.2
   },
   switcherTagWrap: {
     paddingHorizontal: 8,
     paddingVertical: 3,
-    backgroundColor: colors.line,
+    backgroundColor: "rgba(255, 255, 255, 0.06)",
     borderRadius: radius.pill
   },
   switcherTagText: {
     fontSize: 8,
-    fontWeight: "955",
-    color: colors.muted,
+    fontWeight: "800",
+    color: "#8E95A5",
     letterSpacing: 0.5
   },
 
   /* Category Caption Slogan Highlight Bar */
   captionHighlightBar: {
-    paddingVertical: 8,
+    paddingVertical: 10,
     paddingHorizontal: spacing.md,
     borderWidth: 1.5,
     borderRadius: radius.sm,
@@ -1262,7 +2051,7 @@ const styles = StyleSheet.create({
   },
   captionHighlightText: {
     fontSize: 12,
-    fontWeight: "900",
+    fontWeight: "800",
     textAlign: "center",
     letterSpacing: 0.5
   },
@@ -1279,37 +2068,38 @@ const styles = StyleSheet.create({
     padding: spacing.md,
     justifyContent: "center",
     gap: 4,
+    borderWidth: 1.5,
+    borderColor: "rgba(255, 255, 255, 0.08)",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.15,
     shadowRadius: 8,
     elevation: 2
   },
   promoTag: {
     fontSize: 9,
-    fontWeight: "950",
-    color: "#FAF6F0",
-    letterSpacing: 1.5,
-    fontFamily: '"Chalkboard SE", "Comic Sans MS", "Bangers", sans-serif'
+    fontWeight: "900",
+    color: "#FFFFFF",
+    letterSpacing: 1.5
   },
   promoTitle: {
     fontSize: 15,
     fontWeight: "900",
-    color: "#FAF6F0"
+    color: "#FFFFFF"
   },
   promoSub: {
     fontSize: 11,
-    color: "rgba(250, 246, 240, 0.8)",
+    color: "#8E95A5",
     lineHeight: 15,
     fontWeight: "700"
   },
 
   /* High-density dashboard styles */
   dashboardTitle: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: "900",
     textTransform: "uppercase",
-    letterSpacing: 0.6,
+    letterSpacing: 0.8,
     marginTop: spacing.xs,
     marginBottom: 6
   },
@@ -1329,22 +2119,21 @@ const styles = StyleSheet.create({
   },
   swiggyCard: {
     width: 230,
-    height: 150,
-    borderRadius: 22,
+    height: 140,
+    borderRadius: 18,
     padding: spacing.md,
     justifyContent: "space-between",
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.12,
-    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.18,
+    shadowRadius: 10,
     elevation: 3,
-    borderWidth: 1.5,
-    borderColor: "rgba(0, 0, 0, 0.04)"
+    borderWidth: 1.5
   },
   swiggyCardTitle: {
-    fontSize: 16,
-    fontWeight: "950",
-    lineHeight: 20
+    fontSize: 15,
+    fontWeight: "900",
+    lineHeight: 18
   },
   swiggyCardContent: {
     flexDirection: "row",
@@ -1352,28 +2141,27 @@ const styles = StyleSheet.create({
     gap: spacing.md
   },
   swiggyEmblem: {
-    width: 66,
-    height: 66,
-    borderRadius: 18,
+    width: 54,
+    height: 54,
+    borderRadius: 12,
     justifyContent: "center",
     alignItems: "center",
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 3,
     elevation: 4
   },
   swiggyEmblemText: {
-    color: "#FAF6F0",
-    fontSize: 10,
-    fontWeight: "950",
+    fontSize: 9,
+    fontWeight: "900",
     textAlign: "center",
-    lineHeight: 12
+    lineHeight: 11
   },
   swiggyCardDesc: {
     flex: 1,
     fontSize: 10,
-    color: "#4A4A4A",
+    color: "#8E95A5",
     lineHeight: 14,
     fontWeight: "700"
   },
@@ -1382,13 +2170,13 @@ const styles = StyleSheet.create({
   premiumCuisineCard: {
     width: 105,
     height: 148,
-    borderRadius: 20,
-    borderColor: colors.line,
+    borderRadius: 18,
+    borderColor: "rgba(255, 255, 255, 0.08)",
     borderWidth: 1.5,
     overflow: "hidden",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.12,
+    shadowOpacity: 0.15,
     shadowRadius: 8,
     elevation: 3
   },
@@ -1407,8 +2195,8 @@ const styles = StyleSheet.create({
   },
   premiumCuisineCardLabel: {
     fontSize: 13,
-    fontWeight: "950",
-    color: "#FAF6F0",
+    fontWeight: "900",
+    color: "#FFFFFF",
     textAlign: "center",
     marginTop: 8,
     letterSpacing: 0.5,
@@ -1441,10 +2229,12 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0, 0, 0, 0.2)"
   },
   cuisineFloatingTag: {
-    backgroundColor: "#FF4A52",
+    backgroundColor: "rgba(11, 12, 16, 0.88)",
+    borderColor: "rgba(255, 255, 255, 0.12)",
+    borderWidth: 1.5,
     paddingHorizontal: 8,
     paddingVertical: 3,
-    borderRadius: radius.pill,
+    borderRadius: 6,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.35,
@@ -1453,17 +2243,15 @@ const styles = StyleSheet.create({
     zIndex: 10
   },
   cuisineFloatingTagText: {
-    color: "#FAF6F0",
     fontSize: 8,
-    fontWeight: "950",
+    fontWeight: "900",
     letterSpacing: 0.5,
-    textAlign: "center",
-    fontFamily: '"Chalkboard SE", "Comic Sans MS", "Bangers", sans-serif'
+    textAlign: "center"
   },
   cuisineTextLabel: {
     fontSize: 11,
     fontWeight: "900",
-    color: colors.ink,
+    color: "#FFFFFF",
     marginTop: 4
   },
 
@@ -1475,16 +2263,16 @@ const styles = StyleSheet.create({
   },
   munchyCard: {
     width: 140,
-    backgroundColor: colors.surface,
-    borderColor: colors.line,
-    borderWidth: 1,
+    backgroundColor: "#FFFFFF",
+    borderColor: "#E9ECF4",
+    borderWidth: 1.5,
     borderRadius: radius.md,
     overflow: "hidden"
   },
   munchyImage: {
     width: "100%",
     height: 100,
-    backgroundColor: colors.primaryFaint
+    backgroundColor: "#F5F6FA"
   },
   munchyInfo: {
     padding: spacing.sm,
@@ -1493,11 +2281,11 @@ const styles = StyleSheet.create({
   munchyName: {
     fontSize: 13,
     fontWeight: "800",
-    color: colors.ink
+    color: "#1E202C"
   },
   munchyUnit: {
     fontSize: 11,
-    color: colors.muted,
+    color: "#7B829A",
     fontWeight: "600"
   },
   munchyPriceRow: {
@@ -1509,7 +2297,7 @@ const styles = StyleSheet.create({
   munchyPrice: {
     fontSize: 13,
     fontWeight: "900",
-    color: colors.ink
+    color: "#1E202C"
   },
   quickAddBtn: {
     width: 24,
@@ -1519,7 +2307,7 @@ const styles = StyleSheet.create({
     alignItems: "center"
   },
   quickAddBtnText: {
-    color: "#FAF6F0",
+    color: "#FFFFFF",
     fontSize: 15,
     fontWeight: "800",
     marginTop: -1
@@ -1532,13 +2320,13 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: "#E4F1EB"
+    backgroundColor: "#F5F6FA"
   },
   gStreet: {
     position: "absolute",
     backgroundColor: "#FFFFFF",
-    borderColor: "#E0E0E0",
-    borderWidth: 0.5
+    borderColor: "#E9ECF4",
+    borderWidth: 1
   },
   gRiver: {
     position: "absolute",
@@ -1546,7 +2334,7 @@ const styles = StyleSheet.create({
     left: 0,
     width: "40%",
     height: 14,
-    backgroundColor: "#A5C9EB",
+    backgroundColor: "#90CAF9",
     borderRadius: 4
   },
   gPark: {
@@ -1555,7 +2343,7 @@ const styles = StyleSheet.create({
     left: "60%",
     width: "35%",
     height: 40,
-    backgroundColor: "#CBE6D6",
+    backgroundColor: "#C8E6C9",
     borderRadius: 8
   },
   gMapControls: {
@@ -1575,21 +2363,25 @@ const styles = StyleSheet.create({
     lineHeight: 24,
     fontSize: 14,
     fontWeight: "900",
-    color: colors.ink,
+    color: "#1E202C",
+    borderWidth: 1,
+    borderColor: "#E9ECF4",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 3,
-    elevation: 3,
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
     overflow: "hidden"
   },
   gMapCompass: {
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "#161824",
     justifyContent: "center",
     alignItems: "center",
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.1)",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.15,
@@ -1606,14 +2398,14 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: 8,
     right: 8,
-    backgroundColor: "rgba(47, 31, 23, 0.8)",
+    backgroundColor: "rgba(11, 12, 16, 0.85)",
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 4,
     zIndex: 10
   },
   gMapsSearchText: {
-    color: "#FAF6F0",
+    color: "#FFFFFF",
     fontSize: 9,
     fontWeight: "800"
   },
@@ -1644,28 +2436,29 @@ const styles = StyleSheet.create({
 
   /* Ride Hailing styles */
   rideCardContainer: {
-    backgroundColor: colors.surface,
-    borderColor: colors.line,
-    borderWidth: 1,
+    backgroundColor: "#FFFFFF",
+    borderColor: "#E9ECF4",
+    borderWidth: 1.5,
     borderRadius: radius.md,
     padding: spacing.md,
     gap: spacing.md
   },
   rideHeading: {
     fontSize: 22,
-    fontWeight: "950"
+    color: "#1E202C",
+    fontWeight: "900"
   },
   rideSubheading: {
-    fontSize: 14,
-    color: colors.muted,
-    lineHeight: 20,
+    fontSize: 13,
+    color: "#7B829A",
+    lineHeight: 18,
     marginTop: -spacing.xs
   },
   rideInputsWrap: {
-    borderWidth: 1,
-    borderColor: colors.line,
+    borderWidth: 1.5,
+    borderColor: "#E9ECF4",
     borderRadius: radius.sm,
-    backgroundColor: "#FAF6F0",
+    backgroundColor: "#F5F6FA",
     overflow: "hidden"
   },
   inputRow: {
@@ -1677,7 +2470,7 @@ const styles = StyleSheet.create({
   },
   inputDivider: {
     height: 1,
-    backgroundColor: colors.line,
+    backgroundColor: "#E9ECF4",
     marginLeft: 38
   },
   inputDot: {
@@ -1688,23 +2481,23 @@ const styles = StyleSheet.create({
   inputLabel: {
     fontSize: 10,
     fontWeight: "900",
-    color: colors.muted,
+    color: "#7B829A",
     letterSpacing: 0.5
   },
   rideInput: {
     fontSize: 15,
     fontWeight: "700",
-    color: colors.ink,
+    color: "#1E202C",
     marginTop: 2,
     padding: 0
   },
   mapWrap: {
     height: 180,
-    backgroundColor: "#E4F1EB",
+    backgroundColor: "#F5F6FA",
     borderRadius: radius.sm,
     position: "relative",
-    borderWidth: 1,
-    borderColor: colors.line,
+    borderWidth: 1.5,
+    borderColor: "#E9ECF4",
     overflow: "hidden"
   },
   mapNode: {
@@ -1718,22 +2511,24 @@ const styles = StyleSheet.create({
     width: 12,
     height: 12,
     borderRadius: 6,
-    backgroundColor: "#588157",
+    backgroundColor: "#00E676",
     borderWidth: 2,
-    borderColor: "#FAF6F0"
+    borderColor: "#FFFFFF"
   },
   nodeCoreRed: {
     width: 12,
     height: 12,
     borderRadius: 6,
     borderWidth: 2,
-    borderColor: "#FAF6F0"
+    borderColor: "#FFFFFF"
   },
   nodeText: {
     fontSize: 11,
     fontWeight: "800",
-    color: colors.ink,
-    backgroundColor: "rgba(250, 246, 240, 0.85)",
+    color: "#1E202C",
+    backgroundColor: "rgba(255, 255, 255, 0.95)",
+    borderColor: "#E9ECF4",
+    borderWidth: 1,
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 4
@@ -1753,8 +2548,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
     paddingVertical: 3,
     borderRadius: 4,
-    borderWidth: 1,
-    borderColor: "#FAF6F0",
+    borderWidth: 1.5,
+    borderColor: "#161824",
     gap: 4,
     zIndex: 15,
     shadowColor: "#000",
@@ -1767,10 +2562,10 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: "#FAF6F0"
+    backgroundColor: "#FFFFFF"
   },
   vehicleBadgeText: {
-    color: "#FAF6F0",
+    color: "#FFFFFF",
     fontSize: 8,
     fontWeight: "900",
     textTransform: "uppercase"
@@ -1794,8 +2589,8 @@ const styles = StyleSheet.create({
     fontWeight: "800"
   },
   onlyDirectBadge: {
-    backgroundColor: "#EBF6ED",
-    borderColor: "#BADBBE",
+    backgroundColor: "rgba(0, 230, 118, 0.12)",
+    borderColor: "rgba(0, 230, 118, 0.2)",
     borderWidth: 1,
     borderRadius: radius.sm,
     paddingVertical: 6,
@@ -1805,8 +2600,8 @@ const styles = StyleSheet.create({
   },
   onlyDirectText: {
     fontSize: 11,
-    color: "#2D8B55",
-    fontWeight: "850",
+    color: "#00E676",
+    fontWeight: "800",
     textTransform: "uppercase",
     letterSpacing: 0.5
   },
@@ -1818,9 +2613,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     padding: spacing.md,
     borderRadius: radius.sm,
-    borderWidth: 1,
-    borderColor: colors.line,
-    backgroundColor: colors.surface,
+    borderWidth: 1.5,
+    borderColor: "rgba(255, 255, 255, 0.08)",
+    backgroundColor: "#161824",
     gap: spacing.md
   },
   vehicleIndicatorIcon: {
@@ -1838,18 +2633,18 @@ const styles = StyleSheet.create({
   vehicleName: {
     fontSize: 16,
     fontWeight: "800",
-    color: colors.ink
+    color: "#FFFFFF"
   },
   vehicleEta: {
     fontSize: 12,
-    color: colors.muted,
+    color: "#8E95A5",
     fontWeight: "600",
     marginTop: 2
   },
   vehicleRate: {
     fontSize: 16,
     fontWeight: "900",
-    color: colors.ink
+    color: "#FFFFFF"
   },
   directPill: {
     paddingHorizontal: 6,
@@ -1857,7 +2652,7 @@ const styles = StyleSheet.create({
     borderRadius: 4
   },
   directPillText: {
-    color: "#FAF6F0",
+    color: "#161824",
     fontSize: 9,
     fontWeight: "900",
     textTransform: "uppercase"
@@ -1866,17 +2661,25 @@ const styles = StyleSheet.create({
     borderRadius: radius.sm,
     paddingVertical: spacing.md,
     alignItems: "center",
-    shadowColor: colors.primaryDeep,
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.2,
     shadowRadius: 10,
     elevation: 4
   },
   bookBtnText: {
-    color: "#FAF6F0",
+    color: "#FFFFFF",
     fontSize: 16,
     fontWeight: "800",
     letterSpacing: 0.5
+  },
+  bookBtnShimmer: {
+    position: "absolute",
+    top: 0,
+    bottom: 0,
+    width: 60,
+    backgroundColor: "rgba(255,255,255,0.18)",
+    transform: [{ skewX: "-15deg" as never }]
   },
 
   /* Matching driver states */
@@ -1902,17 +2705,25 @@ const styles = StyleSheet.create({
     opacity: 0.4
   },
   matchingSpinner: {
-    fontSize: 24,
+    fontSize: 22,
     fontWeight: "900"
+  },
+  pulseCore: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 2
   },
   matchingTitle: {
     fontSize: 18,
     fontWeight: "900",
-    color: colors.primaryDeep
+    color: "#FFFFFF"
   },
   matchingSubtitle: {
     fontSize: 13,
-    color: colors.muted,
+    color: "#8E95A5",
     textAlign: "center",
     lineHeight: 20,
     paddingHorizontal: 20
@@ -1927,42 +2738,45 @@ const styles = StyleSheet.create({
     alignItems: "center",
     padding: spacing.md,
     borderRadius: radius.sm,
-    borderWidth: 1,
+    borderWidth: 1.5,
+    borderColor: "rgba(255, 255, 255, 0.08)",
+    backgroundColor: "#1E202C",
     gap: spacing.md
   },
   driverAvatar: {
     width: 46,
     height: 46,
     borderRadius: 23,
-    backgroundColor: "#FAF6F0",
+    backgroundColor: "#161824",
     justifyContent: "center",
     alignItems: "center",
     borderWidth: 1.5
   },
   driverAvatarText: {
     fontSize: 16,
-    fontWeight: "900"
+    fontWeight: "900",
+    color: "#FFFFFF"
   },
   driverName: {
     fontSize: 16,
     fontWeight: "800",
-    color: colors.primaryDeep
+    color: "#FFFFFF"
   },
   driverRating: {
     fontSize: 12,
     fontWeight: "800",
-    color: colors.warning
+    color: "#FFB300"
   },
   driverVehicle: {
     fontSize: 13,
-    color: colors.muted,
+    color: "#8E95A5",
     fontWeight: "600",
     marginTop: 2
   },
   matchingTaglineWrap: {
-    backgroundColor: "#F9EDE6",
-    borderColor: "#EAC7C0",
-    borderWidth: 1,
+    backgroundColor: "#1E202C",
+    borderColor: "rgba(255, 255, 255, 0.08)",
+    borderWidth: 1.5,
     borderRadius: radius.sm,
     padding: spacing.md,
     gap: 6
@@ -1970,29 +2784,30 @@ const styles = StyleSheet.create({
   matchingTaglineTitle: {
     fontSize: 11,
     fontWeight: "900",
-    letterSpacing: 1
+    letterSpacing: 1,
+    color: "#FFFFFF"
   },
   matchingTaglineText: {
     fontSize: 13,
-    color: colors.ink,
+    color: "#8E95A5",
     lineHeight: 19,
     fontWeight: "600"
   },
   etaContainer: {
     alignItems: "center",
     paddingVertical: spacing.sm,
-    borderTopWidth: 1,
-    borderBottomWidth: 1,
-    borderColor: colors.line
+    borderTopWidth: 1.5,
+    borderBottomWidth: 1.5,
+    borderColor: "rgba(255, 255, 255, 0.08)"
   },
   etaText: {
     fontSize: 18,
-    fontWeight: "950",
-    color: colors.success
+    fontWeight: "900",
+    color: "#00E676"
   },
   etaSub: {
     fontSize: 13,
-    color: colors.muted,
+    color: "#8E95A5",
     fontWeight: "600",
     marginTop: 2
   },
@@ -2015,9 +2830,9 @@ const styles = StyleSheet.create({
   },
   commuteHistoryCard: {
     width: 210,
-    backgroundColor: colors.surface,
-    borderColor: colors.line,
-    borderWidth: 1,
+    backgroundColor: "#FFFFFF",
+    borderColor: "#E9ECF4",
+    borderWidth: 1.5,
     borderRadius: radius.sm,
     padding: spacing.md,
     gap: 4
@@ -2025,7 +2840,7 @@ const styles = StyleSheet.create({
   commuteHistoryDest: {
     fontSize: 13,
     fontWeight: "900",
-    color: colors.ink
+    color: "#1E202C"
   },
   commuteHistoryFare: {
     fontSize: 10,
@@ -2035,8 +2850,404 @@ const styles = StyleSheet.create({
   },
   commuteHistoryRate: {
     fontSize: 14,
-    color: colors.ink,
+    color: "#1E202C",
     fontWeight: "900",
     marginTop: 2
+  },
+
+  /* Live Ticker styles */
+  tickerContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#FFFFFF",
+    borderColor: "#E9ECF4",
+    borderWidth: 1.5,
+    borderRadius: radius.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 12,
+    marginBottom: spacing.xs,
+    gap: 12,
+    overflow: "hidden"
+  },
+  tickerBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    borderWidth: 1,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6
+  },
+  tickerPulseDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3
+  },
+  tickerBadgeText: {
+    fontSize: 9,
+    fontWeight: "900",
+    letterSpacing: 0.5
+  },
+  tickerText: {
+    flex: 1,
+    fontSize: 11,
+    fontWeight: "700",
+    color: "#1E202C",
+    letterSpacing: 0.2
+  },
+
+  /* Instamart Free Delivery Goal Bar */
+  deliveryGoalWrap: {
+    backgroundColor: "#FFFFFF",
+    borderColor: "rgba(0, 230, 118, 0.2)",
+    borderWidth: 1.5,
+    borderRadius: radius.md,
+    padding: spacing.md,
+    marginBottom: spacing.md
+  },
+  deliveryGoalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 8
+  },
+  deliveryGoalTitle: {
+    fontSize: 12,
+    fontWeight: "900",
+    color: "#1E202C",
+    letterSpacing: 0.2
+  },
+  deliveryGoalValue: {
+    fontSize: 11,
+    fontWeight: "900",
+    color: "#00C853"
+  },
+  deliveryProgressBarBg: {
+    height: 6,
+    backgroundColor: "rgba(0, 0, 0, 0.06)",
+    borderRadius: 3,
+    overflow: "hidden"
+  },
+  deliveryProgressBarFill: {
+    height: "100%",
+    borderRadius: 3
+  },
+
+  /* Swiggy food filter chips */
+  filterChipsScroll: {
+    gap: 8,
+    paddingVertical: spacing.xs,
+    marginBottom: spacing.xs
+  },
+  filterChip: {
+    borderWidth: 1.5,
+    borderColor: "#E9ECF4",
+    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    backgroundColor: "#FFFFFF"
+  },
+  filterChipText: {
+    fontSize: 11,
+    fontWeight: "800",
+    color: "#8E95A5"
+  },
+
+  /* Instamart Flash banner */
+  flashBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#FFEBEE",
+    borderColor: "#FFCDD2",
+    borderWidth: 1,
+    borderRadius: radius.sm,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 10,
+    marginBottom: spacing.md,
+    gap: 8
+  },
+  flashBadge: {
+    backgroundColor: "#FF2E63",
+    paddingHorizontal: 6,
+    paddingVertical: 3,
+    borderRadius: 4
+  },
+  flashBadgeText: {
+    fontSize: 9,
+    fontWeight: "900",
+    color: "#FFFFFF"
+  },
+  flashText: {
+    flex: 1,
+    fontSize: 11,
+    fontWeight: "900",
+    color: "#1E202C"
+  },
+  flashTimer: {
+    fontSize: 11,
+    fontWeight: "900",
+    color: "#FF2E63"
+  },
+
+  /* Instamart 2x4 grid */
+  instamartGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 12,
+    justifyContent: "space-between"
+  },
+  instamartGridCard: {
+    width: "48%",
+    backgroundColor: "#FFFFFF",
+    borderRadius: radius.md,
+    borderColor: "#E9ECF4",
+    borderWidth: 1.5,
+    padding: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    marginVertical: 4
+  },
+  instamartGridCardImg: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: "#F5F6FA"
+  },
+  instamartGridLabelWrap: {
+    flex: 1,
+    gap: 4
+  },
+  instamartGridCardLabel: {
+    fontSize: 12,
+    fontWeight: "900",
+    color: "#1E202C"
+  },
+  instamartGridTag: {
+    alignSelf: "flex-start",
+    borderWidth: 1,
+    borderRadius: 4,
+    paddingHorizontal: 4,
+    paddingVertical: 1
+  },
+  instamartGridTagText: {
+    fontSize: 8,
+    fontWeight: "900"
+  },
+
+  /* Instamart QuantitySelector styling */
+  instamartAddBtn: {
+    borderWidth: 1.5,
+    borderRadius: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    backgroundColor: "#FFFFFF",
+    alignItems: "center",
+    justifyContent: "center",
+    minWidth: 55
+  },
+  instamartAddBtnText: {
+    fontSize: 11,
+    fontWeight: "900"
+  },
+  instamartCounterWrap: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderWidth: 1.5,
+    borderRadius: 6,
+    backgroundColor: "#FFFFFF",
+    overflow: "hidden",
+    minWidth: 70,
+    justifyContent: "space-between"
+  },
+  counterBtn: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    alignItems: "center",
+    justifyContent: "center"
+  },
+  counterBtnText: {
+    fontSize: 13,
+    fontWeight: "900"
+  },
+  counterValue: {
+    fontSize: 11,
+    fontWeight: "900",
+    color: "#1E202C"
+  },
+
+  /* Uber scheduling UI */
+  scheduleBtn: {
+    borderWidth: 2,
+    borderRadius: radius.sm,
+    paddingHorizontal: 20,
+    justifyContent: "center",
+    alignItems: "center",
+    height: 48
+  },
+  scheduleBtnText: {
+    fontSize: 14,
+    fontWeight: "800"
+  },
+  scheduleSheet: {
+    backgroundColor: "#FFFFFF",
+    borderColor: "#E9ECF4",
+    borderWidth: 1.5,
+    borderRadius: radius.md,
+    padding: spacing.md,
+    marginTop: spacing.md,
+    gap: 12
+  },
+  scheduleTitle: {
+    fontSize: 13,
+    fontWeight: "900",
+    color: "#1E202C",
+    letterSpacing: 0.5
+  },
+  scheduleTimeRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8
+  },
+  timeChip: {
+    borderWidth: 1.5,
+    borderColor: "#E9ECF4",
+    borderRadius: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    backgroundColor: "#FFFFFF"
+  },
+  timeChipText: {
+    fontSize: 11,
+    fontWeight: "800",
+    color: "#7B829A"
+  },
+  scheduleConfirmBtn: {
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: radius.sm,
+    alignItems: "center",
+    justifyContent: "center"
+  },
+  scheduleConfirmBtnText: {
+    color: "#1E202C",
+    fontSize: 13,
+    fontWeight: "900"
+  },
+  scheduleCancelBtn: {
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderWidth: 1.5,
+    borderColor: "#E9ECF4",
+    borderRadius: radius.sm,
+    alignItems: "center",
+    justifyContent: "center"
+  },
+  scheduleCancelBtnText: {
+    color: "#7B829A",
+    fontSize: 13,
+    fontWeight: "800"
+  },
+  scheduleSuccessText: {
+    fontSize: 11,
+    fontWeight: "900",
+    marginTop: 4,
+    textAlign: "center"
+  },
+  /* Glovo Signature Floating Bubble Grid styles */
+  glovoBubbleGridWrap: {
+    marginVertical: spacing.sm,
+    backgroundColor: "#FFFFFF",
+    borderRadius: radius.lg,
+    padding: spacing.md,
+    borderWidth: 1.5,
+    borderColor: "#E6E8EC",
+    shadowColor: "#000000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 10,
+    elevation: 3
+  },
+  glovoBubbleHeaderRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 8,
+    paddingHorizontal: 4
+  },
+  glovoBubbleGridTitle: {
+    fontSize: 16,
+    fontWeight: "900",
+    color: "#222222"
+  },
+  glovoBubbleGridSub: {
+    fontSize: 11,
+    fontWeight: "800",
+    color: "#00A082",
+    textTransform: "uppercase",
+    letterSpacing: 0.5
+  },
+  glovoBubbleScrollContent: {
+    paddingHorizontal: 2,
+    gap: 14,
+    paddingVertical: 10
+  },
+  glovoBubbleItemWrap: {
+    alignItems: "center",
+    width: 82
+  },
+  glovoBubblePressable: {
+    alignItems: "center"
+  },
+  glovoBubbleCircle: {
+    width: 66,
+    height: 66,
+    borderRadius: 33,
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 3,
+    shadowColor: "#00A082",
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.2,
+    shadowRadius: 10,
+    elevation: 5,
+    position: "relative"
+  },
+  glovoBubbleActiveRing: {
+    borderWidth: 4,
+    borderColor: "#222222",
+    transform: [{ scale: 1.08 }]
+  },
+  glovoBubbleActiveDot: {
+    position: "absolute",
+    top: 2,
+    right: 2,
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    backgroundColor: "#222222",
+    borderWidth: 2,
+    borderColor: "#FFFFFF"
+  },
+  glovoBubbleIconText: {
+    fontSize: 30
+  },
+  glovoBubbleLabelText: {
+    fontSize: 12,
+    fontWeight: "800",
+    color: "#222222",
+    marginTop: 6,
+    textAlign: "center"
+  },
+  glovoBubbleLabelActive: {
+    fontWeight: "900",
+    color: "#00A082"
+  },
+  glovoBubbleSubText: {
+    fontSize: 9,
+    fontWeight: "600",
+    color: "#757575",
+    marginTop: 1,
+    textAlign: "center"
   }
 });

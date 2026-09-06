@@ -15,7 +15,7 @@ export function DeliveryApp() {
       title="Rider Go"
       subtitle="Fast routes, smart stacking, daily earning clarity."
       activeTab={activeTab}
-      onTabChange={setActiveTab}
+      onTabChange={(tab) => setActiveTab(tab as DeliveryTab)}
       tabs={deliveryTabs}
     >
       {activeTab === "home" ? <DeliveryHomeScreen /> : null}

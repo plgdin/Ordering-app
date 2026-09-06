@@ -190,25 +190,33 @@ export function ClientApp() {
         ) : null}
       </PageShell>
 
-      {/* Floating Swiggy/Instamart style Cart Strip */}
+      {/* Glovo Floating Cart Bar */}
       {activeTab === "home" && cart.itemCount > 0 && (
         <Pressable
           style={styles.floatingCartStrip}
           onPress={() => setActiveTab("cart")}
         >
           <View style={styles.cartStripInfo}>
-            <Text style={styles.cartStripIcon}>🛒</Text>
-            <Text style={styles.cartStripText}>
-              {cart.itemCount} {cart.itemCount === 1 ? "item" : "items"} added
-            </Text>
+            <View style={styles.badgeCountWrap}>
+              <Text style={styles.badgeCountText}>{cart.itemCount}</Text>
+            </View>
+            <View>
+              <Text style={styles.cartStripTitle}>
+                {cart.itemCount === 1 ? "1 Item added" : `${cart.itemCount} Items added`}
+              </Text>
+              <Text style={styles.cartStripSub}>Tap to complete your order</Text>
+            </View>
           </View>
-          <Text style={styles.cartStripBtn}>View Cart ➔</Text>
+          <View style={styles.cartStripBtnWrap}>
+            <Text style={styles.cartStripBtn}>View Order ➔</Text>
+          </View>
         </Pressable>
       )}
 
-      {/* Floating toast notification */}
+      {/* Floating Glovo toast notification */}
       {toastMessage && (
         <Animated.View style={[styles.floatingToast, { opacity: toastOpacity }]}>
+          <Text style={styles.toastIcon}>🟡</Text>
           <Text style={styles.floatingToastText}>{toastMessage}</Text>
         </Animated.View>
       )}
@@ -223,66 +231,91 @@ const styles = StyleSheet.create({
   },
   floatingToast: {
     position: "absolute",
-    bottom: 96,
+    bottom: 94,
     left: 20,
     right: 20,
-    backgroundColor: "#FAF6F0", // cream beige background
-    borderColor: "#A8201A", // primary Red border
+    backgroundColor: "#222222", // Glovo Dark Slate
+    borderColor: "#FFC244", // Glovo Yellow Border
     borderWidth: 2,
     paddingVertical: 14,
     paddingHorizontal: 20,
-    borderRadius: 18,
+    borderRadius: 22,
+    flexDirection: "row",
     alignItems: "center",
-    shadowColor: "#5C0D11",
+    gap: 10,
+    shadowColor: "#000000",
     shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 6,
+    shadowOpacity: 0.2,
+    shadowRadius: 10,
+    elevation: 8,
     zIndex: 9999
   },
+  toastIcon: {
+    fontSize: 16
+  },
   floatingToastText: {
-    color: "#8B1E22", // crimson red text
+    color: "#FFFFFF",
     fontSize: 14,
-    fontWeight: "900",
-    letterSpacing: 0.5
+    fontWeight: "800",
+    letterSpacing: 0.3
   },
   floatingCartStrip: {
     position: "absolute",
-    bottom: 84, // position it just above the bottom tab bar
-    left: 20,
-    right: 20,
-    backgroundColor: "#A8201A", // primary Red
+    bottom: 82, // Position above bottom tab bar
+    left: 16,
+    right: 16,
+    backgroundColor: "#00A082", // Glovo Emerald Teal
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingVertical: 14,
-    paddingHorizontal: 20,
-    borderRadius: 18,
-    shadowColor: "#5C0D11",
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 24,
+    shadowColor: "#00A082",
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
-    elevation: 8,
+    shadowOpacity: 0.35,
+    shadowRadius: 14,
+    elevation: 10,
     zIndex: 999
   },
   cartStripInfo: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 10
+    gap: 12
   },
-  cartStripIcon: {
-    fontSize: 20
+  badgeCountWrap: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: "#FFC244", // Glovo Yellow Badge
+    alignItems: "center",
+    justifyContent: "center"
   },
-  cartStripText: {
-    color: "#FAF6F0",
+  badgeCountText: {
+    color: "#222222",
     fontSize: 15,
-    fontWeight: "800",
-    letterSpacing: 0.5
+    fontWeight: "900"
+  },
+  cartStripTitle: {
+    color: "#FFFFFF",
+    fontSize: 15,
+    fontWeight: "800"
+  },
+  cartStripSub: {
+    color: "#E6F5F2",
+    fontSize: 11,
+    fontWeight: "600"
+  },
+  cartStripBtnWrap: {
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: 16
   },
   cartStripBtn: {
-    color: "#FAF6F0",
-    fontSize: 15,
+    color: "#FFFFFF",
+    fontSize: 13,
     fontWeight: "900",
-    letterSpacing: 0.5
+    letterSpacing: 0.3
   }
 });

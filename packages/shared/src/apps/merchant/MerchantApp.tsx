@@ -15,7 +15,7 @@ export function MerchantApp() {
       title="Merchant Hub"
       subtitle="Faster packing, cleaner ops, better repeat orders."
       activeTab={activeTab}
-      onTabChange={setActiveTab}
+      onTabChange={(tab) => setActiveTab(tab as MerchantTab)}
       tabs={merchantTabs}
     >
       {activeTab === "dashboard" ? <MerchantDashboardScreen /> : null}

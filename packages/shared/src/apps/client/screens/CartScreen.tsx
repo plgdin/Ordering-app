@@ -527,8 +527,8 @@ const styles = StyleSheet.create({
   },
   discountCode: {
     fontSize: 12,
-    fontWeight: "800",
-    color: colors.primaryMid
+    fontWeight: "900",
+    color: "#00A082" // Glovo Teal
   },
   discountTitle: {
     fontSize: 15,
@@ -541,27 +541,32 @@ const styles = StyleSheet.create({
   },
   discountButton: {
     borderRadius: radius.pill,
-    borderWidth: 1,
-    borderColor: colors.primaryMid,
+    borderWidth: 1.5,
+    borderColor: "#00A082",
     paddingHorizontal: 14,
     paddingVertical: 8
   },
   discountButtonApplied: {
-    backgroundColor: colors.primaryMid
+    backgroundColor: "#00A082"
   },
   discountButtonText: {
     fontSize: 13,
-    fontWeight: "800",
-    color: colors.primaryMid
+    fontWeight: "900",
+    color: "#00A082"
   },
   discountButtonTextApplied: {
     color: "#FFFFFF"
   },
   primaryButton: {
-    backgroundColor: colors.primary,
+    backgroundColor: "#FFC244", // Glovo Yellow
     borderRadius: radius.md,
-    paddingVertical: 14,
-    alignItems: "center"
+    paddingVertical: 16,
+    alignItems: "center",
+    shadowColor: "#000000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 4
   },
   secondaryButton: {
     borderRadius: radius.md,
@@ -571,14 +576,15 @@ const styles = StyleSheet.create({
     alignItems: "center"
   },
   secondaryButtonText: {
-    color: colors.primaryMid,
-    fontWeight: "700",
+    color: "#00A082",
+    fontWeight: "800",
     fontSize: 14
   },
   primaryButtonText: {
-    color: "#FFFFFF",
-    fontWeight: "800",
-    fontSize: 14
+    color: "#222222", // Dark text on Glovo Yellow
+    fontWeight: "900",
+    fontSize: 16,
+    letterSpacing: 0.3
   },
   buttonDisabled: {
     opacity: 0.7
@@ -590,14 +596,14 @@ const styles = StyleSheet.create({
   modeChip: {
     flex: 1,
     borderRadius: radius.pill,
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: colors.line,
     paddingVertical: 10,
     alignItems: "center"
   },
   modeChipActive: {
-    backgroundColor: colors.primaryMid,
-    borderColor: colors.primaryMid
+    backgroundColor: "#00A082",
+    borderColor: "#00A082"
   },
   modeChipText: {
     color: colors.muted,
