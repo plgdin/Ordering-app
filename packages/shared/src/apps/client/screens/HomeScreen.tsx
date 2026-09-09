@@ -13,7 +13,7 @@ import {
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { serviceRules } from "@nearnow/config";
-import { Store, InventoryItem } from "@nearnow/core";
+import { categories, verticals, Store, InventoryItem } from "@nearnow/core";
 import {
   Card,
   CartLoadingIndicator,
@@ -1692,6 +1692,42 @@ function QuantitySelector({
         <Text style={[styles.counterBtnText, { color: accentColor }]}>+</Text>
       </Pressable>
     </Animated.View>
+=======
+      {!isFilterLoading ? (
+        <View style={styles.sectionSpacing}>
+          <SectionTitle
+            title={previewFilter ? `${previewFilter} options` : "Popular restaurants near you"}
+          />
+          {filteredStores.length > 0 ? (
+            filteredStores.map((store) => (
+              <StoreCardBlock
+                key={store.id}
+                store={store}
+                featured={store.featured}
+                onPress={onStorePress}
+              />
+            ))
+          ) : (
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyTitle}>No restaurants found</Text>
+              <Text style={styles.emptyBody}>
+                Try a different category or clear the filter to explore more.
+              </Text>
+            </View>
+          )}
+        </View>
+      ) : null}
+        </>
+      ) : (
+        <View style={styles.comingSoonContainer}>
+          <Text style={styles.comingSoonTitle}>{activeVertical}</Text>
+          <Text style={styles.comingSoonBody}>
+            This feature will be implemented in the future. Check back later!
+          </Text>
+        </View>
+      )}
+    </>
+>>>>>>> origin/main
   );
 }
 
@@ -1834,6 +1870,54 @@ function StoreMetaBadge({
 }
 
 const styles = StyleSheet.create({
+  verticalsContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: spacing.sm,
+    marginBottom: spacing.md
+  },
+  verticalCard: {
+    flex: 1,
+    minWidth: '45%',
+    padding: spacing.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FFFFFF',
+    borderColor: '#E5E7EB',
+    borderWidth: 1,
+    borderRadius: radius.md,
+  },
+  activeVerticalCard: {
+    backgroundColor: colors.primaryDeep,
+    borderColor: colors.primaryDeep,
+  },
+  verticalText: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: colors.ink
+  },
+  activeVerticalText: {
+    color: '#FFFFFF'
+  },
+  comingSoonContainer: {
+    padding: spacing.xl,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#F9FAFB",
+    borderRadius: radius.lg,
+    marginTop: spacing.xl
+  },
+  comingSoonTitle: {
+    fontSize: 24,
+    fontWeight: "800",
+    color: colors.ink,
+    marginBottom: spacing.sm
+  },
+  comingSoonBody: {
+    fontSize: 16,
+    color: colors.muted,
+    textAlign: "center"
+  },
   sectionSpacing: {
     gap: spacing.md
   },
