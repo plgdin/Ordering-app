@@ -58,7 +58,25 @@ import {
   calculateDistanceKm
 } from './data/catalog';
 
-type ScreenType = 'home' | 'discover' | 'stores' | 'menu' | 'cart' | 'tracker' | 'profile';
+type ScreenType = 'home' | 'discover' | 'stores' | 'menu' | 'cart' | 'tracker' | 'profile' | 'multiorder';
+
+export interface SpinReward {
+  code: string;
+  title: string;
+  desc: string;
+  discountPercent?: number;
+  discountAmount?: number;
+  color: string;
+}
+
+const SPIN_WHEEL_REWARDS: SpinReward[] = [
+  { code: 'SPIN25', title: 'FLAT 25% OFF', desc: 'Get 25% off on your entire food order!', discountPercent: 25, color: '#DC2626' },
+  { code: 'FREEDEL', title: 'FREE DELIVERY', desc: 'Zero delivery charges on your current order!', discountAmount: 40, color: '#059669' },
+  { code: 'SAVE100', title: 'FLAT ₹100 OFF', desc: 'Flat ₹100 instant discount on orders above ₹299!', discountAmount: 100, color: '#7C3AED' },
+  { code: 'FREEDESSERT', title: 'FREE DESSERT', desc: 'Free Neyyappam or Gelato with your next order!', discountAmount: 50, color: '#DB2777' },
+  { code: 'SPIN30', title: '30% OFF COMBOS', desc: '30% off on all Multi-Store & Gourmet combos!', discountPercent: 30, color: '#2563EB' },
+  { code: 'GOLDSPIN', title: '1-MO GOLD FREE', desc: 'Free 4Kit Gold membership with zero delivery fees!', discountAmount: 75, color: '#D97706' }
+];
 
 const BUBBLE_CATEGORIES = [
   { id: 'food', name: 'Food', icon: Utensils, theme: CATEGORY_THEMES.food },
@@ -125,6 +143,69 @@ export default function App() {
   const [showCustomStoreBuilder, setShowCustomStoreBuilder] = useState<boolean>(false);
   const [customStore1, setCustomStore1] = useState<string>('Zam Zam Restaurant');
   const [customStore2, setCustomStore2] = useState<string>('Azad Restaurant');
+
+  // Gamification & Spin Wheel State
+  const [showSpinWheelModal, setShowSpinWheelModal] = useState<boolean>(false);
+  const [isSpinning, setIsSpinning] = useState<boolean>(false);
+  const [wheelRotation, setWheelRotation] = useState<number>(0);
+  const [wonReward, setWonReward] = useState<SpinReward | null>(null);
+  const [appliedCoupon, setAppliedCoupon] = useState<SpinReward | null>(null);
+
+  // Cravings Roulette State
+  const [rouletteMood, setRouletteMood] = useState<string | null>(null);
+  const [rouletteDish, setRouletteDish] = useState<MenuItem | null>(null);
+  const [isRouletteSpinning, setIsRouletteSpinning] = useState<boolean>(false);
+
+  // Discover Screen Budget Filter State
+  const [discoverMaxPrice, setDiscoverMaxPrice] = useState<number>(99);
+  const [discoverVegOnly, setDiscoverVegOnly] = useState<boolean>(false);
+  const [discoverTopRated, setDiscoverTopRated] = useState<boolean>(false);
+
+  const triggerSpinWheel = () => {
+    if (isSpinning) return;
+    setIsSpinning(true);
+    setWonReward(null);
+
+    const randomIndex = Math.floor(Math.random() * SPIN_WHEEL_REWARDS.length);
+    const sliceAngle = 360 / SPIN_WHEEL_REWARDS.length;
+    const extraRotations = 1800;
+    const targetSliceCenter = randomIndex * sliceAngle + sliceAngle / 2;
+    const finalDegree = wheelRotation + extraRotations + (360 - (wheelRotation % 360) - targetSliceCenter);
+
+    setWheelRotation(finalDegree);
+
+    setTimeout(() => {
+      setIsSpinning(false);
+      const reward = SPIN_WHEEL_REWARDS[randomIndex];
+      setWonReward(reward);
+      try {
+        confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 } });
+      } catch (e) {}
+    }, 3600);
+  };
+
+  const triggerCravingsRoulette = (moodTag: string) => {
+    setRouletteMood(moodTag);
+    setIsRouletteSpinning(true);
+    setRouletteDish(null);
+
+    let candidates = ALL_TRIVANDRUM_FOOD_DISHES;
+    if (moodTag === 'spicy') {
+      candidates = ALL_TRIVANDRUM_FOOD_DISHES.filter((d) => d.name.toLowerCase().includes('biriyani') || d.name.toLowerCase().includes('beef') || d.name.toLowerCase().includes('alfaham'));
+    } else if (moodTag === 'snack') {
+      candidates = ALL_TRIVANDRUM_FOOD_DISHES.filter((d) => d.price <= 99 || d.category === 'Breads' || d.category === 'Street Food');
+    } else if (moodTag === 'sweet') {
+      candidates = ALL_TRIVANDRUM_FOOD_DISHES.filter((d) => d.sugar === 'sweet' || d.category.includes('Dessert') || d.category.includes('Beverage'));
+    }
+
+    if (candidates.length === 0) candidates = ALL_TRIVANDRUM_FOOD_DISHES;
+    const picked = candidates[Math.floor(Math.random() * candidates.length)];
+
+    setTimeout(() => {
+      setIsRouletteSpinning(false);
+      setRouletteDish(picked);
+    }, 1000);
+  };
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
 
@@ -596,10 +677,28 @@ export default function App() {
                 <ChevronLeft size={20} color="var(--text-primary)" />
               </motion.button>
             )}
-            <div className="kit4-brand-logo" onClick={() => { setCurrentScreen('home'); setSearchQuery(''); }} style={{ cursor: 'pointer' }}>
-              <div className="kit4-logo-badge" style={{ background: activeTheme.primary }}>4Kit</div>
+            <div className="kit4-brand-logo" onClick={() => { setCurrentScreen('home'); setSearchQuery(''); }} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div 
+                className="kit4-brand-logo-img"
+                style={{ 
+                  height: 38, 
+                  width: 62, 
+                  backgroundColor: activeTheme.primary,
+                  WebkitMaskImage: 'url(/4kit_logo.png)',
+                  maskImage: 'url(/4kit_logo.png)',
+                  WebkitMaskSize: 'contain',
+                  maskSize: 'contain',
+                  WebkitMaskRepeat: 'no-repeat',
+                  maskRepeat: 'no-repeat',
+                  WebkitMaskPosition: 'center',
+                  maskPosition: 'center',
+                  transition: 'background-color 0.35s ease, transform 0.2s ease',
+                  display: 'block'
+                }} 
+                title="4Kit Logo"
+              />
               <div>
-                <div className="kit4-tagline" style={{ color: activeTheme.primary }}>{activeTheme.name} Mode</div>
+                <div className="kit4-tagline" style={{ color: activeTheme.primary, fontWeight: 700, fontSize: '11px', letterSpacing: '0.5px' }}>{activeTheme.name} Mode</div>
               </div>
             </div>
           </div>
@@ -763,7 +862,7 @@ export default function App() {
                             </span>
                             {item.storeName && (
                               <span className="distance-pill-badge">
-                                📍 {item.storeName}
+                                 {item.storeName}
                               </span>
                             )}
                           </div>
@@ -791,6 +890,71 @@ export default function App() {
                 </div>
               ) : (
                 <>
+                  {/* ─── GAMIFIED SPIN THE WHEEL WIDGET BANNER ─── */}
+                  <div style={{ padding: '0 16px', marginTop: 12 }}>
+                    <div className="spin-wheel-card-banner" style={{ background: activeTheme.gradient, boxShadow: activeTheme.glow, transition: 'all 0.4s ease' }}>
+                      <div className="spin-wheel-title">
+                        Spin the Wheel for a Discount!
+                      </div>
+                      <div className="spin-wheel-sub">
+                        Win up to 50% OFF, Free Delivery &amp; Mystery Food Deals!
+                      </div>
+                      <button className="spin-wheel-cta-btn" onClick={() => setShowSpinWheelModal(true)}>
+                        Spin Now &amp; Claim Coupon
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* ─── FOOD MOOD & CRAVINGS ROULETTE WIDGET ─── */}
+                  <div style={{ padding: '0 16px', marginBottom: 16 }}>
+                    <div style={{ background: '#FFFFFF', borderRadius: 20, padding: 18, border: '1.5px solid var(--food-border)', boxShadow: '0 4px 16px rgba(0,0,0,0.05)' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                        <Flame size={18} color={activeTheme.primary} />
+                        <span style={{ fontSize: 16, fontWeight: 900, fontFamily: 'var(--font-display)', color: 'var(--text-primary)' }}>
+                           Food Mood &amp; Mystery Dish Spinner
+                        </span>
+                      </div>
+                      <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 12, fontWeight: 600 }}>
+                        Can't decide what to eat? Tap a mood to roll a random Trivandrum mystery recommendation!
+                      </p>
+                      <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 6 }} className="no-scrollbar">
+                        {[
+                          { id: 'spicy', label: ' Spicy Kerala' },
+                          { id: 'snack', label: ' Quick Snack' },
+                          { id: 'sweet', label: ' Sweet Treat' }
+                        ].map((mood) => (
+                          <button
+                            key={mood.id}
+                            className="quick-filter-btn"
+                            style={{ padding: '8px 14px', fontSize: 12 }}
+                            onClick={() => triggerCravingsRoulette(mood.id)}
+                          >
+                            {mood.label}
+                          </button>
+                        ))}
+                      </div>
+
+                      {isRouletteSpinning && (
+                        <div style={{ textAlign: 'center', padding: 16, color: activeTheme.primary, fontWeight: 800 }}>
+                           Rolling the Trivandrum Cravings Wheel...
+                        </div>
+                      )}
+
+                      {rouletteDish && !isRouletteSpinning && (
+                        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} style={{ background: '#F8FAFC', borderRadius: 16, padding: 12, marginTop: 12, display: 'flex', gap: 12, alignItems: 'center', border: '1px solid #E2E8F0' }}>
+                          <img src={rouletteDish.image} alt={rouletteDish.name} style={{ width: 64, height: 64, borderRadius: 12, objectFit: 'cover' }} />
+                          <div style={{ flex: 1 }}>
+                            <div style={{ fontSize: 13, fontWeight: 900, color: '#1F2937' }}>{rouletteDish.name}</div>
+                            <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{rouletteDish.storeName} • ₹{rouletteDish.price}</div>
+                          </div>
+                          <button className="quick-filter-btn active" style={{ background: activeTheme.primary, borderColor: activeTheme.primary }} onClick={() => updateItemQty(rouletteDish, 1)}>
+                            + Add
+                          </button>
+                        </motion.div>
+                      )}
+                    </div>
+                  </div>
+
                   {/* ─── 4KIT CATEGORY SPECIALS PROMO CAROUSEL ─── */}
                   <div className="category-promo-carousel">
                     {categorySpecials.map((banner) => (
@@ -801,7 +965,7 @@ export default function App() {
                         whileHover={{ scale: 1.02 }}
                         onClick={() => {
                           if (banner.id.includes('food_3')) {
-                            setCurrentScreen('discover');
+                            setCurrentScreen('multiorder');
                           } else {
                             setCurrentScreen('stores');
                           }
@@ -928,8 +1092,179 @@ export default function App() {
             </>
           )}
 
-          {/* ═════════ 2. DISCOVER SCREEN (Multi-Store Bundles & 5km Radius) ═════════ */}
+          {/* ═════════ 2. DISCOVER SCREEN (Budget Steals & Items under Certain Amount) ═════════ */}
           {currentScreen === 'discover' && (
+            <div className="stores-section" style={{ paddingTop: 16 }}>
+              {/* Discover Budget Hero - Modern Cool Typography */}
+              <div className="discover-budget-hero" style={{ background: 'linear-gradient(135deg, #0F172A 0%, #1E293B 100%)', borderRadius: 24, padding: 22, color: '#FFFFFF', marginBottom: 20, boxShadow: '0 12px 32px rgba(15, 23, 42, 0.25)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+                  <span style={{
+                    fontSize: 11,
+                    fontWeight: 800,
+                    textTransform: 'uppercase',
+                    letterSpacing: '1px',
+                    color: '#38BDF8',
+                    background: 'rgba(56, 189, 248, 0.12)',
+                    padding: '5px 14px',
+                    borderRadius: 20,
+                    border: '1px solid rgba(56, 189, 248, 0.3)',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    fontFamily: "'Space Grotesk', 'Outfit', sans-serif"
+                  }}>
+                    <Compass size={14} color="#38BDF8" />
+                    TRIVANDRUM BUDGET STEALS &amp; CRAVINGS
+                  </span>
+                </div>
+                <h2 style={{ fontSize: 22, fontWeight: 800, fontFamily: "'Space Grotesk', 'Outfit', sans-serif", letterSpacing: '-0.02em', marginBottom: 8, color: '#FFFFFF', lineHeight: 1.25 }}>
+                  Delicious Items Under Your Target Budget
+                </h2>
+                <div style={{ fontSize: 13, color: '#94A3B8', fontWeight: 600, fontFamily: "'Plus Jakarta Sans', sans-serif", lineHeight: 1.4 }}>
+                  Filter top Trivandrum dishes &amp; teatime snacks by price range, dietary preferences &amp; fast delivery.
+                </div>
+              </div>
+
+              {/* Interactive Budget & Preference Filter System */}
+              <div style={{ background: '#FFFFFF', padding: '16px 18px', borderRadius: 22, marginBottom: 20, border: '1.5px solid #E2E8F0', boxShadow: '0 8px 24px rgba(0,0,0,0.04)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <SlidersHorizontal size={18} color={activeTheme.primary} />
+                    <span style={{ fontSize: 14, fontWeight: 800, fontFamily: "'Space Grotesk', 'Outfit', sans-serif", color: 'var(--text-primary)' }}>
+                      Filter Dishes by Price &amp; Preference
+                    </span>
+                  </div>
+                  <span style={{ fontSize: 12, fontWeight: 800, color: activeTheme.primary, background: activeTheme.lightBg, padding: '4px 12px', borderRadius: 12, border: `1px solid ${activeTheme.accentBorder}` }}>
+                    {discoverMaxPrice >= 500 ? 'All Items' : `Max ₹${discoverMaxPrice}`}
+                  </span>
+                </div>
+
+                {/* Price Range Filter Pills */}
+                <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 6, marginBottom: 12 }} className="no-scrollbar">
+                  {[
+                    { label: 'All Items', val: 500 },
+                    { label: 'Under ₹49 (Tea & Snacks)', val: 49 },
+                    { label: 'Under ₹99 (Pocket Bites)', val: 99 },
+                    { label: 'Under ₹149 (Quick Meals)', val: 149 },
+                    { label: 'Under ₹199 (Full Combos)', val: 199 },
+                    { label: 'Under ₹299 (Feasts)', val: 299 }
+                  ].map((pill) => (
+                    <button
+                      key={pill.val}
+                      className={`budget-price-chip ${discoverMaxPrice === pill.val ? 'active' : ''}`}
+                      style={{
+                        fontFamily: "'Space Grotesk', 'Plus Jakarta Sans', sans-serif",
+                        fontWeight: 700,
+                        fontSize: 12
+                      }}
+                      onClick={() => setDiscoverMaxPrice(pill.val)}
+                    >
+                      {pill.label}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Quick Preference Filter Toggles */}
+                <div style={{ display: 'flex', gap: 8, paddingTop: 10, borderTop: '1px solid #F1F5F9' }}>
+                  <button
+                    className={`quick-filter-btn ${discoverVegOnly ? 'active' : ''}`}
+                    style={discoverVegOnly ? { background: '#059669', borderColor: '#059669', color: '#FFFFFF', fontWeight: 800 } : { fontSize: 12 }}
+                    onClick={() => setDiscoverVegOnly(!discoverVegOnly)}
+                  >
+                    🍀 Pure Veg Only
+                  </button>
+                  <button
+                    className={`quick-filter-btn ${discoverTopRated ? 'active' : ''}`}
+                    style={discoverTopRated ? { background: '#D97706', borderColor: '#D97706', color: '#FFFFFF', fontWeight: 800 } : { fontSize: 12 }}
+                    onClick={() => setDiscoverTopRated(!discoverTopRated)}
+                  >
+                    ⭐ Rating 4.5+
+                  </button>
+                </div>
+              </div>
+
+              {/* Dedicated Snacks Under ₹49 & ₹99 Section */}
+              <div style={{ marginBottom: 24 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                  <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--text-primary)', fontFamily: "'Space Grotesk', 'Outfit', sans-serif" }}>
+                    Popular Teatime &amp; Evening Snacks Under ₹99
+                  </div>
+                  <span className="rating-green-pill" style={{ background: '#FEF3C7', color: '#B45309', fontWeight: 800 }}>Trivandrum Favorites</span>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 12 }}>
+                  {ALL_TRIVANDRUM_FOOD_DISHES
+                    .filter((d) => d.price <= 99 && (d.category === 'Breads' || d.category === 'Street Food' || d.category === 'Hot Beverages' || d.category.includes('Starters') || d.category.includes('Dessert')))
+                    .filter((d) => !discoverVegOnly || d.diet === 'veg')
+                    .filter((d) => !discoverTopRated || (d.rating && d.rating >= 4.5))
+                    .slice(0, 6)
+                    .map((snack) => (
+                      <motion.div key={snack.id} whileHover={{ y: -3 }} style={{ background: '#FFFFFF', borderRadius: 16, border: '1px solid #E2E8F0', padding: 10, position: 'relative' }}>
+                        <img src={snack.image} alt={snack.name} style={{ width: '100%', height: 100, borderRadius: 12, objectFit: 'cover', marginBottom: 8 }} />
+                        <div style={{ fontSize: 13, fontWeight: 800, color: '#1F2937', height: 36, overflow: 'hidden', lineHeight: 1.3, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>{snack.name}</div>
+                        <div style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 600, margin: '4px 0' }}>{snack.storeName}</div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 8 }}>
+                          <span style={{ fontSize: 15, fontWeight: 900, color: activeTheme.primary, fontFamily: "'Space Grotesk', sans-serif" }}>₹{snack.price}</span>
+                          <button
+                            className="quick-filter-btn active"
+                            style={{ padding: '4px 10px', fontSize: 12, background: activeTheme.primary, borderColor: activeTheme.primary }}
+                            onClick={() => updateItemQty(snack, 1)}
+                          >
+                            + Add
+                          </button>
+                        </div>
+                      </motion.div>
+                    ))}
+                </div>
+              </div>
+
+              {/* Full Budget Items Grid */}
+              <div style={{ marginBottom: 16 }}>
+                <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 12, fontFamily: "'Space Grotesk', 'Outfit', sans-serif" }}>
+                  All Trivandrum Items {discoverMaxPrice >= 500 ? '' : `Under ₹${discoverMaxPrice}`} ({
+                    ALL_TRIVANDRUM_FOOD_DISHES
+                      .filter((d) => d.price <= discoverMaxPrice)
+                      .filter((d) => !discoverVegOnly || d.diet === 'veg')
+                      .filter((d) => !discoverTopRated || (d.rating && d.rating >= 4.5)).length
+                  } dishes)
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  {ALL_TRIVANDRUM_FOOD_DISHES
+                    .filter((d) => d.price <= discoverMaxPrice)
+                    .filter((d) => !discoverVegOnly || d.diet === 'veg')
+                    .filter((d) => !discoverTopRated || (d.rating && d.rating >= 4.5))
+                    .slice(0, 15)
+                    .map((dish) => (
+                      <div key={dish.id} className="budget-dish-card">
+                        <img src={dish.image} alt={dish.name} className="budget-dish-img" />
+                        <div style={{ flex: 1 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
+                            <span style={{ fontSize: 10, padding: '2px 6px', borderRadius: 4, background: dish.diet === 'veg' ? '#D1FAE5' : '#FEE2E2', color: dish.diet === 'veg' ? '#065F46' : '#991B1B', fontWeight: 800 }}>
+                              {dish.diet === 'veg' ? 'VEG' : 'NON-VEG'}
+                            </span>
+                            <span style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 600 }}>{dish.category}</span>
+                          </div>
+                          <div style={{ fontSize: 14, fontWeight: 800, color: '#1F2937', marginBottom: 2, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>{dish.name}</div>
+                          <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>{dish.storeName} • {dish.storeLoc || 'Palayam'}</div>
+                          <div style={{ fontSize: 15, fontWeight: 900, color: activeTheme.primary, marginTop: 4, fontFamily: "'Space Grotesk', sans-serif" }}>₹{dish.price}</div>
+                        </div>
+                        <button
+                          className="shimmer-btn"
+                          style={{ padding: '8px 14px', fontSize: 12, borderRadius: 12, background: activeTheme.gradient, boxShadow: activeTheme.glow }}
+                          onClick={() => updateItemQty(dish, 1)}
+                        >
+                          + Add
+                        </button>
+                      </div>
+                    ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ═════════ DEDICATED MULTI-ORDER SCREEN (Multi-Store Bundles & 5km Radius) ═════════ */}
+          {currentScreen === 'multiorder' && (
             <div className="stores-section" style={{ paddingTop: 16 }}>
               <div className="section-label-badge" style={{ marginBottom: 8, color: activeTheme.primary }}>
                 <Zap size={14} color={activeTheme.primary} />
@@ -1041,7 +1376,7 @@ export default function App() {
                   style={filterMaxDistKm <= 5 ? { background: activeTheme.primary, borderColor: activeTheme.primary } : {}}
                   onClick={() => setFilterMaxDistKm(filterMaxDistKm <= 5 ? 15 : 5)}
                 >
-                  📍 &lt; 5km Radius
+                   &lt; 5km Radius
                 </button>
                 {['Palayam', 'Kowdiar', 'Kazhakkoottam', 'Lulu Mall', 'Vazhuthacaud'].map((loc) => (
                   <button
@@ -1084,7 +1419,7 @@ export default function App() {
                     </div>
 
                     <div className="swiggy-rating-row">
-                      <span className="swiggy-star-circle" style={{ background: activeTheme.primary }}>★</span>
+                      <span className="swiggy-star-circle" style={{ background: activeTheme.primary }}></span>
                       <span>{store.rating} ({store.reviewCount || '1.2K+'}) • {store.eta}</span>
                     </div>
 
@@ -1133,7 +1468,7 @@ export default function App() {
                 <h2 className="section-h2">{selectedStore ? selectedStore.name : `${activeTheme.name} Menu`}</h2>
                 {selectedStore && (
                   <div style={{ fontSize: 12, color: 'var(--text-secondary)', fontWeight: 700, marginTop: 4 }}>
-                    📍 {selectedStore.locality || selectedStore.categoryTag.split('•')[0]} • 25 Curated Dishes Available
+                     {selectedStore.locality || selectedStore.categoryTag.split('•')[0]} • 25 Curated Dishes Available
                   </div>
                 )}
               </div>
@@ -1214,7 +1549,7 @@ export default function App() {
                           <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>Bundled pickup from {distinctStoresInCart} nearby merchants</div>
                         </div>
                       </div>
-                      <span className="distance-pill-badge within-range">Within 5km ✅</span>
+                      <span className="distance-pill-badge within-range">Within 5km </span>
                     </div>
                   )}
 
@@ -1457,11 +1792,11 @@ export default function App() {
                 <div className="filter-chips-grid">
                   {[
                     { label: 'All Diets', val: 'All' },
-                    { label: '🥬 Pure Veg', val: 'veg' },
-                    { label: '🍗 Non-Veg', val: 'non-veg' },
-                    { label: '🌱 100% Vegan', val: 'vegan' },
-                    { label: '🥑 Keto Friendly', val: 'keto' },
-                    { label: '💪 High Protein', val: 'high-protein' }
+                    { label: ' Pure Veg', val: 'veg' },
+                    { label: ' Non-Veg', val: 'non-veg' },
+                    { label: ' 100% Vegan', val: 'vegan' },
+                    { label: ' Keto Friendly', val: 'keto' },
+                    { label: ' High Protein', val: 'high-protein' }
                   ].map((dt) => (
                     <button
                       key={dt.label}
@@ -1483,10 +1818,10 @@ export default function App() {
                 <div className="filter-chips-grid">
                   {[
                     { label: 'All', val: 'All' },
-                    { label: '🚫 Sugar-Free', val: 'sugar-free' },
-                    { label: '🩺 Diabetic Friendly', val: 'diabetic-friendly' },
-                    { label: '💧 Low Sugar', val: 'low-sugar' },
-                    { label: '🍰 Sweet Cravings', val: 'sweet' }
+                    { label: ' Sugar-Free', val: 'sugar-free' },
+                    { label: ' Diabetic Friendly', val: 'diabetic-friendly' },
+                    { label: ' Low Sugar', val: 'low-sugar' },
+                    { label: ' Sweet Cravings', val: 'sweet' }
                   ].map((sg) => (
                     <button
                       key={sg.label}
@@ -1568,7 +1903,7 @@ export default function App() {
                       Distance between merchants: <strong>{currentStore2Distance} km</strong>
                     </div>
                     <div style={{ fontSize: 11, color: '#059669', fontWeight: 700 }}>
-                      ✅ Valid for single courier pickup (&le; 5.0 km)
+                       Valid for single courier pickup (&le; 5.0 km)
                     </div>
                   </div>
                 </div>
@@ -1576,7 +1911,7 @@ export default function App() {
               </div>
 
               <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 16 }}>
-                📦 Express courier will collect both packages and deliver together (+₹25 multi-pickup surcharge applies). Max 10 items total.
+                 Express courier will collect both packages and deliver together (+₹25 multi-pickup surcharge applies). Max 10 items total.
               </div>
 
               <button
@@ -1657,7 +1992,7 @@ export default function App() {
                   <div className="rider-info-row">
                     <div>
                       <div className="rider-name">Nikhil Sharma</div>
-                      <div className="rider-rating">★ 4.95 • Electric Scooter</div>
+                      <div className="rider-rating"> 4.95 • Electric Scooter</div>
                     </div>
                     <button className="call-rider-btn" onClick={() => alert("Calling Nikhil (+91 98950-4KIT-NIKHIL)...")}>
                       <PhoneCall size={13} /> Call
@@ -1698,7 +2033,106 @@ export default function App() {
         )}
       </AnimatePresence>
 
-      {/* ─── 4KIT 4-TAB BOTTOM NAVIGATION DOCK ─── */}
+      {/* ─── SPIN THE WHEEL INTERACTIVE DISCOUNT MODAL ─── */}
+      <AnimatePresence>
+        {showSpinWheelModal && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="spin-modal-overlay" onClick={() => !isSpinning && setShowSpinWheelModal(false)}>
+            <motion.div initial={{ scale: 0.8, y: 30 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.8, y: 30 }} className="spin-modal-card" onClick={(e) => e.stopPropagation()}>
+              <button
+                style={{ position: 'absolute', top: 16, right: 16, background: '#F3F4F6', border: 'none', borderRadius: '50%', width: 32, height: 32, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                onClick={() => !isSpinning && setShowSpinWheelModal(false)}
+              >
+                <X size={18} color="#4B5563" />
+              </button>
+
+              <h3 style={{ fontSize: 20, fontWeight: 900, fontFamily: 'var(--font-display)', color: '#1F2937', marginBottom: 4 }}>
+                Spin the Wheel for a Discount!
+              </h3>
+              <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 12, fontWeight: 600 }}>
+                Tap SPIN below to reveal your randomized surprise coupon!
+              </p>
+
+              {/* Wheel Graphic */}
+              <div className="spin-wheel-wrapper">
+                <div className="spin-wheel-pointer" />
+                <svg
+                  className="spin-wheel-svg"
+                  viewBox="0 0 200 200"
+                  style={{
+                    transform: `rotate(${wheelRotation}deg)`,
+                    transition: isSpinning ? 'transform 3.5s cubic-bezier(0.15, 0.9, 0.2, 1)' : 'none'
+                  }}
+                >
+                  {SPIN_WHEEL_REWARDS.map((rew, i) => {
+                    const numSlices = SPIN_WHEEL_REWARDS.length;
+                    const sliceAngle = 360 / numSlices;
+                    const startAngle = i * sliceAngle;
+                    const endAngle = (i + 1) * sliceAngle;
+                    const x1 = 100 + 100 * Math.cos((Math.PI * startAngle) / 180);
+                    const y1 = 100 + 100 * Math.sin((Math.PI * startAngle) / 180);
+                    const x2 = 100 + 100 * Math.cos((Math.PI * endAngle) / 180);
+                    const y2 = 100 + 100 * Math.sin((Math.PI * endAngle) / 180);
+                    const textAngle = startAngle + sliceAngle / 2;
+                    const textX = 100 + 65 * Math.cos((Math.PI * textAngle) / 180);
+                    const textY = 100 + 65 * Math.sin((Math.PI * textAngle) / 180);
+
+                    return (
+                      <g key={rew.code}>
+                        <path
+                          d={`M 100 100 L ${x1} ${y1} A 100 100 0 0 1 ${x2} ${y2} Z`}
+                          fill={rew.color}
+                          stroke="#FFFFFF"
+                          strokeWidth="2"
+                        />
+                        <text
+                          x={textX}
+                          y={textY}
+                          fill="#FFFFFF"
+                          fontSize="8"
+                          fontWeight="900"
+                          textAnchor="middle"
+                          dominantBaseline="middle"
+                          transform={`rotate(${textAngle + 90}, ${textX}, ${textY})`}
+                        >
+                          {rew.title}
+                        </text>
+                      </g>
+                    );
+                  })}
+                </svg>
+
+                <button className="spin-wheel-center-btn" onClick={triggerSpinWheel} disabled={isSpinning}>
+                  {isSpinning ? 'SPINNING...' : 'SPIN!'}
+                </button>
+              </div>
+
+              {/* Won Reward Banner */}
+              {wonReward && (
+                <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} style={{ background: '#ECFDF5', border: '1.5px solid #6EE7B7', borderRadius: 20, padding: 16, marginTop: 12 }}>
+                  <div style={{ fontSize: 16, fontWeight: 900, color: '#047857', marginBottom: 2 }}>
+                     YOU WON: {wonReward.title}!
+                  </div>
+                  <div style={{ fontSize: 12, color: '#065F46', marginBottom: 12, fontWeight: 600 }}>{wonReward.desc}</div>
+                  <button
+                    className="shimmer-btn"
+                    style={{ width: '100%', padding: 12, background: 'linear-gradient(135deg, #059669 0%, #047857 100%)', boxShadow: '0 4px 14px rgba(5,150,105,0.4)' }}
+                    onClick={() => {
+                      setAppliedCoupon(wonReward);
+                      setShowSpinWheelModal(false);
+                      setLimitWarning(`Coupon ${wonReward.code} applied to cart!`);
+                      setTimeout(() => setLimitWarning(null), 3500);
+                    }}
+                  >
+                    Apply Coupon ({wonReward.code}) to Cart
+                  </button>
+                </motion.div>
+              )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ─── 4KIT 5-TAB BOTTOM NAVIGATION DOCK ─── */}
       <div className="glovo-bottom-dock">
         <button
           className={`dock-tab-btn ${currentScreen === 'home' ? 'active' : ''}`}
@@ -1713,6 +2147,13 @@ export default function App() {
           onClick={() => setCurrentScreen('discover')}
         >
           <Compass size={18} className="dock-tab-icon" /> <span>Discover</span>
+        </button>
+        <button
+          className={`dock-tab-btn ${currentScreen === 'multiorder' ? 'active' : ''}`}
+          style={currentScreen === 'multiorder' ? { background: activeTheme.gradient, boxShadow: activeTheme.glow } : {}}
+          onClick={() => setCurrentScreen('multiorder')}
+        >
+          <Zap size={18} className="dock-tab-icon" /> <span>Multi-Order</span>
         </button>
         <button
           className={`dock-tab-btn ${currentScreen === 'cart' || currentScreen === 'tracker' ? 'active' : ''}`}

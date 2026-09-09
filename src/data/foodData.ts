@@ -48,29 +48,29 @@ export interface CollectionPick {
 }
 
 export const CATEGORIES: FoodCategory[] = [
-  { id: 'promotions', name: 'Offers', icon: '🏷️', badge: '50% OFF' },
-  { id: 'biryani', name: 'Biryani', icon: '🍲' },
-  { id: 'burgers', name: 'Burgers', icon: '🍔' },
-  { id: 'north_indian', name: 'North Indian', icon: '🍛' },
-  { id: 'pizza', name: 'Pizza', icon: '🍕' },
-  { id: 'chinese', name: 'Chinese', icon: '🥟' },
-  { id: 'japanese', name: 'Japanese', icon: '🍱' },
-  { id: 'desserts', name: 'Desserts', icon: '🍨' }
+  { id: 'promotions', name: 'Offers', icon: '️', badge: '50% OFF' },
+  { id: 'biryani', name: 'Biryani', icon: '' },
+  { id: 'burgers', name: 'Burgers', icon: '' },
+  { id: 'north_indian', name: 'North Indian', icon: '' },
+  { id: 'pizza', name: 'Pizza', icon: '' },
+  { id: 'chinese', name: 'Chinese', icon: '' },
+  { id: 'japanese', name: 'Japanese', icon: '' },
+  { id: 'desserts', name: 'Desserts', icon: '' }
 ];
 
 export const FOOD_TYPES: FoodTypeOption[] = [
-  { id: 'biryani', name: 'Biryani', icon: '🍲', selectedByDefault: true },
-  { id: 'north_indian', name: 'North Indian', icon: '🍛', selectedByDefault: true },
-  { id: 'south_indian', name: 'South Indian', icon: '🧇' },
-  { id: 'chinese', name: 'Indo-Chinese', icon: '🥢' },
-  { id: 'japanese', name: 'Japanese & Sushi', icon: '🍜' },
-  { id: 'pizza', name: 'Pizza & Pasta', icon: '🍕', selectedByDefault: true },
-  { id: 'burgers', name: 'Burgers & Fries', icon: '🍔' },
-  { id: 'street_food', name: 'Chaat & Street', icon: '🥙' },
-  { id: 'kebab', name: 'Kebab & Tandoor', icon: '🍢', selectedByDefault: true },
-  { id: 'thali', name: 'Royal Thali', icon: '🍱' },
-  { id: 'desserts', name: 'Sweets & Desserts', icon: '🍧' },
-  { id: 'shakes', name: 'Shakes & Beverages', icon: '🥤' }
+  { id: 'biryani', name: 'Biryani', icon: '', selectedByDefault: true },
+  { id: 'north_indian', name: 'North Indian', icon: '', selectedByDefault: true },
+  { id: 'south_indian', name: 'South Indian', icon: '' },
+  { id: 'chinese', name: 'Indo-Chinese', icon: '' },
+  { id: 'japanese', name: 'Japanese & Sushi', icon: '' },
+  { id: 'pizza', name: 'Pizza & Pasta', icon: '', selectedByDefault: true },
+  { id: 'burgers', name: 'Burgers & Fries', icon: '' },
+  { id: 'street_food', name: 'Chaat & Street', icon: '' },
+  { id: 'kebab', name: 'Kebab & Tandoor', icon: '', selectedByDefault: true },
+  { id: 'thali', name: 'Royal Thali', icon: '' },
+  { id: 'desserts', name: 'Sweets & Desserts', icon: '' },
+  { id: 'shakes', name: 'Shakes & Beverages', icon: '' }
 ];
 
 export const QUICK_JAPANESE_DISHES: QuickDish[] = [
@@ -163,7 +163,7 @@ export const INITIAL_PICKS: CollectionPick[] = [
     id: 'p1',
     name: 'My Favourites',
     subtitle: '4 places saved',
-    icon: '❤️',
+    icon: '️',
     selected: true,
     count: 4
   },
@@ -171,7 +171,7 @@ export const INITIAL_PICKS: CollectionPick[] = [
     id: 'p2',
     name: 'Late Night Craving',
     subtitle: '6 places saved',
-    icon: '🌙',
+    icon: '',
     selected: false,
     count: 6
   },
@@ -179,15 +179,15 @@ export const INITIAL_PICKS: CollectionPick[] = [
     id: 'p3',
     name: 'Weekend Biryani Spots',
     subtitle: '3 places saved',
-    icon: '🍲',
+    icon: '',
     selected: false,
     count: 3
   }
 ];
 
 export const BUILDING_TYPES = [
-  { id: 'house', label: 'Independent House', icon: '🏠', desc: 'Villa, Independent house or bunglow' },
-  { id: 'apartment', label: 'Apartment / Gated', icon: '🏢', desc: 'High-rise apartment or flat block' },
-  { id: 'office', label: 'Office / Tech Park', icon: '💼', desc: 'IT Park, commercial office tower' },
-  { id: 'other', label: 'Other Location', icon: '📍', desc: 'Hotel, friend house, or landmark' }
+  { id: 'house', label: 'Independent House', icon: '', desc: 'Villa, Independent house or bunglow' },
+  { id: 'apartment', label: 'Apartment / Gated', icon: '', desc: 'High-rise apartment or flat block' },
+  { id: 'office', label: 'Office / Tech Park', icon: '', desc: 'IT Park, commercial office tower' },
+  { id: 'other', label: 'Other Location', icon: '', desc: 'Hotel, friend house, or landmark' }
 ];
